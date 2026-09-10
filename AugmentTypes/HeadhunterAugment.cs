@@ -1,5 +1,6 @@
 using Microsoft.Xna.Framework;
 using Terraria;
+using Terraria.ID;
 using Terraria.ModLoader;
 
 namespace Augments
@@ -49,6 +50,12 @@ namespace Augments
             };
 
             target.StrikeNPC(hit);
+            // StrikeNPC does not sync itself. In multiplayer the damage would
+            // only apply on the local client; the server's authoritative NPC
+            // never takes it and re-syncs back to alive (looks like a "respawn").
+            // Mirror SimpleStrikeNPC and relay the strike to the server/clients.
+            if (Main.netMode != NetmodeID.SinglePlayer)
+                NetMessage.SendStrikeNPC(target, in hit);
             CombatText.NewText(target.Hitbox, Color.White, hit.Damage);
         }
     }
