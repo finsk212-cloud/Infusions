@@ -65,6 +65,26 @@ namespace Augments
 			CalculatedStyle dims = GetDimensions();
 			var rect = new Rectangle((int)dims.X, (int)dims.Y, (int)dims.Width, (int)dims.Height);
 
+			float time = (float)Main.GlobalTimeWrappedHourly;
+			float epicPulse = (float)Math.Sin(time * 3f + (rect.X + rect.Y) * 0.02f) * 0.5f + 0.5f;
+			float legPulse = (float)Math.Sin(time * 4f + (rect.X + rect.Y) * 0.02f) * 0.5f + 0.5f;
+
+			// 0. Outer Aura Glow for Epic & Legendary (drawn behind the slot box)
+			if (Augment.Rarity == AugmentRarity.Epic)
+			{
+				int glowDist = 1 + (int)(epicPulse * 3f);
+				Color epicGlow = new Color(170, 90, 255) * (0.10f + epicPulse * 0.20f);
+				Rectangle auraRect = new Rectangle(rect.X - glowDist, rect.Y - glowDist, rect.Width + glowDist * 2, rect.Height + glowDist * 2);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, auraRect, epicGlow);
+			}
+			else if (Augment.Rarity == AugmentRarity.Legendary)
+			{
+				int glowDist = 2 + (int)(legPulse * 4f);
+				Color legGlow = new Color(255, 170, 30) * (0.16f + legPulse * 0.28f);
+				Rectangle auraRect = new Rectangle(rect.X - glowDist, rect.Y - glowDist, rect.Width + glowDist * 2, rect.Height + glowDist * 2);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, auraRect, legGlow);
+			}
+
 			// 1. Slot Background (Terraria inventory dark slate-blue)
 			Color bgColor = isHovered ? new Color(38, 50, 92) * 0.95f : new Color(24, 32, 60) * 0.92f;
 			spriteBatch.Draw(TextureAssets.MagicPixel.Value, rect, bgColor);
@@ -81,7 +101,7 @@ namespace Augments
 			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X + 1, rect.Bottom - 3, rect.Width - 2, 2), botDark);
 			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right - 3, rect.Y + 1, 2, rect.Height - 2), botDark);
 
-			// 3. Border (Rarity colored or Gold when selected)
+			// 3. Border (Rarity colored, with Epic/Legendary custom effects)
 			Color borderColor = AugmentListEntry.RarityColor(Augment.Rarity);
 			int borderWidth = 2;
 
@@ -89,6 +109,18 @@ namespace Augments
 			{
 				borderColor = new Color(255, 220, 80);
 				borderWidth = 3;
+			}
+			else if (Augment.Rarity == AugmentRarity.Epic)
+			{
+				borderColor = Color.Lerp(new Color(155, 115, 225), new Color(215, 180, 255), epicPulse * 0.45f);
+				if (isHovered)
+					borderColor = Color.Lerp(borderColor, Color.White, 0.4f);
+			}
+			else if (Augment.Rarity == AugmentRarity.Legendary)
+			{
+				borderColor = Color.Lerp(new Color(255, 160, 20), new Color(255, 210, 60), legPulse * 0.45f);
+				if (isHovered)
+					borderColor = Color.Lerp(borderColor, Color.White, 0.4f);
 			}
 			else if (isHovered)
 			{
@@ -100,6 +132,70 @@ namespace Augments
 			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X, rect.Bottom - borderWidth, rect.Width, borderWidth), borderColor);
 			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X, rect.Y, borderWidth, rect.Height), borderColor);
 			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right - borderWidth, rect.Y, borderWidth, rect.Height), borderColor);
+
+			// Corner Ornaments & Trims
+			if (Augment.Rarity == AugmentRarity.Epic)
+			{
+				// 4 Luminous Amethyst Corner Studs (3x3 pixels)
+				Color gemColor = new Color(225, 185, 255) * (0.8f + epicPulse * 0.2f);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X - 1, rect.Y - 1, 3, 3), gemColor);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right - 2, rect.Y - 1, 3, 3), gemColor);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X - 1, rect.Bottom - 2, 3, 3), gemColor);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right - 2, rect.Bottom - 2, 3, 3), gemColor);
+			}
+			else if (Augment.Rarity == AugmentRarity.Legendary)
+			{
+				// Inner Gold Hairline
+				Color innerGold = new Color(255, 225, 90) * (0.75f + legPulse * 0.25f);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X + 2, rect.Y + 2, rect.Width - 4, 1), innerGold);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X + 2, rect.Y + 2, 1, rect.Height - 4), innerGold);
+
+				// 4 Ornate Royal Gold Corner Brackets (6x2 and 2x6 L-shapes)
+				Color cornerGold = new Color(255, 220, 80);
+				// Top-Left
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X - 2, rect.Y - 2, 6, 2), cornerGold);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X - 2, rect.Y - 2, 2, 6), cornerGold);
+				// Top-Right
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right - 4, rect.Y - 2, 6, 2), cornerGold);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right, rect.Y - 2, 2, 6), cornerGold);
+				// Bottom-Left
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X - 2, rect.Bottom, 6, 2), cornerGold);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X - 2, rect.Bottom - 4, 2, 6), cornerGold);
+				// Bottom-Right
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right - 4, rect.Bottom, 6, 2), cornerGold);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right, rect.Bottom - 4, 2, 6), cornerGold);
+
+				// Twinkling Star Sparkles glinting on corners
+				float sparkCycle = (time * 2.5f + (rect.X * 0.1f)) % 4f;
+				if (sparkCycle < 1f)
+				{
+					float sparkProgress = sparkCycle;
+					float sparkAlpha = (float)Math.Sin(sparkProgress * MathHelper.Pi);
+					if (sparkAlpha > 0.05f)
+					{
+						int spX = rect.Right;
+						int spY = rect.Y;
+						Color spColor = new Color(255, 255, 220) * sparkAlpha;
+						spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(spX, spY - 3, 1, 7), spColor);
+						spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(spX - 3, spY, 7, 1), spColor);
+						spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(spX - 1, spY - 1, 3, 3), Color.White * (sparkAlpha * 0.9f));
+					}
+				}
+				else if (sparkCycle >= 2f && sparkCycle < 3f)
+				{
+					float sparkProgress = sparkCycle - 2f;
+					float sparkAlpha = (float)Math.Sin(sparkProgress * MathHelper.Pi);
+					if (sparkAlpha > 0.05f)
+					{
+						int spX = rect.X;
+						int spY = rect.Bottom;
+						Color spColor = new Color(255, 255, 220) * sparkAlpha;
+						spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(spX, spY - 3, 1, 7), spColor);
+						spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(spX - 3, spY, 7, 1), spColor);
+						spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(spX - 1, spY - 1, 3, 3), Color.White * (sparkAlpha * 0.9f));
+					}
+				}
+			}
 
 			var font = FontAssets.MouseText.Value;
 
