@@ -17,6 +17,7 @@ namespace Augments
 		public static Asset<Texture2D> MeleeIconAsset;
 		public static Asset<Texture2D> MagicIconAsset;
 		public static Asset<Texture2D> SummonIconAsset;
+		public static Asset<Texture2D> RangedIconAsset;
 
 		public readonly Augment Augment;
 		public bool IsSelected { get; set; }
@@ -166,6 +167,29 @@ namespace Augments
 					spriteBatch.Draw(slimeTex, iconPos, iconColor);
 				}
 			}
+			else if (Augment.Class == AugmentClass.Ranged)
+			{
+				if (RangedIconAsset == null)
+					RangedIconAsset = ModContent.Request<Texture2D>("Augments/UI/RangedIcon", AssetRequestMode.ImmediateLoad);
+
+				if (RangedIconAsset?.IsLoaded == true)
+				{
+					Texture2D crosshairTex = RangedIconAsset.Value;
+					Color iconColor = AugmentListEntry.RarityColor(Augment.Rarity);
+					if (Augment.Rarity == AugmentRarity.Common)
+						iconColor = new Color(225, 230, 240);
+
+					if (isHovered)
+						iconColor = Color.Lerp(iconColor, Color.White, 0.4f);
+
+					Vector2 iconPos = new Vector2(
+						rect.X + (rect.Width - crosshairTex.Width) * 0.5f,
+						rect.Y + (rect.Height - crosshairTex.Height) * 0.5f
+					);
+
+					spriteBatch.Draw(crosshairTex, iconPos, iconColor);
+				}
+			}
 			else
 			{
 				string initials = GetInitials(Augment.DisplayName);
@@ -184,8 +208,8 @@ namespace Augments
 				);
 			}
 
-			// 5. Class badge in top-left corner (omit for Melee, Magic, Summon since they have custom icons)
-			if (Augment.Class != AugmentClass.Melee && Augment.Class != AugmentClass.Magic && Augment.Class != AugmentClass.Summon)
+			// 5. Class badge in top-left corner (omit for Melee, Magic, Summon, Ranged since they have custom icons)
+			if (Augment.Class != AugmentClass.Melee && Augment.Class != AugmentClass.Magic && Augment.Class != AugmentClass.Summon && Augment.Class != AugmentClass.Ranged)
 			{
 				string classLetter = GetClassLetter(Augment.Class);
 				Color classColor = GetClassColor(Augment.Class);
