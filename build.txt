@@ -1,3 +1,3 @@
-displayName = Augmented powerups
+displayName = Infusions
 author = Finsk
 version = 0.4.8

@@ -46,7 +46,7 @@ namespace Augments
 			backPanel.BorderColor = new Color(14, 20, 42);
 
 			// Title
-			UIText title = new UIText("Augments Codex", 1.05f)
+			UIText title = new UIText("Infusions Codex", 1.05f)
 			{
 				HAlign = 0.5f
 			};

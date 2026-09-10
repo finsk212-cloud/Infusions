@@ -1,5 +1,5 @@
 Keybinds: {
-	OpenAugmentList.DisplayName: Open Augment List
+	OpenAugmentList.DisplayName: Open Infusions Codex
 	DebugTriggerPopup.DisplayName: Debug Trigger Popup
 	DebugSpawnVendor.DisplayName: Debug Spawn Vendor
 	DebugToggleShop.DisplayName: Debug Toggle Shop
@@ -26,8 +26,8 @@ NPCs: {
 
 Items: {
 	AugmentEssenceItem: {
-		DisplayName: Augment Essence Item
-		Tooltip: ""
+		DisplayName: Infusion Essence
+		Tooltip: "Used to buy or re-acquire Infusions from the vendor."
 	}
 }
 

@@ -1,6 +1,6 @@
-[b]Augments[/b] is a progression-focused Terraria mod that adds permanent character upgrades earned by defeating bosses.
+[b]Infusions[/b] is a progression-focused Terraria mod that adds permanent character upgrades earned by defeating bosses.
 
-Instead of bosses only dropping items, this mod gives you a choice between several powerful augments after a boss kill. Each augment becomes a permanent part of your character for that playthrough, changing how you fight, survive, and build your character over time.
+Instead of bosses only dropping items, this mod gives you a choice between several powerful infusions after a boss kill. Each infusion becomes a permanent part of your character for that playthrough, changing how you fight, survive, and build your character over time.
 
 The goal is to make boss progression feel more exciting and replayable. Every boss kill can push your character in a new direction, letting you slowly create a build that feels different from a normal Terraria run.
 
