@@ -16,6 +16,7 @@ namespace Augments
 	{
 		public static Asset<Texture2D> MeleeIconAsset;
 		public static Asset<Texture2D> MagicIconAsset;
+		public static Asset<Texture2D> SummonIconAsset;
 
 		public readonly Augment Augment;
 		public bool IsSelected { get; set; }
@@ -142,6 +143,29 @@ namespace Augments
 					spriteBatch.Draw(flameTex, iconPos, iconColor);
 				}
 			}
+			else if (Augment.Class == AugmentClass.Summon)
+			{
+				if (SummonIconAsset == null)
+					SummonIconAsset = ModContent.Request<Texture2D>("Augments/UI/SummonerIcon", AssetRequestMode.ImmediateLoad);
+
+				if (SummonIconAsset?.IsLoaded == true)
+				{
+					Texture2D slimeTex = SummonIconAsset.Value;
+					Color iconColor = AugmentListEntry.RarityColor(Augment.Rarity);
+					if (Augment.Rarity == AugmentRarity.Common)
+						iconColor = new Color(225, 230, 240);
+
+					if (isHovered)
+						iconColor = Color.Lerp(iconColor, Color.White, 0.4f);
+
+					Vector2 iconPos = new Vector2(
+						rect.X + (rect.Width - slimeTex.Width) * 0.5f,
+						rect.Y + (rect.Height - slimeTex.Height) * 0.5f
+					);
+
+					spriteBatch.Draw(slimeTex, iconPos, iconColor);
+				}
+			}
 			else
 			{
 				string initials = GetInitials(Augment.DisplayName);
@@ -160,8 +184,8 @@ namespace Augments
 				);
 			}
 
-			// 5. Class badge in top-left corner (omit for Melee and Magic since they have custom icons)
-			if (Augment.Class != AugmentClass.Melee && Augment.Class != AugmentClass.Magic)
+			// 5. Class badge in top-left corner (omit for Melee, Magic, Summon since they have custom icons)
+			if (Augment.Class != AugmentClass.Melee && Augment.Class != AugmentClass.Magic && Augment.Class != AugmentClass.Summon)
 			{
 				string classLetter = GetClassLetter(Augment.Class);
 				Color classColor = GetClassColor(Augment.Class);
