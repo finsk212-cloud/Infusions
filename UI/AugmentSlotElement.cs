@@ -104,13 +104,13 @@ namespace Augments
 			// 2.5. Diagonal Light Gleam (Shine Sweep) across slot for Legendary tier
 			if (Augment.Rarity == AugmentRarity.Legendary)
 			{
-				float sweepPeriod = 2.6f;
-				float sweepProgress = (time * 1.1f + (rect.X + rect.Y) * 0.005f) % sweepPeriod;
-				if (sweepProgress < 0.9f)
+				float sweepPeriod = 4.0f;
+				float sweepProgress = (time * 0.6f + (rect.X + rect.Y) * 0.003f) % sweepPeriod;
+				if (sweepProgress < 1.8f)
 				{
-					float t = sweepProgress / 0.9f;
+					float t = sweepProgress / 1.8f;
 					float sweepCenter = (rect.Width + rect.Height) * t;
-					int beamWidth = 14;
+					int beamWidth = 18;
 					Color beamColor = new Color(255, 245, 215);
 
 					for (int py = 2; py < rect.Height - 2; py += 2)
@@ -197,22 +197,22 @@ namespace Augments
 				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right - 4, rect.Bottom, 6, 2), cornerGold);
 				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right, rect.Bottom - 4, 2, 6), cornerGold);
 
-				// Multi-Point Twinkling Star Sparkles along the borders
+				// Multi-Point Twinkling Star Sparkles along the borders (graceful, relaxed pace)
 				(int x, int y, float offset)[] spPoints = new (int, int, float)[]
 				{
-					(rect.Right - 1, rect.Y, 0.0f),
-					(rect.X + 1, rect.Bottom - 1, 0.75f),
-					(rect.X, rect.Y + (int)(rect.Height * 0.42f), 1.5f),
-					(rect.Right - 1, rect.Y + (int)(rect.Height * 0.68f), 2.25f),
-					(rect.X + (int)(rect.Width * 0.55f), rect.Y + 1, 1.1f)
+					(rect.Right - 1, rect.Y, 0.0f),                     // Top-right corner
+					(rect.X + 1, rect.Bottom - 1, 1.0f),               // Bottom-left corner
+					(rect.X, rect.Y + (int)(rect.Height * 0.42f), 2.0f), // Left edge
+					(rect.Right - 1, rect.Y + (int)(rect.Height * 0.68f), 3.0f), // Right edge
+					(rect.X + (int)(rect.Width * 0.55f), rect.Y + 1, 1.5f) // Top edge
 				};
 
 				foreach (var sp in spPoints)
 				{
-					float spPhase = (time * 2.8f + sp.offset + (rect.X * 0.03f)) % 3.0f;
-					if (spPhase < 0.85f)
+					float spPhase = (time * 1.0f + sp.offset + (rect.X * 0.02f)) % 4.0f;
+					if (spPhase < 1.4f)
 					{
-						float prog = spPhase / 0.85f;
+						float prog = spPhase / 1.4f;
 						float intensity = (float)Math.Sin(prog * MathHelper.Pi);
 						DrawStarSparkle(spriteBatch, sp.x, sp.y, intensity);
 					}
