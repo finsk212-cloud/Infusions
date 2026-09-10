@@ -19,6 +19,7 @@ namespace Augments
 		public static Asset<Texture2D> SummonIconAsset;
 		public static Asset<Texture2D> RangedIconAsset;
 		public static Asset<Texture2D> SupportIconAsset;
+		public static Asset<Texture2D> UniversalIconAsset;
 
 		public readonly Augment Augment;
 		public bool IsSelected { get; set; }
@@ -214,6 +215,29 @@ namespace Augments
 					spriteBatch.Draw(plusTex, iconPos, iconColor);
 				}
 			}
+			else if (Augment.Class == AugmentClass.Universal)
+			{
+				if (UniversalIconAsset == null)
+					UniversalIconAsset = ModContent.Request<Texture2D>("Augments/UI/UniversalIcon", AssetRequestMode.ImmediateLoad);
+
+				if (UniversalIconAsset?.IsLoaded == true)
+				{
+					Texture2D rhombusTex = UniversalIconAsset.Value;
+					Color iconColor = AugmentListEntry.RarityColor(Augment.Rarity);
+					if (Augment.Rarity == AugmentRarity.Common)
+						iconColor = new Color(225, 230, 240);
+
+					if (isHovered)
+						iconColor = Color.Lerp(iconColor, Color.White, 0.4f);
+
+					Vector2 iconPos = new Vector2(
+						rect.X + (rect.Width - rhombusTex.Width) * 0.5f,
+						rect.Y + (rect.Height - rhombusTex.Height) * 0.5f
+					);
+
+					spriteBatch.Draw(rhombusTex, iconPos, iconColor);
+				}
+			}
 			else
 			{
 				string initials = GetInitials(Augment.DisplayName);
@@ -232,8 +256,8 @@ namespace Augments
 				);
 			}
 
-			// 5. Class badge in top-left corner (omit for Melee, Magic, Summon, Ranged, Support since they have custom icons)
-			if (Augment.Class != AugmentClass.Melee && Augment.Class != AugmentClass.Magic && Augment.Class != AugmentClass.Summon && Augment.Class != AugmentClass.Ranged && Augment.Class != AugmentClass.Support)
+			// 5. Class badge in top-left corner (omit for Melee, Magic, Summon, Ranged, Support, Universal since they have custom icons)
+			if (Augment.Class != AugmentClass.Melee && Augment.Class != AugmentClass.Magic && Augment.Class != AugmentClass.Summon && Augment.Class != AugmentClass.Ranged && Augment.Class != AugmentClass.Support && Augment.Class != AugmentClass.Universal)
 			{
 				string classLetter = GetClassLetter(Augment.Class);
 				Color classColor = GetClassColor(Augment.Class);

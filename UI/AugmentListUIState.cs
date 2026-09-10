@@ -467,6 +467,32 @@ namespace Augments
 						y += ChatManager.GetStringSize(font, currentAugment.DisplayName, new Vector2(0.95f)).Y + 3f;
 					}
 				}
+				else if (currentAugment.Class == AugmentClass.Universal)
+				{
+					if (AugmentSlotElement.UniversalIconAsset == null)
+						AugmentSlotElement.UniversalIconAsset = ModContent.Request<Texture2D>("Augments/UI/UniversalIcon", ReLogic.Content.AssetRequestMode.ImmediateLoad);
+
+					if (AugmentSlotElement.UniversalIconAsset?.IsLoaded == true)
+					{
+						Texture2D rhombus = AugmentSlotElement.UniversalIconAsset.Value;
+						Color iconColor = AugmentListEntry.RarityColor(currentAugment.Rarity);
+						if (currentAugment.Rarity == AugmentRarity.Common)
+							iconColor = new Color(225, 230, 240);
+
+						spriteBatch.Draw(rhombus, new Vector2(x, y - 2f), iconColor);
+						ChatManager.DrawColorCodedStringWithShadow(
+							spriteBatch, font, currentAugment.DisplayName, new Vector2(x + rhombus.Width + 8f, y + 2f), nameColor, 0f, Vector2.Zero, new Vector2(0.95f)
+						);
+						y += Math.Max(rhombus.Height, ChatManager.GetStringSize(font, currentAugment.DisplayName, new Vector2(0.95f)).Y) + 4f;
+					}
+					else
+					{
+						ChatManager.DrawColorCodedStringWithShadow(
+							spriteBatch, font, currentAugment.DisplayName, new Vector2(x, y), nameColor, 0f, Vector2.Zero, new Vector2(0.95f)
+						);
+						y += ChatManager.GetStringSize(font, currentAugment.DisplayName, new Vector2(0.95f)).Y + 3f;
+					}
+				}
 				else
 				{
 					ChatManager.DrawColorCodedStringWithShadow(
