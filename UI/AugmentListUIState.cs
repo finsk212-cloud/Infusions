@@ -516,31 +516,39 @@ namespace Augments
 						float sx = x + s * starSpacing;
 						Vector2 starPos = new Vector2(sx, y);
 
-						// Glowing halo behind stars
-						Color starGlow = starColor * 0.25f;
+						Color drawColor = starColor;
+
 						if (currentAugment.Rarity == AugmentRarity.Epic)
 						{
 							float sPulse = (float)Math.Sin(time * 3f + s * 0.4f) * 0.5f + 0.5f;
-							starGlow = new Color(190, 130, 255) * (0.25f + sPulse * 0.35f);
-							spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle((int)sx - 2, (int)y - 2, starTex.Width + 4, starTex.Height + 4), starGlow * 0.45f);
+							drawColor = Color.Lerp(starColor, new Color(255, 215, 255), sPulse * 0.4f);
+
+							// Subtle star-shaped halo using the star texture itself (no square boxes)
+							Color halo = new Color(190, 130, 255) * (0.20f + sPulse * 0.25f);
+							spriteBatch.Draw(starTex, starPos + new Vector2(-1f, 0f), halo);
+							spriteBatch.Draw(starTex, starPos + new Vector2(1f, 0f), halo);
+							spriteBatch.Draw(starTex, starPos + new Vector2(0f, -1f), halo);
+							spriteBatch.Draw(starTex, starPos + new Vector2(0f, 1f), halo);
 						}
 						else if (currentAugment.Rarity == AugmentRarity.Legendary)
 						{
 							float sPulse = (float)Math.Sin(time * 4f + s * 0.5f) * 0.5f + 0.5f;
-							starGlow = new Color(255, 180, 40) * (0.30f + sPulse * 0.45f);
-							spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle((int)sx - 3, (int)y - 3, starTex.Width + 6, starTex.Height + 6), starGlow * 0.50f);
+							drawColor = Color.Lerp(starColor, new Color(255, 255, 220), sPulse * 0.45f);
+
+							// Subtle star-shaped halo using the star texture itself (no square boxes)
+							Color halo = new Color(255, 180, 40) * (0.25f + sPulse * 0.30f);
+							spriteBatch.Draw(starTex, starPos + new Vector2(-1f, 0f), halo);
+							spriteBatch.Draw(starTex, starPos + new Vector2(1f, 0f), halo);
+							spriteBatch.Draw(starTex, starPos + new Vector2(0f, -1f), halo);
+							spriteBatch.Draw(starTex, starPos + new Vector2(0f, 1f), halo);
 
 							if (sPulse > 0.88f)
 							{
 								AugmentSlotElement.DrawStarSparkle(spriteBatch, (int)(sx + starTex.Width * 0.5f), (int)(y + starTex.Height * 0.5f), (sPulse - 0.88f) / 0.12f);
 							}
 						}
-						else
-						{
-							spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle((int)sx - 1, (int)y - 1, starTex.Width + 2, starTex.Height + 2), starGlow);
-						}
 
-						spriteBatch.Draw(starTex, starPos, starColor);
+						spriteBatch.Draw(starTex, starPos, drawColor);
 					}
 
 					float classX = x + starCount * starSpacing + 6f;
