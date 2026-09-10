@@ -27,7 +27,7 @@ NPCs: {
 Items: {
 	AugmentEssenceItem: {
 		DisplayName: Infusion Essence
-		Tooltip: "Used to buy or re-acquire Infusions from the vendor."
+		Tooltip: Used to buy or re-acquire Infusions from the vendor.
 	}
 }
 

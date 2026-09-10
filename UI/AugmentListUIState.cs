@@ -335,12 +335,41 @@ namespace Augments
 				float y = dims.Y + 10f;
 				float maxTextWidth = dims.Width - 20f;
 
-				// 1. Augment Display Name
+				// 1. Augment Display Name & Icon
 				Color nameColor = AugmentListEntry.RarityColor(currentAugment.Rarity);
-				ChatManager.DrawColorCodedStringWithShadow(
-					spriteBatch, font, currentAugment.DisplayName, new Vector2(x, y), nameColor, 0f, Vector2.Zero, new Vector2(0.95f)
-				);
-				y += ChatManager.GetStringSize(font, currentAugment.DisplayName, new Vector2(0.95f)).Y + 3f;
+				if (currentAugment.Class == AugmentClass.Melee)
+				{
+					if (AugmentSlotElement.MeleeIconAsset == null)
+						AugmentSlotElement.MeleeIconAsset = ModContent.Request<Texture2D>("Augments/UI/MeleeIcon", ReLogic.Content.AssetRequestMode.ImmediateLoad);
+
+					if (AugmentSlotElement.MeleeIconAsset?.IsLoaded == true)
+					{
+						Texture2D sword = AugmentSlotElement.MeleeIconAsset.Value;
+						Color iconColor = AugmentListEntry.RarityColor(currentAugment.Rarity);
+						if (currentAugment.Rarity == AugmentRarity.Common)
+							iconColor = new Color(225, 230, 240);
+
+						spriteBatch.Draw(sword, new Vector2(x, y - 2f), iconColor);
+						ChatManager.DrawColorCodedStringWithShadow(
+							spriteBatch, font, currentAugment.DisplayName, new Vector2(x + sword.Width + 8f, y + 2f), nameColor, 0f, Vector2.Zero, new Vector2(0.95f)
+						);
+						y += Math.Max(sword.Height, ChatManager.GetStringSize(font, currentAugment.DisplayName, new Vector2(0.95f)).Y) + 4f;
+					}
+					else
+					{
+						ChatManager.DrawColorCodedStringWithShadow(
+							spriteBatch, font, currentAugment.DisplayName, new Vector2(x, y), nameColor, 0f, Vector2.Zero, new Vector2(0.95f)
+						);
+						y += ChatManager.GetStringSize(font, currentAugment.DisplayName, new Vector2(0.95f)).Y + 3f;
+					}
+				}
+				else
+				{
+					ChatManager.DrawColorCodedStringWithShadow(
+						spriteBatch, font, currentAugment.DisplayName, new Vector2(x, y), nameColor, 0f, Vector2.Zero, new Vector2(0.95f)
+					);
+					y += ChatManager.GetStringSize(font, currentAugment.DisplayName, new Vector2(0.95f)).Y + 3f;
+				}
 
 				// 2. Rarity Tier & Class
 				string tierClassText = $"[{currentAugment.Rarity} Tier]  {currentAugment.Class}";

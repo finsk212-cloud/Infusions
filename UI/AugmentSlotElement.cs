@@ -1,10 +1,12 @@
 using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using ReLogic.Content;
 using Terraria;
 using Terraria.Audio;
 using Terraria.GameContent;
 using Terraria.ID;
+using Terraria.ModLoader;
 using Terraria.UI;
 using Terraria.UI.Chat;
 
@@ -12,6 +14,8 @@ namespace Augments
 {
 	public class AugmentSlotElement : UIElement
 	{
+		public static Asset<Texture2D> MeleeIconAsset;
+
 		public readonly Augment Augment;
 		public bool IsSelected { get; set; }
 		public bool IsOwned { get; set; }
@@ -88,30 +92,60 @@ namespace Augments
 			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X, rect.Y, borderWidth, rect.Height), borderColor);
 			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right - borderWidth, rect.Y, borderWidth, rect.Height), borderColor);
 
-			// 4. Augment Name Initials (Centered)
-			string initials = GetInitials(Augment.DisplayName);
 			var font = FontAssets.MouseText.Value;
-			Vector2 textSize = ChatManager.GetStringSize(font, initials, new Vector2(0.85f));
-			Vector2 textPos = new Vector2(
-				rect.X + (rect.Width - textSize.X) * 0.5f,
-				rect.Y + (rect.Height - textSize.Y) * 0.5f
-			);
 
-			Color nameColor = AugmentListEntry.RarityColor(Augment.Rarity);
-			if (isHovered)
-				nameColor = Color.White;
+			// 4. Center Content: Sword icon for Melee, Initials for other classes
+			if (Augment.Class == AugmentClass.Melee)
+			{
+				if (MeleeIconAsset == null)
+					MeleeIconAsset = ModContent.Request<Texture2D>("Augments/UI/MeleeIcon", AssetRequestMode.ImmediateLoad);
 
-			ChatManager.DrawColorCodedStringWithShadow(
-				spriteBatch, font, initials, textPos, nameColor, 0f, Vector2.Zero, new Vector2(0.85f)
-			);
+				if (MeleeIconAsset?.IsLoaded == true)
+				{
+					Texture2D swordTex = MeleeIconAsset.Value;
+					Color iconColor = AugmentListEntry.RarityColor(Augment.Rarity);
+					if (Augment.Rarity == AugmentRarity.Common)
+						iconColor = new Color(225, 230, 240); // Clean silver-white for Common tier
 
-			// 5. Class badge in top-left corner
-			string classLetter = GetClassLetter(Augment.Class);
-			Color classColor = GetClassColor(Augment.Class);
-			Vector2 classPos = new Vector2(rect.X + 4f, rect.Y + 3f);
-			ChatManager.DrawColorCodedStringWithShadow(
-				spriteBatch, font, classLetter, classPos, classColor, 0f, Vector2.Zero, new Vector2(0.65f)
-			);
+					if (isHovered)
+						iconColor = Color.Lerp(iconColor, Color.White, 0.4f);
+
+					Vector2 iconPos = new Vector2(
+						rect.X + (rect.Width - swordTex.Width) * 0.5f,
+						rect.Y + (rect.Height - swordTex.Height) * 0.5f
+					);
+
+					spriteBatch.Draw(swordTex, iconPos, iconColor);
+				}
+			}
+			else
+			{
+				string initials = GetInitials(Augment.DisplayName);
+				Vector2 textSize = ChatManager.GetStringSize(font, initials, new Vector2(0.85f));
+				Vector2 textPos = new Vector2(
+					rect.X + (rect.Width - textSize.X) * 0.5f,
+					rect.Y + (rect.Height - textSize.Y) * 0.5f
+				);
+
+				Color nameColor = AugmentListEntry.RarityColor(Augment.Rarity);
+				if (isHovered)
+					nameColor = Color.White;
+
+				ChatManager.DrawColorCodedStringWithShadow(
+					spriteBatch, font, initials, textPos, nameColor, 0f, Vector2.Zero, new Vector2(0.85f)
+				);
+			}
+
+			// 5. Class badge in top-left corner (omit for melee since it has the sword icon)
+			if (Augment.Class != AugmentClass.Melee)
+			{
+				string classLetter = GetClassLetter(Augment.Class);
+				Color classColor = GetClassColor(Augment.Class);
+				Vector2 classPos = new Vector2(rect.X + 4f, rect.Y + 3f);
+				ChatManager.DrawColorCodedStringWithShadow(
+					spriteBatch, font, classLetter, classPos, classColor, 0f, Vector2.Zero, new Vector2(0.65f)
+				);
+			}
 
 			// 6. Owned Indicator in bottom-right corner
 			if (IsOwned)
