@@ -10,6 +10,7 @@ using Terraria.ID;
 using Terraria.ModLoader;
 using Terraria.UI;
 using Terraria.UI.Chat;
+using ReLogic.Content;
 
 namespace Augments
 {
@@ -18,6 +19,8 @@ namespace Augments
 	// with an interactive inspector panel on the right showing full detailed info when clicked.
 	public class AugmentListUIState : UIState
 	{
+		public static Asset<Texture2D> RarityStarAsset;
+
 		private UIPanel backPanel;
 		private UIList gridList;
 		private UIScrollbar gridScrollbar;
@@ -28,8 +31,8 @@ namespace Augments
 		private Augment selectedAugment;
 		private readonly List<CodexTabButton> tabButtons = new List<CodexTabButton>();
 
-		private const float PanelWidth = 840f;
-		private const float PanelHeight = 550f;
+		private const float PanelWidth = 880f;
+		private const float PanelHeight = 560f;
 		private const int SlotsPerRow = 6;
 		private const float SlotWidth = 74f;
 		private const float SlotHeight = 84f;
@@ -80,24 +83,24 @@ namespace Augments
 			gridScrollbar = new UIScrollbar();
 			gridScrollbar.Top.Set(74f, 0f);
 			gridScrollbar.Height.Set(-86f, 1f);
-			gridScrollbar.Left.Set(530f, 0f);
+			gridScrollbar.Left.Set(534f, 0f);
 			gridList.SetScrollbar(gridScrollbar);
 			backPanel.Append(gridScrollbar);
 
 			// Right: Detailed Info Inspector Panel
 			detailPanel = new AugmentDetailPanel();
 			detailPanel.Top.Set(74f, 0f);
-			detailPanel.Left.Set(556f, 0f);
-			detailPanel.Width.Set(270f, 0f);
-			detailPanel.Height.Set(-122f, 1f);
+			detailPanel.Left.Set(568f, 0f);
+			detailPanel.Width.Set(288f, 0f);
+			detailPanel.Height.Set(-124f, 1f);
 			backPanel.Append(detailPanel);
 
 			// Bottom-Right: Support Class Tag
 			supportTag = new SupportClassTagElement();
-			supportTag.Left.Set(556f, 0f);
-			supportTag.Width.Set(270f, 0f);
+			supportTag.Left.Set(568f, 0f);
+			supportTag.Width.Set(288f, 0f);
 			supportTag.Height.Set(30f, 0f);
-			supportTag.Top.Set(506f, 0f);
+			supportTag.Top.Set(516f, 0f);
 			backPanel.Append(supportTag);
 
 			Append(backPanel);
@@ -486,12 +489,75 @@ namespace Augments
 					y += ChatManager.GetStringSize(font, currentAugment.DisplayName, new Vector2(0.95f)).Y + 3f;
 				}
 
-				// 2. Rarity Tier & Class
-				string tierClassText = $"[{currentAugment.Rarity} Tier]  {currentAugment.Class}";
-				ChatManager.DrawColorCodedStringWithShadow(
-					spriteBatch, font, tierClassText, new Vector2(x, y), Color.LightGray, 0f, Vector2.Zero, new Vector2(0.78f)
-				);
-				y += ChatManager.GetStringSize(font, tierClassText, new Vector2(0.78f)).Y + 4f;
+				// 2. Rarity Tier Stars & Class Name
+				int starCount = currentAugment.Rarity switch
+				{
+					AugmentRarity.Common => 1,
+					AugmentRarity.Rare => 2,
+					AugmentRarity.Epic => 3,
+					AugmentRarity.Legendary => 4,
+					_ => 1
+				};
+
+				Color starColor = AugmentListEntry.RarityColor(currentAugment.Rarity);
+				if (currentAugment.Rarity == AugmentRarity.Common)
+					starColor = new Color(225, 230, 240);
+
+				if (RarityStarAsset == null)
+					RarityStarAsset = ModContent.Request<Texture2D>("Augments/UI/RarityStar", ReLogic.Content.AssetRequestMode.ImmediateLoad);
+
+				if (RarityStarAsset?.IsLoaded == true)
+				{
+					Texture2D starTex = RarityStarAsset.Value;
+					float starSpacing = 17f;
+
+					for (int s = 0; s < starCount; s++)
+					{
+						float sx = x + s * starSpacing;
+						Vector2 starPos = new Vector2(sx, y);
+
+						// Glowing halo behind stars
+						Color starGlow = starColor * 0.25f;
+						if (currentAugment.Rarity == AugmentRarity.Epic)
+						{
+							float sPulse = (float)Math.Sin(time * 3f + s * 0.4f) * 0.5f + 0.5f;
+							starGlow = new Color(190, 130, 255) * (0.25f + sPulse * 0.35f);
+							spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle((int)sx - 2, (int)y - 2, starTex.Width + 4, starTex.Height + 4), starGlow * 0.45f);
+						}
+						else if (currentAugment.Rarity == AugmentRarity.Legendary)
+						{
+							float sPulse = (float)Math.Sin(time * 4f + s * 0.5f) * 0.5f + 0.5f;
+							starGlow = new Color(255, 180, 40) * (0.30f + sPulse * 0.45f);
+							spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle((int)sx - 3, (int)y - 3, starTex.Width + 6, starTex.Height + 6), starGlow * 0.50f);
+
+							if (sPulse > 0.88f)
+							{
+								AugmentSlotElement.DrawStarSparkle(spriteBatch, (int)(sx + starTex.Width * 0.5f), (int)(y + starTex.Height * 0.5f), (sPulse - 0.88f) / 0.12f);
+							}
+						}
+						else
+						{
+							spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle((int)sx - 1, (int)y - 1, starTex.Width + 2, starTex.Height + 2), starGlow);
+						}
+
+						spriteBatch.Draw(starTex, starPos, starColor);
+					}
+
+					float classX = x + starCount * starSpacing + 6f;
+					Color classColor = new Color(200, 210, 230);
+					ChatManager.DrawColorCodedStringWithShadow(
+						spriteBatch, font, currentAugment.Class.ToString(), new Vector2(classX, y - 1f), classColor, 0f, Vector2.Zero, new Vector2(0.82f)
+					);
+					y += Math.Max(starTex.Height, ChatManager.GetStringSize(font, currentAugment.Class.ToString(), new Vector2(0.82f)).Y) + 6f;
+				}
+				else
+				{
+					string tierClassText = $"[{currentAugment.Rarity} Tier]  {currentAugment.Class}";
+					ChatManager.DrawColorCodedStringWithShadow(
+						spriteBatch, font, tierClassText, new Vector2(x, y), Color.LightGray, 0f, Vector2.Zero, new Vector2(0.78f)
+					);
+					y += ChatManager.GetStringSize(font, tierClassText, new Vector2(0.78f)).Y + 4f;
+				}
 
 				// 3. Ownership Status
 				string statusText = currentIsOwned ? "[ Equipped ]" : "[ Not Equipped ]";
