@@ -31,8 +31,9 @@ namespace Augments
 		private const float PanelWidth = 840f;
 		private const float PanelHeight = 550f;
 		private const int SlotsPerRow = 6;
-		private const float SlotSize = 72f;
-		private const float SlotSpacing = 11f;
+		private const float SlotWidth = 74f;
+		private const float SlotHeight = 84f;
+		private const float SlotSpacing = 10f;
 
 		public override void OnInitialize()
 		{
@@ -159,6 +160,7 @@ namespace Augments
 		private void PopulateGrid()
 		{
 			gridList.Clear();
+			AugmentListEntry.HoveredAugment = null;
 
 			var ap = Main.LocalPlayer.GetModPlayer<AugmentPlayer>();
 			var all = AugmentDatabase.All;
@@ -212,7 +214,7 @@ namespace Augments
 				{
 					currentRow = new UIElement();
 					currentRow.Width.Set(0f, 1f);
-					currentRow.Height.Set(SlotSize + 4f, 0f);
+					currentRow.Height.Set(SlotHeight + 5f, 0f);
 					gridList.Add(currentRow);
 				}
 
@@ -222,7 +224,7 @@ namespace Augments
 					IsSelected = (selectedAugment != null && selectedAugment.Id == aug.Id),
 					IsOwned = ap.HasAugment(aug.Id)
 				};
-				slot.Left.Set(slotIndexInRow * (SlotSize + SlotSpacing), 0f);
+				slot.Left.Set(slotIndexInRow * (SlotWidth + SlotSpacing), 0f);
 				slot.Top.Set(0f, 0f);
 				slot.Clicked += SelectAugment;
 
@@ -337,161 +339,18 @@ namespace Augments
 
 				// 1. Augment Display Name & Icon
 				Color nameColor = AugmentListEntry.RarityColor(currentAugment.Rarity);
-				if (currentAugment.Class == AugmentClass.Melee)
+				Texture2D classIcon = AugmentSlotElement.GetClassIcon(currentAugment.Class);
+				if (classIcon != null)
 				{
-					if (AugmentSlotElement.MeleeIconAsset == null)
-						AugmentSlotElement.MeleeIconAsset = ModContent.Request<Texture2D>("Augments/UI/MeleeIcon", ReLogic.Content.AssetRequestMode.ImmediateLoad);
+					Color iconColor = AugmentListEntry.RarityColor(currentAugment.Rarity);
+					if (currentAugment.Rarity == AugmentRarity.Common)
+						iconColor = new Color(225, 230, 240);
 
-					if (AugmentSlotElement.MeleeIconAsset?.IsLoaded == true)
-					{
-						Texture2D sword = AugmentSlotElement.MeleeIconAsset.Value;
-						Color iconColor = AugmentListEntry.RarityColor(currentAugment.Rarity);
-						if (currentAugment.Rarity == AugmentRarity.Common)
-							iconColor = new Color(225, 230, 240);
-
-						spriteBatch.Draw(sword, new Vector2(x, y - 2f), iconColor);
-						ChatManager.DrawColorCodedStringWithShadow(
-							spriteBatch, font, currentAugment.DisplayName, new Vector2(x + sword.Width + 8f, y + 2f), nameColor, 0f, Vector2.Zero, new Vector2(0.95f)
-						);
-						y += Math.Max(sword.Height, ChatManager.GetStringSize(font, currentAugment.DisplayName, new Vector2(0.95f)).Y) + 4f;
-					}
-					else
-					{
-						ChatManager.DrawColorCodedStringWithShadow(
-							spriteBatch, font, currentAugment.DisplayName, new Vector2(x, y), nameColor, 0f, Vector2.Zero, new Vector2(0.95f)
-						);
-						y += ChatManager.GetStringSize(font, currentAugment.DisplayName, new Vector2(0.95f)).Y + 3f;
-					}
-				}
-				else if (currentAugment.Class == AugmentClass.Magic)
-				{
-					if (AugmentSlotElement.MagicIconAsset == null)
-						AugmentSlotElement.MagicIconAsset = ModContent.Request<Texture2D>("Augments/UI/MagicIcon", ReLogic.Content.AssetRequestMode.ImmediateLoad);
-
-					if (AugmentSlotElement.MagicIconAsset?.IsLoaded == true)
-					{
-						Texture2D flame = AugmentSlotElement.MagicIconAsset.Value;
-						Color iconColor = AugmentListEntry.RarityColor(currentAugment.Rarity);
-						if (currentAugment.Rarity == AugmentRarity.Common)
-							iconColor = new Color(225, 230, 240);
-
-						spriteBatch.Draw(flame, new Vector2(x, y - 2f), iconColor);
-						ChatManager.DrawColorCodedStringWithShadow(
-							spriteBatch, font, currentAugment.DisplayName, new Vector2(x + flame.Width + 8f, y + 2f), nameColor, 0f, Vector2.Zero, new Vector2(0.95f)
-						);
-						y += Math.Max(flame.Height, ChatManager.GetStringSize(font, currentAugment.DisplayName, new Vector2(0.95f)).Y) + 4f;
-					}
-					else
-					{
-						ChatManager.DrawColorCodedStringWithShadow(
-							spriteBatch, font, currentAugment.DisplayName, new Vector2(x, y), nameColor, 0f, Vector2.Zero, new Vector2(0.95f)
-						);
-						y += ChatManager.GetStringSize(font, currentAugment.DisplayName, new Vector2(0.95f)).Y + 3f;
-					}
-				}
-				else if (currentAugment.Class == AugmentClass.Summon)
-				{
-					if (AugmentSlotElement.SummonIconAsset == null)
-						AugmentSlotElement.SummonIconAsset = ModContent.Request<Texture2D>("Augments/UI/SummonerIcon", ReLogic.Content.AssetRequestMode.ImmediateLoad);
-
-					if (AugmentSlotElement.SummonIconAsset?.IsLoaded == true)
-					{
-						Texture2D slime = AugmentSlotElement.SummonIconAsset.Value;
-						Color iconColor = AugmentListEntry.RarityColor(currentAugment.Rarity);
-						if (currentAugment.Rarity == AugmentRarity.Common)
-							iconColor = new Color(225, 230, 240);
-
-						spriteBatch.Draw(slime, new Vector2(x, y - 2f), iconColor);
-						ChatManager.DrawColorCodedStringWithShadow(
-							spriteBatch, font, currentAugment.DisplayName, new Vector2(x + slime.Width + 8f, y + 2f), nameColor, 0f, Vector2.Zero, new Vector2(0.95f)
-						);
-						y += Math.Max(slime.Height, ChatManager.GetStringSize(font, currentAugment.DisplayName, new Vector2(0.95f)).Y) + 4f;
-					}
-					else
-					{
-						ChatManager.DrawColorCodedStringWithShadow(
-							spriteBatch, font, currentAugment.DisplayName, new Vector2(x, y), nameColor, 0f, Vector2.Zero, new Vector2(0.95f)
-						);
-						y += ChatManager.GetStringSize(font, currentAugment.DisplayName, new Vector2(0.95f)).Y + 3f;
-					}
-				}
-				else if (currentAugment.Class == AugmentClass.Ranged)
-				{
-					if (AugmentSlotElement.RangedIconAsset == null)
-						AugmentSlotElement.RangedIconAsset = ModContent.Request<Texture2D>("Augments/UI/RangedIcon", ReLogic.Content.AssetRequestMode.ImmediateLoad);
-
-					if (AugmentSlotElement.RangedIconAsset?.IsLoaded == true)
-					{
-						Texture2D crosshair = AugmentSlotElement.RangedIconAsset.Value;
-						Color iconColor = AugmentListEntry.RarityColor(currentAugment.Rarity);
-						if (currentAugment.Rarity == AugmentRarity.Common)
-							iconColor = new Color(225, 230, 240);
-
-						spriteBatch.Draw(crosshair, new Vector2(x, y - 2f), iconColor);
-						ChatManager.DrawColorCodedStringWithShadow(
-							spriteBatch, font, currentAugment.DisplayName, new Vector2(x + crosshair.Width + 8f, y + 2f), nameColor, 0f, Vector2.Zero, new Vector2(0.95f)
-						);
-						y += Math.Max(crosshair.Height, ChatManager.GetStringSize(font, currentAugment.DisplayName, new Vector2(0.95f)).Y) + 4f;
-					}
-					else
-					{
-						ChatManager.DrawColorCodedStringWithShadow(
-							spriteBatch, font, currentAugment.DisplayName, new Vector2(x, y), nameColor, 0f, Vector2.Zero, new Vector2(0.95f)
-						);
-						y += ChatManager.GetStringSize(font, currentAugment.DisplayName, new Vector2(0.95f)).Y + 3f;
-					}
-				}
-				else if (currentAugment.Class == AugmentClass.Support)
-				{
-					if (AugmentSlotElement.SupportIconAsset == null)
-						AugmentSlotElement.SupportIconAsset = ModContent.Request<Texture2D>("Augments/UI/SupportIcon", ReLogic.Content.AssetRequestMode.ImmediateLoad);
-
-					if (AugmentSlotElement.SupportIconAsset?.IsLoaded == true)
-					{
-						Texture2D plus = AugmentSlotElement.SupportIconAsset.Value;
-						Color iconColor = AugmentListEntry.RarityColor(currentAugment.Rarity);
-						if (currentAugment.Rarity == AugmentRarity.Common)
-							iconColor = new Color(225, 230, 240);
-
-						spriteBatch.Draw(plus, new Vector2(x, y - 2f), iconColor);
-						ChatManager.DrawColorCodedStringWithShadow(
-							spriteBatch, font, currentAugment.DisplayName, new Vector2(x + plus.Width + 8f, y + 2f), nameColor, 0f, Vector2.Zero, new Vector2(0.95f)
-						);
-						y += Math.Max(plus.Height, ChatManager.GetStringSize(font, currentAugment.DisplayName, new Vector2(0.95f)).Y) + 4f;
-					}
-					else
-					{
-						ChatManager.DrawColorCodedStringWithShadow(
-							spriteBatch, font, currentAugment.DisplayName, new Vector2(x, y), nameColor, 0f, Vector2.Zero, new Vector2(0.95f)
-						);
-						y += ChatManager.GetStringSize(font, currentAugment.DisplayName, new Vector2(0.95f)).Y + 3f;
-					}
-				}
-				else if (currentAugment.Class == AugmentClass.Universal)
-				{
-					if (AugmentSlotElement.UniversalIconAsset == null)
-						AugmentSlotElement.UniversalIconAsset = ModContent.Request<Texture2D>("Augments/UI/UniversalIcon", ReLogic.Content.AssetRequestMode.ImmediateLoad);
-
-					if (AugmentSlotElement.UniversalIconAsset?.IsLoaded == true)
-					{
-						Texture2D rhombus = AugmentSlotElement.UniversalIconAsset.Value;
-						Color iconColor = AugmentListEntry.RarityColor(currentAugment.Rarity);
-						if (currentAugment.Rarity == AugmentRarity.Common)
-							iconColor = new Color(225, 230, 240);
-
-						spriteBatch.Draw(rhombus, new Vector2(x, y - 2f), iconColor);
-						ChatManager.DrawColorCodedStringWithShadow(
-							spriteBatch, font, currentAugment.DisplayName, new Vector2(x + rhombus.Width + 8f, y + 2f), nameColor, 0f, Vector2.Zero, new Vector2(0.95f)
-						);
-						y += Math.Max(rhombus.Height, ChatManager.GetStringSize(font, currentAugment.DisplayName, new Vector2(0.95f)).Y) + 4f;
-					}
-					else
-					{
-						ChatManager.DrawColorCodedStringWithShadow(
-							spriteBatch, font, currentAugment.DisplayName, new Vector2(x, y), nameColor, 0f, Vector2.Zero, new Vector2(0.95f)
-						);
-						y += ChatManager.GetStringSize(font, currentAugment.DisplayName, new Vector2(0.95f)).Y + 3f;
-					}
+					spriteBatch.Draw(classIcon, new Vector2(x, y - 2f), iconColor);
+					ChatManager.DrawColorCodedStringWithShadow(
+						spriteBatch, font, currentAugment.DisplayName, new Vector2(x + classIcon.Width + 8f, y + 2f), nameColor, 0f, Vector2.Zero, new Vector2(0.95f)
+					);
+					y += Math.Max(classIcon.Height, ChatManager.GetStringSize(font, currentAugment.DisplayName, new Vector2(0.95f)).Y) + 4f;
 				}
 				else
 				{
