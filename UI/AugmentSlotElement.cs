@@ -15,6 +15,7 @@ namespace Augments
 	public class AugmentSlotElement : UIElement
 	{
 		public static Asset<Texture2D> MeleeIconAsset;
+		public static Asset<Texture2D> MagicIconAsset;
 
 		public readonly Augment Augment;
 		public bool IsSelected { get; set; }
@@ -94,7 +95,7 @@ namespace Augments
 
 			var font = FontAssets.MouseText.Value;
 
-			// 4. Center Content: Sword icon for Melee, Initials for other classes
+			// 4. Center Content: Sword for Melee, Angled Flame for Magic, Initials for others
 			if (Augment.Class == AugmentClass.Melee)
 			{
 				if (MeleeIconAsset == null)
@@ -118,6 +119,29 @@ namespace Augments
 					spriteBatch.Draw(swordTex, iconPos, iconColor);
 				}
 			}
+			else if (Augment.Class == AugmentClass.Magic)
+			{
+				if (MagicIconAsset == null)
+					MagicIconAsset = ModContent.Request<Texture2D>("Augments/UI/MagicIcon", AssetRequestMode.ImmediateLoad);
+
+				if (MagicIconAsset?.IsLoaded == true)
+				{
+					Texture2D flameTex = MagicIconAsset.Value;
+					Color iconColor = AugmentListEntry.RarityColor(Augment.Rarity);
+					if (Augment.Rarity == AugmentRarity.Common)
+						iconColor = new Color(225, 230, 240);
+
+					if (isHovered)
+						iconColor = Color.Lerp(iconColor, Color.White, 0.4f);
+
+					Vector2 iconPos = new Vector2(
+						rect.X + (rect.Width - flameTex.Width) * 0.5f,
+						rect.Y + (rect.Height - flameTex.Height) * 0.5f
+					);
+
+					spriteBatch.Draw(flameTex, iconPos, iconColor);
+				}
+			}
 			else
 			{
 				string initials = GetInitials(Augment.DisplayName);
@@ -136,8 +160,8 @@ namespace Augments
 				);
 			}
 
-			// 5. Class badge in top-left corner (omit for melee since it has the sword icon)
-			if (Augment.Class != AugmentClass.Melee)
+			// 5. Class badge in top-left corner (omit for Melee and Magic since they have custom icons)
+			if (Augment.Class != AugmentClass.Melee && Augment.Class != AugmentClass.Magic)
 			{
 				string classLetter = GetClassLetter(Augment.Class);
 				Color classColor = GetClassColor(Augment.Class);

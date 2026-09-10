@@ -363,6 +363,32 @@ namespace Augments
 						y += ChatManager.GetStringSize(font, currentAugment.DisplayName, new Vector2(0.95f)).Y + 3f;
 					}
 				}
+				else if (currentAugment.Class == AugmentClass.Magic)
+				{
+					if (AugmentSlotElement.MagicIconAsset == null)
+						AugmentSlotElement.MagicIconAsset = ModContent.Request<Texture2D>("Augments/UI/MagicIcon", ReLogic.Content.AssetRequestMode.ImmediateLoad);
+
+					if (AugmentSlotElement.MagicIconAsset?.IsLoaded == true)
+					{
+						Texture2D flame = AugmentSlotElement.MagicIconAsset.Value;
+						Color iconColor = AugmentListEntry.RarityColor(currentAugment.Rarity);
+						if (currentAugment.Rarity == AugmentRarity.Common)
+							iconColor = new Color(225, 230, 240);
+
+						spriteBatch.Draw(flame, new Vector2(x, y - 2f), iconColor);
+						ChatManager.DrawColorCodedStringWithShadow(
+							spriteBatch, font, currentAugment.DisplayName, new Vector2(x + flame.Width + 8f, y + 2f), nameColor, 0f, Vector2.Zero, new Vector2(0.95f)
+						);
+						y += Math.Max(flame.Height, ChatManager.GetStringSize(font, currentAugment.DisplayName, new Vector2(0.95f)).Y) + 4f;
+					}
+					else
+					{
+						ChatManager.DrawColorCodedStringWithShadow(
+							spriteBatch, font, currentAugment.DisplayName, new Vector2(x, y), nameColor, 0f, Vector2.Zero, new Vector2(0.95f)
+						);
+						y += ChatManager.GetStringSize(font, currentAugment.DisplayName, new Vector2(0.95f)).Y + 3f;
+					}
+				}
 				else
 				{
 					ChatManager.DrawColorCodedStringWithShadow(
