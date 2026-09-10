@@ -382,7 +382,7 @@ namespace Augments
 			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, botStr, botPos, color, 0f, Vector2.Zero, lineScale);
 		}
 
-		private static void DrawStarSparkle(SpriteBatch spriteBatch, int cx, int cy, float intensity)
+		public static void DrawStarSparkle(SpriteBatch spriteBatch, int cx, int cy, float intensity)
 		{
 			if (intensity <= 0.05f) return;
 
