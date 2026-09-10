@@ -53,10 +53,6 @@ namespace Augments
             var ap = player.GetModPlayer<AugmentPlayer>();
             int roll = Main.rand.Next(4);
 
-            // DIAGNOSTIC - temporary
-            string[] names = { "Heal", "Speed", "Invuln", "Bonus Strike" };
-            Main.NewText($"[WildCard] Crit triggered outcome: {names[roll]}", 255, 165, 0);
-
             switch (roll)
             {
                 case 0:

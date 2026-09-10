@@ -19,13 +19,20 @@ namespace Augments
         public override void OnHitNPCWithItem(Player player, Item item, NPC target, NPC.HitInfo hit)
         {
             if (hit.Crit && item.DamageType == DamageClass.Magic)
-                target.AddBuff(BuffID.Frostburn, FrostburnDurationTicks);
+                ApplyFrostburn(target);
         }
 
         public override void OnHitNPCWithProj(Player player, Projectile proj, NPC target, NPC.HitInfo hit)
         {
             if (hit.Crit && proj.DamageType == DamageClass.Magic)
-                target.AddBuff(BuffID.Frostburn, FrostburnDurationTicks);
+                ApplyFrostburn(target);
+        }
+
+        private static void ApplyFrostburn(NPC target)
+        {
+            target.AddBuff(BuffID.Frostburn, FrostburnDurationTicks);
+            if (Main.netMode != NetmodeID.SinglePlayer)
+                NetMessage.SendData(MessageID.NPCBuffs, number: target.whoAmI);
         }
     }
 }

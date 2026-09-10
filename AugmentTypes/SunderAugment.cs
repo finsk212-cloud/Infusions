@@ -1,4 +1,4 @@
-﻿using Terraria;
+using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
 
@@ -19,13 +19,20 @@ namespace Augments
         public override void OnHitNPCWithItem(Player player, Item item, NPC target, NPC.HitInfo hit)
         {
             if (hit.Crit && item.CountsAsClass(DamageClass.Melee))
-                target.AddBuff(BuffID.Ichor, IchorDurationTicks);
+                ApplyIchor(target);
         }
 
         public override void OnHitNPCWithProj(Player player, Projectile proj, NPC target, NPC.HitInfo hit)
         {
             if (hit.Crit && proj.CountsAsClass(DamageClass.Melee))
-                target.AddBuff(BuffID.Ichor, IchorDurationTicks);
+                ApplyIchor(target);
+        }
+
+        private static void ApplyIchor(NPC target)
+        {
+            target.AddBuff(BuffID.Ichor, IchorDurationTicks);
+            if (Main.netMode != NetmodeID.SinglePlayer)
+                NetMessage.SendData(MessageID.NPCBuffs, number: target.whoAmI);
         }
     }
 }

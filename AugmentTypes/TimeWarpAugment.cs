@@ -1,4 +1,5 @@
 using Terraria;
+using Terraria.ID;
 using Terraria.ModLoader;
 
 namespace Augments
@@ -37,7 +38,11 @@ namespace Augments
                     continue;
 
                 if (npc.Distance(target.Center) <= SlowRange)
+                {
                     npc.GetGlobalNPC<AugmentSlowNPC>().ApplySlow(SlowDurationTicks, SlowPercent);
+                    if (Main.netMode == NetmodeID.MultiplayerClient)
+                        AugmentNet.SendApplyNPCEffectSlow(npc.whoAmI, SlowDurationTicks, SlowPercent);
+                }
             }
         }
     }

@@ -59,7 +59,11 @@ namespace Augments
             ap.OverwhelmResetTimer = ResetWindowTicks;
 
             if (ap.OverwhelmHitCounter % HitsToTrigger == 0)
+            {
                 target.AddBuff(BuffID.Confused, ConfusedDurationTicks);
+                if (Main.netMode != NetmodeID.SinglePlayer)
+                    NetMessage.SendData(MessageID.NPCBuffs, number: target.whoAmI);
+            }
         }
     }
 }

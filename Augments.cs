@@ -26,7 +26,8 @@ namespace Augments
 		VendorSellRequest,
 		VendorBuyBackRequest,
 		RequestVendorSpawn,
-		SyncOwnedAugments  // client → server → all: list of owned augment IDs
+		SyncOwnedAugments, // client → server → all: list of owned augment IDs
+		ApplyNPCEffect     // client → server: custom GlobalNPC effect (Bleed, Slow, Cracked)
 	}
 
 	internal enum DebugAugmentCommandType : byte

@@ -1,4 +1,5 @@
-﻿using Terraria;
+using Terraria;
+using Terraria.ID;
 using Terraria.ModLoader;
 
 namespace Augments
@@ -32,6 +33,8 @@ namespace Augments
                 if (player.buffType[i] > 0 && Main.debuff[player.buffType[i]])
                 {
                     player.DelBuff(i);
+                    if (Main.netMode == NetmodeID.MultiplayerClient)
+                        NetMessage.SendData(MessageID.PlayerBuffs, number: player.whoAmI);
                     return;
                 }
             }

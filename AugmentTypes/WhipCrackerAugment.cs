@@ -1,4 +1,5 @@
 using Terraria;
+using Terraria.ID;
 using Terraria.ModLoader;
 
 namespace Augments
@@ -18,7 +19,11 @@ namespace Augments
 		public override void OnHitNPCWithProj(Player player, Projectile proj, NPC target, NPC.HitInfo hit)
 		{
 			if (proj.DamageType == DamageClass.SummonMeleeSpeed)
+			{
 				target.GetGlobalNPC<AugmentCrackedNPC>().ApplyStack(StackDurationTicks);
+				if (Main.netMode == NetmodeID.MultiplayerClient)
+					AugmentNet.SendApplyNPCEffectCracked(target.whoAmI, StackDurationTicks);
+			}
 		}
 	}
 }

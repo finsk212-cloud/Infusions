@@ -93,6 +93,8 @@ namespace Augments
 
 			ap.MomentumCrashPendingConfuse = false;
 			target.AddBuff(BuffID.Confused, ConfusedDurationTicks);
+			if (Main.netMode != NetmodeID.SinglePlayer)
+				NetMessage.SendData(MessageID.NPCBuffs, number: target.whoAmI);
 		}
 	}
 }

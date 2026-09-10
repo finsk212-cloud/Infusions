@@ -58,6 +58,9 @@ namespace Augments
 				case AugmentPacketType.RequestVendorSpawn:
 					HandleVendorSpawnRequest(whoAmI);
 					return true;
+				case AugmentPacketType.ApplyNPCEffect:
+					HandleApplyNPCEffect(reader, whoAmI);
+					return true;
 			}
 
 			return false;
@@ -450,6 +453,102 @@ namespace Augments
 
 			if (Main.netMode == NetmodeID.Server && npcIndex >= 0 && npcIndex < Main.maxNPCs)
 				NetMessage.SendData(MessageID.SyncNPC, -1, -1, null, npcIndex);
+		}
+
+		public enum NPCEffectType : byte
+		{
+			Bleed,
+			Slow,
+			Cracked
+		}
+
+		public static void SendApplyNPCEffectBleed(int npcIndex, int durationTicks, int dps)
+		{
+			if (Main.netMode != NetmodeID.MultiplayerClient || npcIndex < 0 || npcIndex >= Main.maxNPCs)
+				return;
+
+			ModPacket packet = ModContent.GetInstance<Augments>().GetPacket();
+			packet.Write((byte)AugmentPacketType.ApplyNPCEffect);
+			packet.Write((byte)NPCEffectType.Bleed);
+			packet.Write((short)npcIndex);
+			packet.Write(durationTicks);
+			packet.Write(dps);
+			packet.Send();
+		}
+
+		public static void SendApplyNPCEffectSlow(int npcIndex, int durationTicks, float slowPercent)
+		{
+			if (Main.netMode != NetmodeID.MultiplayerClient || npcIndex < 0 || npcIndex >= Main.maxNPCs)
+				return;
+
+			ModPacket packet = ModContent.GetInstance<Augments>().GetPacket();
+			packet.Write((byte)AugmentPacketType.ApplyNPCEffect);
+			packet.Write((byte)NPCEffectType.Slow);
+			packet.Write((short)npcIndex);
+			packet.Write(durationTicks);
+			packet.Write(slowPercent);
+			packet.Send();
+		}
+
+		public static void SendApplyNPCEffectCracked(int npcIndex, int durationTicks)
+		{
+			if (Main.netMode != NetmodeID.MultiplayerClient || npcIndex < 0 || npcIndex >= Main.maxNPCs)
+				return;
+
+			ModPacket packet = ModContent.GetInstance<Augments>().GetPacket();
+			packet.Write((byte)AugmentPacketType.ApplyNPCEffect);
+			packet.Write((byte)NPCEffectType.Cracked);
+			packet.Write((short)npcIndex);
+			packet.Write(durationTicks);
+			packet.Send();
+		}
+
+		private static void HandleApplyNPCEffect(BinaryReader reader, int whoAmI)
+		{
+			NPCEffectType effectType = (NPCEffectType)reader.ReadByte();
+			int npcIndex = reader.ReadInt16();
+
+			if (npcIndex < 0 || npcIndex >= Main.maxNPCs)
+				return;
+
+			NPC npc = Main.npc[npcIndex];
+			if (!npc.active)
+				return;
+
+			switch (effectType)
+			{
+				case NPCEffectType.Bleed:
+				{
+					int durationTicks = reader.ReadInt32();
+					int dps = reader.ReadInt32();
+					npc.GetGlobalNPC<AugmentBleedNPC>().ApplyBleed(durationTicks, dps);
+					break;
+				}
+				case NPCEffectType.Slow:
+				{
+					int durationTicks = reader.ReadInt32();
+					float slowPercent = reader.ReadSingle();
+					npc.GetGlobalNPC<AugmentSlowNPC>().ApplySlow(durationTicks, slowPercent);
+					break;
+				}
+				case NPCEffectType.Cracked:
+				{
+					int durationTicks = reader.ReadInt32();
+					npc.GetGlobalNPC<AugmentCrackedNPC>().ApplyStack(durationTicks);
+
+					// If on server, relay to all other clients so their local damage multipliers are up to date.
+					if (Main.netMode == NetmodeID.Server)
+					{
+						ModPacket relay = ModContent.GetInstance<Augments>().GetPacket();
+						relay.Write((byte)AugmentPacketType.ApplyNPCEffect);
+						relay.Write((byte)NPCEffectType.Cracked);
+						relay.Write((short)npcIndex);
+						relay.Write(durationTicks);
+						relay.Send(-1, whoAmI);
+					}
+					break;
+				}
+			}
 		}
 	}
 }

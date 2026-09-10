@@ -78,7 +78,11 @@ namespace Augments
             }
 
             if (nearest != null)
+            {
                 nearest.AddBuff(debuffType, GetSpreadDuration(debuffType, debuffTime));
+                if (Main.netMode != NetmodeID.SinglePlayer)
+                    NetMessage.SendData(MessageID.NPCBuffs, number: nearest.whoAmI);
+            }
         }
     }
 }

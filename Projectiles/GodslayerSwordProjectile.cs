@@ -107,6 +107,8 @@ namespace Augments
             SoundEngine.PlaySound(SoundID.Item4 with { Pitch = -0.35f, Volume = 0.65f }, target.Center);
 
             target.AddBuff(BuffID.Ichor, IchorDurationTicks);
+            if (Main.netMode != NetmodeID.SinglePlayer)
+                NetMessage.SendData(MessageID.NPCBuffs, number: target.whoAmI);
             SpawnImpactParticles(target.Center);
             DamageNearbyEnemies(target);
         }
@@ -124,6 +126,8 @@ namespace Augments
                 int hitDirection = npc.Center.X >= directTarget.Center.X ? 1 : -1;
                 npc.SimpleStrikeNPC(Projectile.damage, hitDirection);
                 npc.AddBuff(BuffID.Ichor, IchorDurationTicks);
+                if (Main.netMode != NetmodeID.SinglePlayer)
+                    NetMessage.SendData(MessageID.NPCBuffs, number: npc.whoAmI);
                 SpawnSplashHitParticles(npc.Center);
             }
         }

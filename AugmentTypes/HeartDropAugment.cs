@@ -17,16 +17,9 @@ namespace Augments
 
         private const float ExtraHeartDropChance = 0.10f;
 
-        public override void OnHitNPCWithItem(Player player, Item item, NPC target, NPC.HitInfo hit)
+        public override void OnKillNPC(Player player, NPC npc)
         {
-            if (target.life <= 0)
-                TryDropHeart(player, target, HitEffectiveness);
-        }
-
-        public override void OnHitNPCWithProj(Player player, Projectile proj, NPC target, NPC.HitInfo hit)
-        {
-            if (target.life <= 0)
-                TryDropHeart(player, target, HitEffectiveness);
+            TryDropHeart(player, npc, HitEffectiveness);
         }
 
         private static void TryDropHeart(Player player, NPC target, float effectiveness)
@@ -38,7 +31,7 @@ namespace Augments
             if (Main.rand.NextFloat() < ExtraHeartDropChance * effectiveness)
             {
                 int index = Item.NewItem(target.GetSource_Loot(), target.Hitbox, ItemID.Heart);
-                if (Main.netMode != NetmodeID.SinglePlayer)
+                if (Main.netMode == NetmodeID.Server)
                     NetMessage.SendData(MessageID.SyncItem, number: index);
             }
         }

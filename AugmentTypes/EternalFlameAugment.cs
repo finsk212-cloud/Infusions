@@ -48,6 +48,8 @@ namespace Augments
                     continue;
 
                 player.DelBuff(i);
+                if (Main.netMode == NetmodeID.MultiplayerClient)
+                    NetMessage.SendData(MessageID.PlayerBuffs, number: player.whoAmI);
                 ap.EternalFlameBoostTicks = BoostDurationTicks;
                 break;
             }

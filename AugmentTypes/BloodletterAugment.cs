@@ -1,4 +1,5 @@
-﻿using Terraria;
+using Terraria;
+using Terraria.ID;
 using Terraria.ModLoader;
 
 namespace Augments
@@ -19,13 +20,20 @@ namespace Augments
         public override void OnHitNPCWithItem(Player player, Item item, NPC target, NPC.HitInfo hit)
         {
             if (hit.Crit && item.CountsAsClass(DamageClass.Melee))
-                target.GetGlobalNPC<AugmentBleedNPC>().ApplyBleed(BleedDurationTicks, DamagePerSecond);
+                ApplyBleed(target);
         }
 
         public override void OnHitNPCWithProj(Player player, Projectile proj, NPC target, NPC.HitInfo hit)
         {
             if (hit.Crit && proj.CountsAsClass(DamageClass.Melee))
-                target.GetGlobalNPC<AugmentBleedNPC>().ApplyBleed(BleedDurationTicks, DamagePerSecond);
+                ApplyBleed(target);
+        }
+
+        private static void ApplyBleed(NPC target)
+        {
+            target.GetGlobalNPC<AugmentBleedNPC>().ApplyBleed(BleedDurationTicks, DamagePerSecond);
+            if (Main.netMode == NetmodeID.MultiplayerClient)
+                AugmentNet.SendApplyNPCEffectBleed(target.whoAmI, BleedDurationTicks, DamagePerSecond);
         }
     }
 }

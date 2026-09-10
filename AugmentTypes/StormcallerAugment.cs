@@ -63,10 +63,7 @@ namespace Augments
             }
 
             if (nearby.Count == 0)
-            {
-                Main.NewText("Stormcaller: triggered but no nearby enemy found", 255, 150, 0);
                 return;
-            }
 
             NPC target = nearby[Main.rand.Next(nearby.Count)];
             int damage = (int)(target.lifeMax * StrikeDamagePercentOfMaxHP);
