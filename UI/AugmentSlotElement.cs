@@ -18,6 +18,7 @@ namespace Augments
 		public static Asset<Texture2D> MagicIconAsset;
 		public static Asset<Texture2D> SummonIconAsset;
 		public static Asset<Texture2D> RangedIconAsset;
+		public static Asset<Texture2D> SupportIconAsset;
 
 		public readonly Augment Augment;
 		public bool IsSelected { get; set; }
@@ -190,6 +191,29 @@ namespace Augments
 					spriteBatch.Draw(crosshairTex, iconPos, iconColor);
 				}
 			}
+			else if (Augment.Class == AugmentClass.Support)
+			{
+				if (SupportIconAsset == null)
+					SupportIconAsset = ModContent.Request<Texture2D>("Augments/UI/SupportIcon", AssetRequestMode.ImmediateLoad);
+
+				if (SupportIconAsset?.IsLoaded == true)
+				{
+					Texture2D plusTex = SupportIconAsset.Value;
+					Color iconColor = AugmentListEntry.RarityColor(Augment.Rarity);
+					if (Augment.Rarity == AugmentRarity.Common)
+						iconColor = new Color(225, 230, 240);
+
+					if (isHovered)
+						iconColor = Color.Lerp(iconColor, Color.White, 0.4f);
+
+					Vector2 iconPos = new Vector2(
+						rect.X + (rect.Width - plusTex.Width) * 0.5f,
+						rect.Y + (rect.Height - plusTex.Height) * 0.5f
+					);
+
+					spriteBatch.Draw(plusTex, iconPos, iconColor);
+				}
+			}
 			else
 			{
 				string initials = GetInitials(Augment.DisplayName);
@@ -208,8 +232,8 @@ namespace Augments
 				);
 			}
 
-			// 5. Class badge in top-left corner (omit for Melee, Magic, Summon, Ranged since they have custom icons)
-			if (Augment.Class != AugmentClass.Melee && Augment.Class != AugmentClass.Magic && Augment.Class != AugmentClass.Summon && Augment.Class != AugmentClass.Ranged)
+			// 5. Class badge in top-left corner (omit for Melee, Magic, Summon, Ranged, Support since they have custom icons)
+			if (Augment.Class != AugmentClass.Melee && Augment.Class != AugmentClass.Magic && Augment.Class != AugmentClass.Summon && Augment.Class != AugmentClass.Ranged && Augment.Class != AugmentClass.Support)
 			{
 				string classLetter = GetClassLetter(Augment.Class);
 				Color classColor = GetClassColor(Augment.Class);
