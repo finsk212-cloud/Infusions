@@ -30,9 +30,9 @@ namespace Augments
 
 		private const float PanelWidth = 840f;
 		private const float PanelHeight = 550f;
-		private const int SlotsPerRow = 7;
-		private const float SlotSize = 64f;
-		private const float SlotSpacing = 7f;
+		private const int SlotsPerRow = 6;
+		private const float SlotSize = 72f;
+		private const float SlotSpacing = 11f;
 
 		public override void OnInitialize()
 		{

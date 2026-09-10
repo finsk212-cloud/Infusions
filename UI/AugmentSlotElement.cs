@@ -27,8 +27,8 @@ namespace Augments
 		public AugmentSlotElement(Augment augment)
 		{
 			Augment = augment;
-			Width.Set(64f, 0f);
-			Height.Set(64f, 0f);
+			Width.Set(72f, 0f);
+			Height.Set(72f, 0f);
 		}
 
 		public override void MouseOver(UIMouseEvent evt)
