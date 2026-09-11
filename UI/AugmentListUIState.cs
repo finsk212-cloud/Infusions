@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Terraria;
@@ -36,6 +37,7 @@ namespace Augments
 	public class AugmentListUIState : UIState
 	{
 		public static bool IsDevMode = false;
+		public static bool IsDevCritMode = false;
 		public static Asset<Texture2D> RarityStarAsset;
 
 		private UIPanel backPanel;
@@ -46,6 +48,7 @@ namespace Augments
 
 		private UIElement devBarContainer;
 		private DevBadgeElement devBadge;
+		private CodexFilterButton critToggleBtn;
 		private int titleClickCount = 0;
 		private double lastTitleClickTime = 0;
 
@@ -263,7 +266,7 @@ namespace Augments
 			var clearAllBtn = new CodexFilterButton("🗑 Clear All", 0.72f);
 			clearAllBtn.Left.Set(0f, 0f);
 			clearAllBtn.Top.Set(0f, 0f);
-			clearAllBtn.Width.Set(100f, 0f);
+			clearAllBtn.Width.Set(86f, 0f);
 			clearAllBtn.Height.Set(26f, 0f);
 			clearAllBtn.CustomActiveBorder = new Color(255, 100, 100);
 			clearAllBtn.Clicked += () =>
@@ -282,9 +285,9 @@ namespace Augments
 			devBarContainer.Append(clearAllBtn);
 
 			var resetCdsBtn = new CodexFilterButton("⏱ Reset CDs", 0.72f);
-			resetCdsBtn.Left.Set(108f, 0f);
+			resetCdsBtn.Left.Set(90f, 0f);
 			resetCdsBtn.Top.Set(0f, 0f);
-			resetCdsBtn.Width.Set(105f, 0f);
+			resetCdsBtn.Width.Set(94f, 0f);
 			resetCdsBtn.Height.Set(26f, 0f);
 			resetCdsBtn.CustomActiveBorder = new Color(100, 220, 255);
 			resetCdsBtn.Clicked += () =>
@@ -295,10 +298,31 @@ namespace Augments
 			};
 			devBarContainer.Append(resetCdsBtn);
 
+			critToggleBtn = new CodexFilterButton(IsDevCritMode ? "💥 Crit: ON" : "💥 100% Crit", 0.72f);
+			critToggleBtn.Left.Set(188f, 0f);
+			critToggleBtn.Top.Set(0f, 0f);
+			critToggleBtn.Width.Set(100f, 0f);
+			critToggleBtn.Height.Set(26f, 0f);
+			critToggleBtn.CustomActiveBorder = new Color(255, 140, 40);
+			critToggleBtn.CustomActiveBg = new Color(80, 30, 20);
+			critToggleBtn.IsActiveHighlight = IsDevCritMode;
+			critToggleBtn.Clicked += () =>
+			{
+				IsDevCritMode = !IsDevCritMode;
+				critToggleBtn.IsActiveHighlight = IsDevCritMode;
+				critToggleBtn.SetText(IsDevCritMode ? "💥 Crit: ON" : "💥 100% Crit");
+				SoundEngine.PlaySound(IsDevCritMode ? SoundID.Item4 : SoundID.MenuClose);
+				Main.NewText(IsDevCritMode
+					? "✦ [DEV] 100% Crit Mode ACTIVATED! (All damage will critically strike) ✦"
+					: "✦ [DEV] 100% Crit Mode DEACTIVATED. ✦",
+					IsDevCritMode ? Color.OrangeRed : Color.Orange);
+			};
+			devBarContainer.Append(critToggleBtn);
+
 			var spawnDummyBtn = new CodexFilterButton("🎯 Spawn Dummy", 0.72f);
-			spawnDummyBtn.Left.Set(221f, 0f);
+			spawnDummyBtn.Left.Set(292f, 0f);
 			spawnDummyBtn.Top.Set(0f, 0f);
-			spawnDummyBtn.Width.Set(125f, 0f);
+			spawnDummyBtn.Width.Set(108f, 0f);
 			spawnDummyBtn.Height.Set(26f, 0f);
 			spawnDummyBtn.CustomActiveBorder = new Color(120, 255, 120);
 			spawnDummyBtn.Clicked += () =>
@@ -358,10 +382,10 @@ namespace Augments
 			};
 			devBarContainer.Append(spawnDummyBtn);
 
-			var testRollBtn = new CodexFilterButton("🎲 Test 3-Card Roll", 0.72f);
-			testRollBtn.Left.Set(354f, 0f);
+			var testRollBtn = new CodexFilterButton("🎲 Test Roll", 0.72f);
+			testRollBtn.Left.Set(404f, 0f);
 			testRollBtn.Top.Set(0f, 0f);
-			testRollBtn.Width.Set(145f, 0f);
+			testRollBtn.Width.Set(111f, 0f);
 			testRollBtn.Height.Set(26f, 0f);
 			testRollBtn.CustomActiveBorder = new Color(255, 215, 80);
 			testRollBtn.Clicked += () =>
@@ -410,6 +434,15 @@ namespace Augments
 			{
 				SoundEngine.PlaySound(SoundID.MenuClose);
 				Main.NewText("✦ [DEV MODE DEACTIVATED] ✦", Color.Orange);
+				if (IsDevCritMode)
+				{
+					IsDevCritMode = false;
+					if (critToggleBtn != null)
+					{
+						critToggleBtn.IsActiveHighlight = false;
+						critToggleBtn.SetText("💥 100% Crit");
+					}
+				}
 			}
 
 			UpdateDevModeVisuals();
@@ -838,6 +871,40 @@ namespace Augments
 		// Right-hand Detail Inspector Panel
 		private class AugmentDetailPanel : UIPanel
 		{
+			private static readonly Regex CooldownRegex = new Regex(
+				@"(?:[\s,]+(?:followed\s+by\s+a\s+)?)?(?:\[c\/[0-9a-fA-F]{6}:)?([0-9]+\s*(?:s|sec|seconds?|minutes?|min|hr|hours?)\s+cooldown)(?:\])?(\s+per\s+player)?\.?",
+				RegexOptions.Compiled | RegexOptions.IgnoreCase
+			);
+
+			private static void ExtractDescriptionAndCooldown(Augment augment, out string effectText, out string cooldownText)
+			{
+				effectText = augment.Description ?? "";
+				cooldownText = augment.CooldownText;
+
+				var match = CooldownRegex.Match(effectText);
+				if (match.Success)
+				{
+					if (string.IsNullOrEmpty(cooldownText))
+					{
+						cooldownText = match.Groups[1].Value;
+						if (match.Groups[2].Success && !string.IsNullOrWhiteSpace(match.Groups[2].Value))
+						{
+							cooldownText += " " + match.Groups[2].Value.Trim().TrimEnd('.');
+						}
+					}
+					effectText = CooldownRegex.Replace(effectText, "").TrimEnd();
+					if (effectText.EndsWith(","))
+						effectText = effectText.Substring(0, effectText.Length - 1).TrimEnd();
+					if (!string.IsNullOrEmpty(effectText) && !effectText.EndsWith("."))
+						effectText += ".";
+				}
+
+				if (!string.IsNullOrEmpty(cooldownText))
+				{
+					cooldownText = cooldownText.Trim().TrimEnd('.');
+				}
+			}
+
 			private readonly AugmentListUIState parentState;
 			private Augment currentAugment;
 			private bool currentIsOwned;
@@ -1169,8 +1236,10 @@ namespace Augments
 				);
 				y += ChatManager.GetStringSize(font, "Effect:", new Vector2(0.78f)).Y + 4f;
 
-				// 6. Wrapped Description with chat colors
-				var lines = AugmentColorText.Wrap(font, currentAugment.Description, maxTextWidth, new Vector2(0.82f));
+				// 6. Wrapped Description with chat colors (stripping inline cooldown clause)
+				ExtractDescriptionAndCooldown(currentAugment, out string effectText, out string cooldownText);
+
+				var lines = AugmentColorText.Wrap(font, effectText, maxTextWidth, new Vector2(0.82f));
 				foreach (var line in lines)
 				{
 					ChatManager.DrawColorCodedStringWithShadow(
@@ -1188,6 +1257,19 @@ namespace Augments
 					Color kbColor = kb.GetAssignedKeys().Count > 0 ? Color.SkyBlue : new Color(255, 120, 100);
 					ChatManager.DrawColorCodedStringWithShadow(
 						spriteBatch, font, kbText, new Vector2(x, y), kbColor, 0f, Vector2.Zero, new Vector2(0.75f)
+					);
+				}
+
+				// 8. Cooldown footer displayed at bottom of card with stopwatch icon matching "⏱ Reset CDs"
+				if (!string.IsNullOrEmpty(cooldownText))
+				{
+					float cdY = dims.Y + dims.Height - 30f;
+					// Subtle divider line
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle((int)x, (int)(cdY - 5f), (int)maxTextWidth, 1), new Color(100, 220, 255) * 0.35f);
+
+					string cdDisplay = $"⏱  {cooldownText}";
+					ChatManager.DrawColorCodedStringWithShadow(
+						spriteBatch, font, cdDisplay, new Vector2(x + 2f, cdY), new Color(100, 220, 255), 0f, Vector2.Zero, new Vector2(0.82f)
 					);
 				}
 			}

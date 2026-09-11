@@ -807,6 +807,10 @@ namespace Augments
 			ReceivedIroncladAura = false;
 			ReceivedManaWell = false;
 			ReceivedCombatMedic = false;
+			if (AugmentListUIState.IsDevCritMode)
+			{
+				Player.GetCritChance(DamageClass.Generic) += 1000f;
+			}
 
 			foreach (var a in Owned)
 				a.UpdateEquips(Player);
@@ -1061,12 +1065,18 @@ namespace Augments
 		// actual damage of the hit via modifiers.FlatBonusDamage.
 		public override void ModifyHitNPCWithItem(Item item, NPC target, ref NPC.HitModifiers modifiers)
 		{
+			if (AugmentListUIState.IsDevCritMode)
+				modifiers.SetCrit();
+
 			foreach (var a in Owned)
 				a.ModifyHitNPCWithItem(Player, item, target, ref modifiers, AugmentHitSource.NormalAttack);
 		}
 
 		public override void ModifyHitNPCWithProj(Projectile proj, NPC target, ref NPC.HitModifiers modifiers)
 		{
+			if (AugmentListUIState.IsDevCritMode)
+				modifiers.SetCrit();
+
 			AugmentProjectileTag tag = proj.GetGlobalProjectile<AugmentProjectileTag>();
 			if (tag.IsAugmentProcDamage && !tag.CanTriggerOnHitAugments)
 				return;

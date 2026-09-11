@@ -118,6 +118,10 @@ namespace Augments
 		// which the cooldown indicator UI reads to know what to display.
 		public virtual int CooldownRemaining => 0;
 
+		// Optional explicit cooldown text for UI display (e.g. "30s cooldown", "12hr cooldown").
+		// If null, the UI automatically extracts any cooldown clause present in Description.
+		public virtual string CooldownText => null;
+
 		// True if CooldownRemaining should be read as ticks-until-next-in-game-day
 		// (displayed as whole hours) rather than a simple seconds countdown.
 		public virtual bool CooldownDisplayInHours => false;
