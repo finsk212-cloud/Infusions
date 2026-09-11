@@ -1,4 +1,7 @@
+using Microsoft.Xna.Framework.Graphics;
 using Terraria;
+using Terraria.GameContent;
+using Terraria.ID;
 using Terraria.ModLoader;
 
 namespace Augments
@@ -14,5 +17,6 @@ namespace Augments
 		public override bool HasAuraEffect => true;
 		public override ModKeybind ActiveModKeybind => Augments.CleanseKeybind;
 		public override int CooldownRemaining => Main.LocalPlayer.GetModPlayer<AugmentPlayer>().CleanseCooldown;
+		public override Texture2D Icon => TextureAssets.Item[ItemID.PurificationPowder].Value;
 	}
 }

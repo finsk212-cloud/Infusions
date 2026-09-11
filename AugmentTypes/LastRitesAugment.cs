@@ -1,3 +1,8 @@
+using Microsoft.Xna.Framework.Graphics;
+using Terraria;
+using Terraria.GameContent;
+using Terraria.ID;
+
 namespace Augments
 {
     public class LastRitesAugment : Augment
@@ -12,6 +17,8 @@ namespace Augments
         public override bool HasAuraEffect => true;
         public override string CooldownText => "90s cooldown per player";
         public override int CooldownRemaining => LocalPlayerState.LastRitesCooldown;
+
+        public override Texture2D Icon => TextureAssets.Item[ItemID.ObsidianShield].Value;
         // No hooks — pull check runs in AugmentPlayer.PostUpdate on the receiving player's client.
     }
 }

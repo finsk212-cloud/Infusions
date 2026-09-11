@@ -1,6 +1,8 @@
 using System;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using Terraria;
+using Terraria.GameContent;
 using Terraria.ID;
 using Terraria.ModLoader;
 
@@ -18,6 +20,7 @@ namespace Augments
 		public override AugmentClass Class => AugmentClass.Support;
 		public override bool HasAuraEffect => true;
 		public override int CooldownRemaining => Main.LocalPlayer.GetModPlayer<AugmentPlayer>().RevitalizingWaveTimer;
+		public override Texture2D Icon => TextureAssets.Item[ItemID.BandofRegeneration].Value;
 
 		public override void OnUpdate(Player player)
 		{

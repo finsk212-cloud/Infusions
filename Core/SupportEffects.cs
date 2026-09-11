@@ -27,14 +27,16 @@ namespace Augments
 			return Vector2.DistanceSquared(owner.Center, target.Center) <= radius * radius;
 		}
 
-		public static bool TryFindSupportOwner(Player target, string augmentId, float radius, out Player owner)
+		public static bool TryFindSupportOwner(Player target, string augmentId, float radius, out Player owner, bool includeSelf = false)
 		{
 			owner = null;
 			float bestDistanceSquared = radius < 0f ? float.MaxValue : radius * radius;
 			for (int i = 0; i < Main.maxPlayers; i++)
 			{
 				Player candidate = Main.player[i];
-				if (!candidate.active || candidate.dead || candidate.whoAmI == target.whoAmI)
+				if (!candidate.active || candidate.dead)
+					continue;
+				if (!includeSelf && candidate.whoAmI == target.whoAmI)
 					continue;
 				if (!AreAllies(candidate, target) || !candidate.GetModPlayer<AugmentPlayer>().HasAugment(augmentId))
 					continue;

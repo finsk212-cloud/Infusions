@@ -76,6 +76,28 @@ namespace Augments
                 }
             }
 
+            // Cooldown icons for triggered Support protections received from an ally
+            // when the local player does not directly own the augment itself.
+            if (augmentPlayer.LifelineCooldown > 0 && !augmentPlayer.HasAugment("lifeline"))
+            {
+                var lifelineAugment = AugmentDatabase.GetById("lifeline");
+                icons.Add(new StatusIcon(
+                    SecondsText(augmentPlayer.LifelineCooldown),
+                    AugmentTextColors.Cooldown,
+                    "Lifeline is on cooldown",
+                    lifelineAugment?.Icon));
+            }
+
+            if (augmentPlayer.LastRitesCooldown > 0 && !augmentPlayer.HasAugment("last_rites"))
+            {
+                var lastRitesAugment = AugmentDatabase.GetById("last_rites");
+                icons.Add(new StatusIcon(
+                    SecondsText(augmentPlayer.LastRitesCooldown),
+                    AugmentTextColors.Cooldown,
+                    "Last Rites is on cooldown",
+                    lastRitesAugment?.Icon));
+            }
+
             // Icons for aura effects received from a nearby Support player.
             // Warcry: the ModBuff being active is the source of truth.
             // Ironclad Aura: the flag is set each UpdateEquips tick by the pull loop.

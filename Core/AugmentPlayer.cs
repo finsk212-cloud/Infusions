@@ -599,19 +599,30 @@ namespace Augments
 			// HandleLifelineRequest/TryConsumeLifelineServer), so a client
 			// locally computing this flag early carries no exploit risk.
 			if (Player.statLife <= (int)(Player.statLifeMax2 * 0.20f) && LastRitesCooldown == 0 &&
-				SupportEffects.TryFindSupportOwner(Player, "last_rites", AuraRadius, out _))
+				SupportEffects.TryFindSupportOwner(Player, "last_rites", AuraRadius, out Player lrOwner, includeSelf: true))
 			{
 				LastRitesCooldown = 5400;
 				lastRitesInvulnTicks = 180;
 				Player.AddBuff(ModContent.BuffType<LastRitesCooldownBuff>(), 5400);
+
+				var lrOwnerAP = lrOwner.GetModPlayer<AugmentPlayer>();
+				lrOwnerAP.LastRitesCooldown = 5400;
+				lrOwnerAP.Player.AddBuff(ModContent.BuffType<LastRitesCooldownBuff>(), 5400);
+
 				if (Main.netMode == NetmodeID.Server)
 				{
 					NetMessage.SendData(MessageID.PlayerBuffs, -1, -1, null, Player.whoAmI);
 					AugmentNet.SendSyncPlayer(Player);
+
+					if (lrOwner.whoAmI != Player.whoAmI)
+					{
+						NetMessage.SendData(MessageID.PlayerBuffs, -1, -1, null, lrOwner.whoAmI);
+						AugmentNet.SendSyncPlayer(lrOwner);
+					}
 				}
 			}
 
-			bool protection = LifelineCooldown == 0 && SupportEffects.TryFindSupportOwner(Player, "lifeline", AuraRadius, out _);
+			bool protection = LifelineCooldown == 0 && SupportEffects.TryFindSupportOwner(Player, "lifeline", AuraRadius, out _, includeSelf: true);
 			if (protection != lifelineProtectionAuthorized)
 			{
 				lifelineProtectionAuthorized = protection;
@@ -729,7 +740,7 @@ namespace Augments
 			// removed anyway for consistency with the rest of the "self-only
 			// effects don't need this guard" cleanup.
 			if (LifelineCooldown > 0 ||
-				!SupportEffects.TryFindSupportOwner(Player, "lifeline", AuraRadius, out Player owner))
+				!SupportEffects.TryFindSupportOwner(Player, "lifeline", AuraRadius, out Player owner, includeSelf: true))
 				return false;
 
 			ModContent.GetInstance<Augments>().Logger.Info($"Lifeline found support owner={owner.name}");
@@ -742,11 +753,21 @@ namespace Augments
 			Player.immuneTime = 120;
 			Player.AddBuff(ModContent.BuffType<LifelineCooldownBuff>(), 5400);
 
+			var ownerAP = owner.GetModPlayer<AugmentPlayer>();
+			ownerAP.LifelineCooldown = 5400;
+			ownerAP.Player.AddBuff(ModContent.BuffType<LifelineCooldownBuff>(), 5400);
+
 			if (Main.netMode == NetmodeID.Server)
 			{
 				NetMessage.SendData(MessageID.PlayerLifeMana, -1, -1, null, Player.whoAmI);
 				NetMessage.SendData(MessageID.PlayerBuffs, -1, -1, null, Player.whoAmI);
 				AugmentNet.SendSyncPlayer(Player);
+
+				if (owner.whoAmI != Player.whoAmI)
+				{
+					NetMessage.SendData(MessageID.PlayerBuffs, -1, -1, null, owner.whoAmI);
+					AugmentNet.SendSyncPlayer(owner);
+				}
 			}
 
 			ModContent.GetInstance<Augments>().Logger.Info($"Lifeline consumed and saved target={Player.name}");
@@ -1177,6 +1198,12 @@ namespace Augments
 
 			if (LifelineCooldown > 0 || !lifelineProtectionAuthorized)
 				return true;
+
+			if (SupportEffects.TryFindSupportOwner(Player, "lifeline", AuraRadius, out Player lifelineOwner, includeSelf: true))
+			{
+				lifelineOwner.GetModPlayer<AugmentPlayer>().LifelineCooldown = 5400;
+				lifelineOwner.AddBuff(ModContent.BuffType<LifelineCooldownBuff>(), 5400);
+			}
 
 			if (Main.netMode == NetmodeID.MultiplayerClient)
 			{
