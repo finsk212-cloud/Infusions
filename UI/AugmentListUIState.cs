@@ -65,11 +65,25 @@ namespace Augments
 		private AugmentFilterPanel filterPanel;
 
 		private const float PanelWidth = 880f;
-		private const float PanelHeight = 560f;
+		private const float PanelHeight = 600f;
 		private const int SlotsPerRow = 6;
 		private const float SlotWidth = 74f;
 		private const float SlotHeight = 84f;
 		private const float SlotSpacing = 10f;
+
+		public override void Update(GameTime gameTime)
+		{
+			base.Update(gameTime);
+
+			if (backPanel != null && backPanel.ContainsPoint(Main.MouseScreen))
+			{
+				Main.LocalPlayer.mouseInterface = true;
+			}
+			else if (filterPanel != null && isFilterMenuOpen && filterPanel.ContainsPoint(Main.MouseScreen))
+			{
+				Main.LocalPlayer.mouseInterface = true;
+			}
+		}
 
 		public override void OnInitialize()
 		{
@@ -84,21 +98,22 @@ namespace Augments
 
 			// Title Header & Secret Dev Badge
 			UIElement titleContainer = new UIElement();
-			titleContainer.Width.Set(300f, 0f);
-			titleContainer.Height.Set(26f, 0f);
+			titleContainer.Width.Set(380f, 0f);
+			titleContainer.Height.Set(28f, 0f);
 			titleContainer.HAlign = 0.5f;
 			titleContainer.Top.Set(8f, 0f);
 
-			UIText title = new UIText("Infusion List", 1.05f)
+			UIText title = new UIText("✦  Infusion List  ✦", 1.12f)
 			{
-				HAlign = 0.45f,
-				VAlign = 0.5f
+				HAlign = 0.44f,
+				VAlign = 0.5f,
+				TextColor = new Color(255, 235, 175)
 			};
 			titleContainer.Append(title);
 
 			devBadge = new DevBadgeElement(this);
-			devBadge.Left.Set(205f, 0f);
-			devBadge.Top.Set(2f, 0f);
+			devBadge.Left.Set(295f, 0f);
+			devBadge.Top.Set(4f, 0f);
 			titleContainer.Append(devBadge);
 
 			titleContainer.OnLeftClick += (evt, elem) => OnTitleClicked();
@@ -128,14 +143,14 @@ namespace Augments
 			gridList.Top.Set(74f, 0f);
 			gridList.Left.Set(12f, 0f);
 			gridList.Width.Set(515f, 0f);
-			gridList.Height.Set(-86f, 1f);
+			gridList.Height.Set(-125f, 1f);
 			gridList.ListPadding = 6f;
 			backPanel.Append(gridList);
 
 			// Scrollbar for Grid
 			gridScrollbar = new UIScrollbar();
 			gridScrollbar.Top.Set(74f, 0f);
-			gridScrollbar.Height.Set(-86f, 1f);
+			gridScrollbar.Height.Set(-125f, 1f);
 			gridScrollbar.Left.Set(534f, 0f);
 			gridList.SetScrollbar(gridScrollbar);
 			backPanel.Append(gridScrollbar);
@@ -145,7 +160,7 @@ namespace Augments
 			detailPanel.Top.Set(74f, 0f);
 			detailPanel.Left.Set(568f, 0f);
 			detailPanel.Width.Set(288f, 0f);
-			detailPanel.Height.Set(-124f, 1f);
+			detailPanel.Height.Set(-125f, 1f);
 			backPanel.Append(detailPanel);
 
 			// Bottom-Right: Support Class Tag
@@ -153,7 +168,7 @@ namespace Augments
 			supportTag.Left.Set(568f, 0f);
 			supportTag.Width.Set(288f, 0f);
 			supportTag.Height.Set(30f, 0f);
-			supportTag.Top.Set(516f, 0f);
+			supportTag.Top.Set(556f, 0f);
 			backPanel.Append(supportTag);
 
 			// Bottom-Left: Dev Mode Action Bar
@@ -241,7 +256,7 @@ namespace Augments
 		{
 			devBarContainer = new UIElement();
 			devBarContainer.Left.Set(14f, 0f);
-			devBarContainer.Top.Set(516f, 0f);
+			devBarContainer.Top.Set(556f, 0f);
 			devBarContainer.Width.Set(515f, 0f);
 			devBarContainer.Height.Set(28f, 0f);
 
@@ -290,15 +305,15 @@ namespace Augments
 			{
 				var player = Main.LocalPlayer;
 				int spawnX = (int)(player.Center.X + player.direction * 80);
-				int spawnY = (int)player.Center.Y;
+				int spawnY = (int)player.Bottom.Y - 24;
 
 				if (Main.netMode == NetmodeID.SinglePlayer)
 				{
-					int npcIndex = NPC.NewNPC(player.GetSource_FromThis(), spawnX, spawnY, NPCID.TargetDummy);
+					int npcIndex = NPC.NewNPC(player.GetSource_FromThis(), spawnX, spawnY, ModContent.NPCType<TestDummyNPC>());
 					if (npcIndex >= 0 && npcIndex < Main.maxNPCs)
 						Main.npc[npcIndex].netUpdate = true;
 					SoundEngine.PlaySound(SoundID.Dig, player.Center);
-					Main.NewText("✦ [DEV] Target Dummy spawned! ✦", Color.LimeGreen);
+					Main.NewText("✦ [DEV] Target Dummy spawned! ✦ (Right-click dummy to remove)", Color.LimeGreen);
 				}
 				else
 				{
@@ -315,6 +330,7 @@ namespace Augments
 			testRollBtn.CustomActiveBorder = new Color(255, 215, 80);
 			testRollBtn.Clicked += () =>
 			{
+				ModContent.GetInstance<AugmentUISystem>().HideList();
 				if (Main.netMode == NetmodeID.SinglePlayer)
 					AugmentRewardLogic.GrantReward(Main.LocalPlayer, RarityBracket.FinalCalamity);
 				else if (Main.netMode == NetmodeID.MultiplayerClient)
@@ -1150,8 +1166,8 @@ namespace Augments
 			public DevBadgeElement(AugmentListUIState parent)
 			{
 				this.parent = parent;
-				Width.Set(52f, 0f);
-				Height.Set(20f, 0f);
+				Width.Set(46f, 0f);
+				Height.Set(18f, 0f);
 			}
 
 			public override void MouseOver(UIMouseEvent evt)
@@ -1197,10 +1213,10 @@ namespace Augments
 				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right - 1, rect.Y, 1, rect.Height), border);
 
 				var font = FontAssets.MouseText.Value;
-				string text = "[ DEV ]";
-				Vector2 size = ChatManager.GetStringSize(font, text, new Vector2(0.72f));
+				string text = "[DEV]";
+				Vector2 size = ChatManager.GetStringSize(font, text, new Vector2(0.65f));
 				Vector2 textPos = new Vector2(rect.X + (rect.Width - size.X) * 0.5f, rect.Y + (rect.Height - size.Y) * 0.5f - 1f);
-				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, text, textPos, border, 0f, Vector2.Zero, new Vector2(0.72f));
+				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, text, textPos, border, 0f, Vector2.Zero, new Vector2(0.65f));
 
 				if (isHovered)
 				{

@@ -57,10 +57,21 @@ namespace Augments
             float boxWidth = contentWidth + padding * 2f;
             float boxHeight = totalHeight + padding * 2f;
 
-            Vector2 boxPos = new Vector2(
-                Main.MouseScreen.X - 24f - boxWidth,
-                Main.MouseScreen.Y + 24f
-            );
+            float posX = Main.MouseScreen.X + 18f;
+            float posY = Main.MouseScreen.Y + 18f;
+
+            if (posX + boxWidth > Main.screenWidth - 12f)
+                posX = Main.MouseScreen.X - 18f - boxWidth;
+
+            if (posY + boxHeight > Main.screenHeight - 12f)
+                posY = Main.screenHeight - 12f - boxHeight;
+
+            if (posX < 12f)
+                posX = 12f;
+            if (posY < 12f)
+                posY = 12f;
+
+            Vector2 boxPos = new Vector2(posX, posY);
 
             var boxRect = new Rectangle(
                 (int)boxPos.X,
