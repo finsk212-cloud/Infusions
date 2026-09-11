@@ -84,6 +84,17 @@ namespace Augments
 			return actualHeal;
 		}
 
+		public static bool IsCleansableDebuff(int buffType)
+		{
+			if (buffType <= 0 || !Main.debuff[buffType])
+				return false;
+			if (buffType == BuffID.PotionSickness || buffType == BuffID.ManaSickness || buffType == BuffID.ChaosState)
+				return false;
+			if (buffType == ModContent.BuffType<LifelineCooldownBuff>() || buffType == ModContent.BuffType<LastRitesCooldownBuff>())
+				return false;
+			return true;
+		}
+
 		public static void ServerClearDebuffs(Player target)
 		{
 			if (Main.netMode == NetmodeID.MultiplayerClient || target == null || !target.active)
@@ -91,12 +102,51 @@ namespace Augments
 
 			for (int i = target.buffType.Length - 1; i >= 0; i--)
 			{
-				if (target.buffType[i] > 0 && Main.debuff[target.buffType[i]])
+				if (IsCleansableDebuff(target.buffType[i]))
 					target.DelBuff(i);
 			}
 
 			if (Main.netMode == NetmodeID.Server)
-				NetMessage.SendData(MessageID.PlayerBuffs, -1, -1, null, target.whoAmI);
+			{
+				ModPacket packet = ModContent.GetInstance<Augments>().GetPacket();
+				packet.Write((byte)AugmentPacketType.CleanseClearDebuffs);
+				packet.Send(target.whoAmI);
+			}
+		}
+
+		public static void HandleCleanseClearDebuffs()
+		{
+			if (Main.netMode != NetmodeID.MultiplayerClient)
+				return;
+
+			Player player = Main.LocalPlayer;
+			if (!player.active || player.dead)
+				return;
+
+			bool removedAny = false;
+			for (int i = player.buffType.Length - 1; i >= 0; i--)
+			{
+				if (IsCleansableDebuff(player.buffType[i]))
+				{
+					player.DelBuff(i);
+					removedAny = true;
+				}
+			}
+
+			SoundEngine.PlaySound(SoundID.Item4, player.Center);
+			for (int i = 0; i < 25; i++)
+			{
+				Vector2 speed = Main.rand.NextVector2Circular(5f, 5f);
+				Dust d = Dust.NewDustDirect(player.position, player.width, player.height, DustID.PurificationPowder, speed.X, speed.Y);
+				d.noGravity = true;
+			}
+
+			if (removedAny)
+			{
+				CombatText.NewText(player.getRect(), Color.LightCyan, "Cleansed!");
+			}
+
+			NetMessage.SendData(MessageID.PlayerBuffs, -1, -1, null, player.whoAmI);
 		}
 
 		public static void HandleSoulLinkRequest(int whoAmI, int requestedHeal)

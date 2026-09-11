@@ -714,7 +714,7 @@ namespace Augments
 			CleanseCooldown = 1800;
 			foreach (Player target in Main.player)
 			{
-				if (SupportEffects.IsAllyInRange(Player, target, SupportEffects.AuraRadius))
+				if (SupportEffects.IsAllyInRange(Player, target, SupportEffects.AuraRadius, includeOwner: true))
 					SupportEffects.ServerClearDebuffs(target);
 			}
 
@@ -957,11 +957,36 @@ namespace Augments
 
 			if (HasAugment("cleanse") && CleanseCooldown == 0 && Augments.CleanseKeybind?.JustPressed == true)
 			{
+				CleanseCooldown = 1800;
 				SoundEngine.PlaySound(SoundID.Item4, Player.Center);
+				for (int i = 0; i < 25; i++)
+				{
+					Vector2 speed = Main.rand.NextVector2Circular(5f, 5f);
+					Dust d = Dust.NewDustDirect(Player.position, Player.width, Player.height, DustID.PurificationPowder, speed.X, speed.Y);
+					d.noGravity = true;
+				}
+
+				bool removedAny = false;
+				for (int i = Player.buffType.Length - 1; i >= 0; i--)
+				{
+					if (SupportEffects.IsCleansableDebuff(Player.buffType[i]))
+					{
+						Player.DelBuff(i);
+						removedAny = true;
+					}
+				}
+				if (removedAny)
+				{
+					CombatText.NewText(Player.getRect(), Color.LightCyan, "Cleansed!");
+				}
+
 				if (Main.netMode == NetmodeID.SinglePlayer)
+				{
 					TryTriggerCleanseServer();
+				}
 				else if (Main.netMode == NetmodeID.MultiplayerClient)
 				{
+					NetMessage.SendData(MessageID.PlayerBuffs, -1, -1, null, Player.whoAmI);
 					ModPacket packet = ModContent.GetInstance<Augments>().GetPacket();
 					packet.Write((byte)AugmentPacketType.CleanseRequest);
 					packet.Send();
