@@ -14,6 +14,22 @@ using ReLogic.Content;
 
 namespace Augments
 {
+	public enum AugmentSortMode
+	{
+		NameAZ,
+		NameZA,
+		RarityHighLow,
+		RarityLowHigh,
+		Class
+	}
+
+	public enum AugmentStatusFilter
+	{
+		All,
+		Equipped,
+		Unequipped
+	}
+
 	// Clean, Terraria-style in-game Augment Codex & Inventory Slot List.
 	// Displays augments in inventory-style slot boxes categorized by tier (Common, Rare, Epic, Legendary),
 	// with an interactive inspector panel on the right showing full detailed info when clicked.
@@ -30,6 +46,17 @@ namespace Augments
 		private string currentTab = "All";
 		private Augment selectedAugment;
 		private readonly List<CodexTabButton> tabButtons = new List<CodexTabButton>();
+
+		private AugmentClass? currentClassFilter = null;
+		private AugmentRarity? currentRarityFilter = null;
+		private AugmentStatusFilter currentStatusFilter = AugmentStatusFilter.All;
+		private AugmentSortMode currentSortMode = AugmentSortMode.NameAZ;
+		private bool isFilterMenuOpen = false;
+
+		private CodexFilterButton classBtn;
+		private CodexFilterButton sortBtn;
+		private CodexFilterButton filterBtn;
+		private AugmentFilterPanel filterPanel;
 
 		private const float PanelWidth = 880f;
 		private const float PanelHeight = 560f;
@@ -69,6 +96,9 @@ namespace Augments
 
 			// Tab Buttons Bar across top
 			CreateTabButtons();
+
+			// Filter & Sort Controls above Detail Panel (Left = 568f, Width = 288f, Top = 38f)
+			CreateFilterBarControls();
 
 			// Left: Grid List Container for Inventory Slot Boxes
 			gridList = new UIList();
@@ -129,12 +159,244 @@ namespace Augments
 			}
 		}
 
+		private static readonly AugmentClass?[] AvailableClasses = new AugmentClass?[]
+		{
+			null,
+			AugmentClass.Universal,
+			AugmentClass.Melee,
+			AugmentClass.Ranged,
+			AugmentClass.Magic,
+			AugmentClass.Summon,
+			AugmentClass.Support
+		};
+
+		private void CreateFilterBarControls()
+		{
+			// 1. Class Button (Left = 568f, Width = 110f)
+			classBtn = new CodexFilterButton(GetClassBtnText());
+			classBtn.Top.Set(38f, 0f);
+			classBtn.Left.Set(568f, 0f);
+			classBtn.Width.Set(110f, 0f);
+			classBtn.Height.Set(26f, 0f);
+			classBtn.Clicked += CycleClassForward;
+			classBtn.RightClicked += CycleClassBackward;
+			backPanel.Append(classBtn);
+
+			// 2. Sort Button (Left = 682f, Width = 110f)
+			sortBtn = new CodexFilterButton(GetSortBtnText());
+			sortBtn.Top.Set(38f, 0f);
+			sortBtn.Left.Set(682f, 0f);
+			sortBtn.Width.Set(110f, 0f);
+			sortBtn.Height.Set(26f, 0f);
+			sortBtn.Clicked += CycleSortForward;
+			sortBtn.RightClicked += CycleSortBackward;
+			backPanel.Append(sortBtn);
+
+			// 3. Filter Button (Left = 796f, Width = 60f)
+			filterBtn = new CodexFilterButton("⚙ Filter");
+			filterBtn.Top.Set(38f, 0f);
+			filterBtn.Left.Set(796f, 0f);
+			filterBtn.Width.Set(60f, 0f);
+			filterBtn.Height.Set(26f, 0f);
+			filterBtn.Clicked += ToggleFilterMenu;
+			backPanel.Append(filterBtn);
+
+			// Floating Filter & Sort Panel
+			filterPanel = new AugmentFilterPanel(this);
+			filterPanel.Left.Set(540f, 0f);
+			filterPanel.Top.Set(68f, 0f);
+			filterPanel.Width.Set(320f, 0f);
+			filterPanel.Height.Set(330f, 0f);
+		}
+
+		private void CycleClassForward()
+		{
+			int idx = Array.IndexOf(AvailableClasses, currentClassFilter);
+			int next = (idx + 1) % AvailableClasses.Length;
+			SetClassFilter(AvailableClasses[next]);
+		}
+
+		private void CycleClassBackward()
+		{
+			int idx = Array.IndexOf(AvailableClasses, currentClassFilter);
+			int prev = (idx - 1 + AvailableClasses.Length) % AvailableClasses.Length;
+			SetClassFilter(AvailableClasses[prev]);
+		}
+
+		public void SetClassFilter(AugmentClass? newClass)
+		{
+			currentClassFilter = newClass;
+			UpdateFilterControlStates();
+			PopulateGrid();
+		}
+
+		private void CycleSortForward()
+		{
+			currentSortMode = (AugmentSortMode)(((int)currentSortMode + 1) % 5);
+			UpdateFilterControlStates();
+			PopulateGrid();
+		}
+
+		private void CycleSortBackward()
+		{
+			currentSortMode = (AugmentSortMode)(((int)currentSortMode - 1 + 5) % 5);
+			UpdateFilterControlStates();
+			PopulateGrid();
+		}
+
+		public void SetSortMode(AugmentSortMode mode)
+		{
+			currentSortMode = mode;
+			UpdateFilterControlStates();
+			PopulateGrid();
+		}
+
+		public void SetRarityFilter(AugmentRarity? rarity)
+		{
+			currentRarityFilter = rarity;
+			currentStatusFilter = AugmentStatusFilter.All;
+			currentTab = rarity.HasValue ? rarity.Value.ToString() : "All";
+			UpdateTabButtons();
+			UpdateFilterControlStates();
+			PopulateGrid();
+		}
+
+		public void SetStatusFilter(AugmentStatusFilter status)
+		{
+			currentStatusFilter = status;
+			if (status == AugmentStatusFilter.Equipped)
+			{
+				currentRarityFilter = null;
+				currentTab = "Equipped";
+			}
+			else if (status == AugmentStatusFilter.All)
+			{
+				currentTab = currentRarityFilter.HasValue ? currentRarityFilter.Value.ToString() : "All";
+			}
+			else
+			{
+				currentTab = "";
+			}
+			UpdateTabButtons();
+			UpdateFilterControlStates();
+			PopulateGrid();
+		}
+
+		public void ResetAllFilters()
+		{
+			currentClassFilter = null;
+			currentRarityFilter = null;
+			currentStatusFilter = AugmentStatusFilter.All;
+			currentSortMode = AugmentSortMode.NameAZ;
+			currentTab = "All";
+			UpdateTabButtons();
+			UpdateFilterControlStates();
+			PopulateGrid();
+		}
+
+		public void ToggleFilterMenu()
+		{
+			isFilterMenuOpen = !isFilterMenuOpen;
+			if (isFilterMenuOpen)
+			{
+				if (!backPanel.HasChild(filterPanel))
+					backPanel.Append(filterPanel);
+				filterPanel.SyncUI();
+			}
+			else
+			{
+				if (backPanel.HasChild(filterPanel))
+					backPanel.RemoveChild(filterPanel);
+			}
+			UpdateFilterControlStates();
+		}
+
+		public void UpdateFilterControlStates()
+		{
+			classBtn?.SetText(GetClassBtnText());
+			sortBtn?.SetText(GetSortBtnText());
+
+			bool isFiltered = currentClassFilter != null || currentRarityFilter != null || currentStatusFilter != AugmentStatusFilter.All;
+			if (filterBtn != null)
+			{
+				filterBtn.IsActiveHighlight = isFiltered || isFilterMenuOpen;
+			}
+
+			if (classBtn != null)
+			{
+				classBtn.IsActiveHighlight = currentClassFilter != null;
+			}
+
+			if (filterPanel != null && isFilterMenuOpen)
+			{
+				filterPanel.SyncUI();
+			}
+		}
+
+		private void UpdateTabButtons()
+		{
+			foreach (var btn in tabButtons)
+			{
+				if (currentStatusFilter == AugmentStatusFilter.Equipped)
+				{
+					btn.IsActive = (btn.TabName == "Equipped");
+				}
+				else if (currentRarityFilter.HasValue)
+				{
+					btn.IsActive = btn.TabName.Equals(currentRarityFilter.Value.ToString(), StringComparison.OrdinalIgnoreCase);
+				}
+				else if (currentStatusFilter == AugmentStatusFilter.All && !currentRarityFilter.HasValue)
+				{
+					btn.IsActive = (btn.TabName == "All");
+				}
+				else
+				{
+					btn.IsActive = false;
+				}
+			}
+		}
+
+		private string GetClassBtnText()
+		{
+			if (currentClassFilter == null)
+				return "Class: All ▾";
+			return $"Class: {currentClassFilter.Value} ▾";
+		}
+
+		private string GetSortBtnText()
+		{
+			return currentSortMode switch
+			{
+				AugmentSortMode.NameAZ => "Sort: A → Z ▾",
+				AugmentSortMode.NameZA => "Sort: Z → A ▾",
+				AugmentSortMode.RarityHighLow => "Sort: Rarity ▼",
+				AugmentSortMode.RarityLowHigh => "Sort: Rarity ▲",
+				AugmentSortMode.Class => "Sort: Class ▾",
+				_ => "Sort: A → Z ▾"
+			};
+		}
+
 		private void SwitchTab(string newTab)
 		{
 			currentTab = newTab;
-			foreach (var btn in tabButtons)
-				btn.IsActive = (btn.TabName == currentTab);
+			if (newTab == "All")
+			{
+				currentRarityFilter = null;
+				currentStatusFilter = AugmentStatusFilter.All;
+			}
+			else if (newTab == "Equipped")
+			{
+				currentRarityFilter = null;
+				currentStatusFilter = AugmentStatusFilter.Equipped;
+			}
+			else if (Enum.TryParse<AugmentRarity>(newTab, true, out var parsedRarity))
+			{
+				currentRarityFilter = parsedRarity;
+				currentStatusFilter = AugmentStatusFilter.All;
+			}
 
+			UpdateTabButtons();
+			UpdateFilterControlStates();
 			PopulateGrid();
 		}
 
@@ -143,6 +405,7 @@ namespace Augments
 			if (gridList == null)
 				return;
 
+			UpdateFilterControlStates();
 			PopulateGrid();
 
 			if (selectedAugment == null)
@@ -162,6 +425,7 @@ namespace Augments
 
 		private void PopulateGrid()
 		{
+			float prevScroll = gridScrollbar?.ViewPosition ?? 0f;
 			gridList.Clear();
 			AugmentListEntry.HoveredAugment = null;
 
@@ -174,31 +438,46 @@ namespace Augments
 				if (aug.Id == "debug_full_crit")
 					continue;
 
-				if (currentTab == "Equipped")
-				{
-					if (ap.HasAugment(aug.Id))
-						filtered.Add(aug);
-				}
-				else if (currentTab == "All")
-				{
-					filtered.Add(aug);
-				}
-				else if (aug.Rarity.ToString().Equals(currentTab, StringComparison.OrdinalIgnoreCase))
-				{
-					filtered.Add(aug);
-				}
+				// Status filter (Equipped / Unequipped)
+				if (currentStatusFilter == AugmentStatusFilter.Equipped && !ap.HasAugment(aug.Id))
+					continue;
+				if (currentStatusFilter == AugmentStatusFilter.Unequipped && ap.HasAugment(aug.Id))
+					continue;
+
+				// Rarity filter
+				if (currentRarityFilter.HasValue && aug.Rarity != currentRarityFilter.Value)
+					continue;
+
+				// Class filter
+				if (currentClassFilter.HasValue && aug.Class != currentClassFilter.Value)
+					continue;
+
+				filtered.Add(aug);
 			}
 
-			// Sort by Rarity (Legendary -> Epic -> Rare -> Common) then Name
+			// Sort
 			filtered.Sort((a, b) =>
 			{
-				int rarityCompare = b.Rarity.CompareTo(a.Rarity);
-				return rarityCompare != 0 ? rarityCompare : string.Compare(a.DisplayName, b.DisplayName, StringComparison.Ordinal);
+				return currentSortMode switch
+				{
+					AugmentSortMode.NameAZ => string.Compare(a.DisplayName, b.DisplayName, StringComparison.OrdinalIgnoreCase),
+					AugmentSortMode.NameZA => string.Compare(b.DisplayName, a.DisplayName, StringComparison.OrdinalIgnoreCase),
+					AugmentSortMode.RarityHighLow => b.Rarity.CompareTo(a.Rarity) != 0
+						? b.Rarity.CompareTo(a.Rarity)
+						: string.Compare(a.DisplayName, b.DisplayName, StringComparison.OrdinalIgnoreCase),
+					AugmentSortMode.RarityLowHigh => a.Rarity.CompareTo(b.Rarity) != 0
+						? a.Rarity.CompareTo(b.Rarity)
+						: string.Compare(a.DisplayName, b.DisplayName, StringComparison.OrdinalIgnoreCase),
+					AugmentSortMode.Class => a.Class.CompareTo(b.Class) != 0
+						? a.Class.CompareTo(b.Class)
+						: string.Compare(a.DisplayName, b.DisplayName, StringComparison.OrdinalIgnoreCase),
+					_ => string.Compare(a.DisplayName, b.DisplayName, StringComparison.OrdinalIgnoreCase)
+				};
 			});
 
 			if (filtered.Count == 0)
 			{
-				var emptyText = new UIText("No augments found in this tier.", 0.9f)
+				var emptyText = new UIText("No augments match the current filters.", 0.9f)
 				{
 					HAlign = 0.5f
 				};
@@ -237,6 +516,9 @@ namespace Augments
 				if (slotIndexInRow >= SlotsPerRow)
 					slotIndexInRow = 0;
 			}
+
+			if (gridScrollbar != null)
+				gridScrollbar.ViewPosition = prevScroll;
 		}
 
 		private void SelectAugment(Augment augment)
@@ -648,6 +930,309 @@ namespace Augments
 			{
 				base.MouseOut(evt);
 				BackgroundColor = IdleColor;
+			}
+		}
+
+		// Reusable interactive button/pill for filter bar and popup chips
+		private class CodexFilterButton : UIPanel
+		{
+			public readonly UIText Label;
+			public event Action Clicked;
+			public event Action RightClicked;
+			private bool isHovered;
+			public bool IsActiveHighlight { get; set; }
+			public Color CustomActiveBg { get; set; } = new Color(38, 54, 105);
+			public Color CustomActiveBorder { get; set; } = new Color(255, 215, 75);
+
+			public CodexFilterButton(string initialText, float textScale = 0.72f)
+			{
+				SetPadding(0f);
+				BackgroundColor = new Color(20, 28, 54);
+				BorderColor = new Color(45, 60, 105);
+
+				Label = new UIText(initialText, textScale)
+				{
+					HAlign = 0.5f,
+					VAlign = 0.5f
+				};
+				Append(Label);
+			}
+
+			public void SetText(string text)
+			{
+				Label.SetText(text);
+			}
+
+			public void SetTextColor(Color color)
+			{
+				Label.TextColor = color;
+			}
+
+			public override void MouseOver(UIMouseEvent evt)
+			{
+				base.MouseOver(evt);
+				isHovered = true;
+				SoundEngine.PlaySound(SoundID.MenuTick);
+			}
+
+			public override void MouseOut(UIMouseEvent evt)
+			{
+				base.MouseOut(evt);
+				isHovered = false;
+			}
+
+			public override void LeftClick(UIMouseEvent evt)
+			{
+				base.LeftClick(evt);
+				SoundEngine.PlaySound(SoundID.MenuTick);
+				Clicked?.Invoke();
+			}
+
+			public override void RightClick(UIMouseEvent evt)
+			{
+				base.RightClick(evt);
+				SoundEngine.PlaySound(SoundID.MenuTick);
+				RightClicked?.Invoke();
+			}
+
+			protected override void DrawSelf(SpriteBatch spriteBatch)
+			{
+				if (IsActiveHighlight)
+				{
+					BackgroundColor = isHovered ? Color.Lerp(CustomActiveBg, Color.White, 0.2f) : CustomActiveBg;
+					BorderColor = CustomActiveBorder;
+				}
+				else
+				{
+					BackgroundColor = isHovered ? new Color(34, 46, 88) : new Color(20, 28, 54);
+					BorderColor = isHovered ? Color.White * 0.7f : new Color(45, 60, 105);
+				}
+
+				base.DrawSelf(spriteBatch);
+			}
+		}
+
+		// Floating filter & sort modal panel
+		private class AugmentFilterPanel : UIPanel
+		{
+			private readonly AugmentListUIState state;
+			private readonly List<(AugmentClass? cls, CodexFilterButton btn)> classButtons = new();
+			private readonly List<(AugmentRarity? rar, CodexFilterButton btn)> rarityButtons = new();
+			private readonly List<(AugmentSortMode sort, CodexFilterButton btn)> sortButtons = new();
+			private readonly List<(AugmentStatusFilter status, CodexFilterButton btn)> statusButtons = new();
+
+			public AugmentFilterPanel(AugmentListUIState state)
+			{
+				this.state = state;
+				SetPadding(8f);
+				BackgroundColor = new Color(14, 18, 38) * 0.98f;
+				BorderColor = new Color(255, 215, 75);
+
+				// Title
+				UIText title = new UIText("Codex Filters & Sorting", 0.85f)
+				{
+					TextColor = Color.Gold,
+					Top = { Pixels = 2f },
+					Left = { Pixels = 4f }
+				};
+				Append(title);
+
+				// Close button [X]
+				var closeBtn = new CloseButton();
+				closeBtn.Width.Set(20f, 0f);
+				closeBtn.Height.Set(20f, 0f);
+				closeBtn.HAlign = 1f;
+				closeBtn.Top.Set(2f, 0f);
+				closeBtn.Left.Set(-2f, 0f);
+				closeBtn.Clicked += state.ToggleFilterMenu;
+				Append(closeBtn);
+
+				float curY = 28f;
+
+				// 1. CLASS FILTER
+				AddSectionLabel("CLASS FILTER", curY);
+				curY += 16f;
+
+				(AugmentClass? cls, string name, float w)[] classDefsRow1 = {
+					(null, "All", 68f),
+					(AugmentClass.Universal, "Universal", 76f),
+					(AugmentClass.Melee, "Melee", 72f),
+					(AugmentClass.Ranged, "Ranged", 74f)
+				};
+				float rowX = 4f;
+				foreach (var def in classDefsRow1)
+				{
+					var btn = CreatePill(def.name, def.w, 22f, rowX, curY);
+					btn.Clicked += () => state.SetClassFilter(def.cls);
+					classButtons.Add((def.cls, btn));
+					rowX += def.w + 4f;
+				}
+				curY += 25f;
+
+				(AugmentClass? cls, string name, float w)[] classDefsRow2 = {
+					(AugmentClass.Magic, "Magic", 94f),
+					(AugmentClass.Summon, "Summon", 98f),
+					(AugmentClass.Support, "Support", 98f)
+				};
+				rowX = 4f;
+				foreach (var def in classDefsRow2)
+				{
+					var btn = CreatePill(def.name, def.w, 22f, rowX, curY);
+					btn.Clicked += () => state.SetClassFilter(def.cls);
+					classButtons.Add((def.cls, btn));
+					rowX += def.w + 6f;
+				}
+				curY += 30f;
+
+				// 2. RARITY TIER
+				AddSectionLabel("RARITY TIER", curY);
+				curY += 16f;
+
+				(AugmentRarity? rar, string name, float w)[] rarityDefs = {
+					(null, "All", 52f),
+					(AugmentRarity.Common, "Common", 64f),
+					(AugmentRarity.Rare, "Rare", 54f),
+					(AugmentRarity.Epic, "Epic", 54f),
+					(AugmentRarity.Legendary, "Legendary", 70f)
+				};
+				rowX = 4f;
+				foreach (var def in rarityDefs)
+				{
+					var btn = CreatePill(def.name, def.w, 22f, rowX, curY);
+					if (def.rar.HasValue)
+					{
+						Color rColor = AugmentListEntry.RarityColor(def.rar.Value);
+						if (def.rar.Value == AugmentRarity.Common) rColor = new Color(225, 230, 240);
+						btn.CustomActiveBorder = rColor;
+					}
+					btn.Clicked += () => state.SetRarityFilter(def.rar);
+					rarityButtons.Add((def.rar, btn));
+					rowX += def.w + 2f;
+				}
+				curY += 30f;
+
+				// 3. SORT ORDER
+				AddSectionLabel("SORT BY", curY);
+				curY += 16f;
+
+				(AugmentSortMode sort, string name, float w)[] sortDefsRow1 = {
+					(AugmentSortMode.NameAZ, "A → Z", 96f),
+					(AugmentSortMode.NameZA, "Z → A", 96f),
+					(AugmentSortMode.Class, "Class", 98f)
+				};
+				rowX = 4f;
+				foreach (var def in sortDefsRow1)
+				{
+					var btn = CreatePill(def.name, def.w, 22f, rowX, curY);
+					btn.Clicked += () => state.SetSortMode(def.sort);
+					sortButtons.Add((def.sort, btn));
+					rowX += def.w + 6f;
+				}
+				curY += 25f;
+
+				(AugmentSortMode sort, string name, float w)[] sortDefsRow2 = {
+					(AugmentSortMode.RarityHighLow, "Rarity ▼ (High)", 146f),
+					(AugmentSortMode.RarityLowHigh, "Rarity ▲ (Low)", 146f)
+				};
+				rowX = 4f;
+				foreach (var def in sortDefsRow2)
+				{
+					var btn = CreatePill(def.name, def.w, 22f, rowX, curY);
+					btn.Clicked += () => state.SetSortMode(def.sort);
+					sortButtons.Add((def.sort, btn));
+					rowX += def.w + 10f;
+				}
+				curY += 30f;
+
+				// 4. STATUS
+				AddSectionLabel("STATUS", curY);
+				curY += 16f;
+
+				(AugmentStatusFilter st, string name, float w)[] statusDefs = {
+					(AugmentStatusFilter.All, "All", 86f),
+					(AugmentStatusFilter.Equipped, "Equipped Only", 110f),
+					(AugmentStatusFilter.Unequipped, "Unequipped", 98f)
+				};
+				rowX = 4f;
+				foreach (var def in statusDefs)
+				{
+					var btn = CreatePill(def.name, def.w, 22f, rowX, curY);
+					btn.Clicked += () => state.SetStatusFilter(def.st);
+					statusButtons.Add((def.st, btn));
+					rowX += def.w + 4f;
+				}
+				curY += 32f;
+
+				// Bottom Action Buttons
+				var resetBtn = new CodexFilterButton("Reset All", 0.75f);
+				resetBtn.Width.Set(146f, 0f);
+				resetBtn.Height.Set(24f, 0f);
+				resetBtn.Left.Set(4f, 0f);
+				resetBtn.Top.Set(curY, 0f);
+				resetBtn.BackgroundColor = new Color(60, 25, 35);
+				resetBtn.BorderColor = new Color(180, 70, 80);
+				resetBtn.Clicked += state.ResetAllFilters;
+				Append(resetBtn);
+
+				var closeApplyBtn = new CodexFilterButton("Close / Apply", 0.75f);
+				closeApplyBtn.Width.Set(146f, 0f);
+				closeApplyBtn.Height.Set(24f, 0f);
+				closeApplyBtn.Left.Set(156f, 0f);
+				closeApplyBtn.Top.Set(curY, 0f);
+				closeApplyBtn.BackgroundColor = new Color(25, 60, 40);
+				closeApplyBtn.BorderColor = new Color(60, 160, 90);
+				closeApplyBtn.Clicked += state.ToggleFilterMenu;
+				Append(closeApplyBtn);
+			}
+
+			private void AddSectionLabel(string text, float y)
+			{
+				UIText label = new UIText(text, 0.72f)
+				{
+					TextColor = new Color(180, 190, 210),
+					Top = { Pixels = y },
+					Left = { Pixels = 4f }
+				};
+				Append(label);
+			}
+
+			private CodexFilterButton CreatePill(string text, float width, float height, float x, float y)
+			{
+				var btn = new CodexFilterButton(text, 0.70f);
+				btn.Width.Set(width, 0f);
+				btn.Height.Set(height, 0f);
+				btn.Left.Set(x, 0f);
+				btn.Top.Set(y, 0f);
+				Append(btn);
+				return btn;
+			}
+
+			public void SyncUI()
+			{
+				foreach (var (cls, btn) in classButtons)
+				{
+					btn.IsActiveHighlight = (cls == state.currentClassFilter);
+				}
+
+				foreach (var (rar, btn) in rarityButtons)
+				{
+					btn.IsActiveHighlight = (rar == state.currentRarityFilter);
+				}
+
+				foreach (var (sort, btn) in sortButtons)
+				{
+					btn.IsActiveHighlight = (sort == state.currentSortMode);
+				}
+
+				foreach (var (status, btn) in statusButtons)
+				{
+					btn.IsActiveHighlight = (status == state.currentStatusFilter);
+				}
+			}
+
+			public override void LeftClick(UIMouseEvent evt)
+			{
+				base.LeftClick(evt);
 			}
 		}
 	}
