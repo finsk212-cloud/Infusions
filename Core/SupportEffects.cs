@@ -1,6 +1,7 @@
 using System;
 using Microsoft.Xna.Framework;
 using Terraria;
+using Terraria.Audio;
 using Terraria.ID;
 using Terraria.ModLoader;
 
@@ -126,6 +127,39 @@ namespace Augments
 			Player target = Main.player[whoAmI];
 			if (target.active)
 				target.GetModPlayer<AugmentPlayer>().TryConsumeLifelineServer();
+		}
+
+		public static void HandleSoulMartyrTrigger(int sourcePlayerIndex, byte martyrIndex, int damage)
+		{
+			if (Main.netMode != NetmodeID.Server || martyrIndex >= Main.maxPlayers)
+				return;
+
+			Player martyr = Main.player[martyrIndex];
+			if (!martyr.active || martyr.dead || !martyr.GetModPlayer<AugmentPlayer>().HasAugment("soul_martyr"))
+				return;
+
+			// Server applies damage to martyr, clamped so they never drop below 1 HP
+			martyr.statLife = Math.Max(1, martyr.statLife - damage);
+			NetMessage.SendData(MessageID.PlayerLifeMana, -1, -1, null, martyr.whoAmI);
+
+			// Notify martyr's client so it updates local statLife and triggers invulnerability
+			ModPacket packet = ModContent.GetInstance<Augments>().GetPacket();
+			packet.Write((byte)AugmentPacketType.SoulMartyrDamage);
+			packet.Write(damage);
+			packet.Send(martyr.whoAmI);
+		}
+
+		public static void HandleSoulMartyrDamage(int damage)
+		{
+			if (Main.netMode != NetmodeID.MultiplayerClient)
+				return;
+
+			Player player = Main.LocalPlayer;
+			player.statLife = Math.Max(1, player.statLife - damage);
+			player.immune = true;
+			player.immuneTime = 40;
+			SoundEngine.PlaySound(SoundID.Item29, player.Center);
+			NetMessage.SendData(MessageID.PlayerLifeMana, -1, -1, null, player.whoAmI);
 		}
 
 		public static void HandleUndyingBondRequest(int whoAmI)

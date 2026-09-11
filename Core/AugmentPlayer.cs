@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -303,6 +304,7 @@ namespace Augments
 		private bool lifelineProtectionAuthorized;
 		private bool undyingBondRedirectSent;
 		private int undyingBondRequestTimer;
+		private bool undyingBondNeedsTeleport;
 		private int mendingAuraHealTimer;
 		private int vitalEchoLastLife = -1;
 		private int vitalEchoDefenseTicks;
@@ -478,6 +480,23 @@ namespace Augments
 				a.OnUpdate(Player);
 
 			UpdateSupportAuthorityState();
+
+			if (undyingBondNeedsTeleport && Player.whoAmI == Main.myPlayer)
+			{
+				undyingBondNeedsTeleport = false;
+				if (SupportEffects.TryFindSupportOwner(Player, "undying_bond", -1f, out Player owner))
+				{
+					Vector2 targetPos = new Vector2(owner.Center.X - Player.width / 2f, owner.Center.Y - Player.height / 2f);
+					Player.Teleport(targetPos, 1);
+					Player.velocity = Vector2.Zero;
+					SoundEngine.PlaySound(SoundID.Item6, Player.Center);
+
+					if (Main.netMode == NetmodeID.MultiplayerClient)
+					{
+						NetMessage.SendData(MessageID.TeleportEntity, -1, -1, null, 0, Player.whoAmI, targetPos.X, targetPos.Y, 1);
+					}
+				}
+			}
 
 			// Keep the Support Class buff active while any Support augment is owned.
 			// Short duration refreshed every tick — expires within 3 frames if removed.
@@ -713,12 +732,14 @@ namespace Augments
 				!SupportEffects.TryFindSupportOwner(Player, "lifeline", AuraRadius, out Player owner))
 				return false;
 
-			ModContent.GetInstance<Augments>().Logger.Info($"Undying Bond found support owner={owner.name}");
+			ModContent.GetInstance<Augments>().Logger.Info($"Lifeline found support owner={owner.name}");
 			LifelineCooldown = 5400;
 			lifelineInvulnTicks = 120;
 			lifelineProtectionAuthorized = false;
 			Player.dead = false;
 			Player.statLife = 1;
+			Player.immune = true;
+			Player.immuneTime = 120;
 			Player.AddBuff(ModContent.BuffType<LifelineCooldownBuff>(), 5400);
 
 			if (Main.netMode == NetmodeID.Server)
@@ -728,7 +749,7 @@ namespace Augments
 				AugmentNet.SendSyncPlayer(Player);
 			}
 
-			ModContent.GetInstance<Augments>().Logger.Info($"Undying Bond consumed and saved target={Player.name}");
+			ModContent.GetInstance<Augments>().Logger.Info($"Lifeline consumed and saved target={Player.name}");
 			return true;
 		}
 
@@ -1120,10 +1141,40 @@ namespace Augments
 			}
 		}
 
-		// Lifeline: fires on the dying player's own client the moment HP hits 0.
+		// Soul Martyr & Lifeline: fires on the dying player's own client the moment HP hits 0.
 		// Returning false prevents death; returning true allows it.
 		public override bool PreKill(double damage, int hitDirection, bool pvp, ref bool playSound, ref bool genGore, ref PlayerDeathReason damageSource)
 		{
+			// Soul Martyr: Teammates inside your aura cannot die. Any lethal damage they take is absorbed and transferred to you instead (cannot drop you below 1 HP).
+			if (SupportEffects.TryFindSupportOwner(Player, "soul_martyr", AuraRadius, out Player martyrOwner))
+			{
+				Player.statLife = 1;
+				Player.immune = true;
+				Player.immuneTime = 60;
+				SoundEngine.PlaySound(SoundID.Item29, Player.Center);
+
+				int dmg = (int)damage;
+				if (dmg <= 0)
+					dmg = 1;
+
+				if (Main.netMode == NetmodeID.SinglePlayer)
+				{
+					martyrOwner.statLife = Math.Max(1, martyrOwner.statLife - dmg);
+					martyrOwner.immune = true;
+					martyrOwner.immuneTime = 40;
+					SoundEngine.PlaySound(SoundID.Item29, martyrOwner.Center);
+				}
+				else if (Main.netMode == NetmodeID.MultiplayerClient)
+				{
+					ModPacket packet = ModContent.GetInstance<Augments>().GetPacket();
+					packet.Write((byte)AugmentPacketType.SoulMartyrTrigger);
+					packet.Write((byte)martyrOwner.whoAmI);
+					packet.Write(dmg);
+					packet.Send();
+				}
+				return false;
+			}
+
 			if (LifelineCooldown > 0 || !lifelineProtectionAuthorized)
 				return true;
 
@@ -1136,31 +1187,24 @@ namespace Augments
 				LifelineCooldown = 5400;
 				lifelineInvulnTicks = 120;
 				Player.statLife = 1;
+				Player.immune = true;
+				Player.immuneTime = 120;
 				Player.AddBuff(ModContent.BuffType<LifelineCooldownBuff>(), 5400);
 				SoundEngine.PlaySound(SoundID.Item29, Player.Center);
-				Main.NewText("✦ [Lifeline] Fatal damage prevented! (90s cooldown) ✦", Color.Gold);
 				return false;
 			}
 
 			return !TryConsumeLifelineServer();
 		}
 
-		// Undying Bond: when the player respawns, redirect directly to the living Support ally.
+		// Undying Bond: when the player respawns, flag for teleport to the living Support ally.
+		// Vanilla Player.Spawn() runs PlayerLoader.OnRespawn() BEFORE resetting position to world spawn,
+		// so we defer the actual teleport to the first PostUpdate() tick to ensure it sticks.
 		public override void OnRespawn()
 		{
-			if (SupportEffects.TryFindSupportOwner(Player, "undying_bond", -1f, out Player owner))
+			if (SupportEffects.TryFindSupportOwner(Player, "undying_bond", -1f, out _))
 			{
-				Vector2 targetPos = new Vector2(owner.Center.X - Player.width / 2f, owner.Center.Y - Player.height / 2f);
-				Player.Teleport(targetPos, 1);
-				Player.velocity = Vector2.Zero;
-				SoundEngine.PlaySound(SoundID.Item6, Player.Center);
-
-				if (Main.netMode == NetmodeID.MultiplayerClient)
-				{
-					NetMessage.SendData(MessageID.TeleportEntity, -1, -1, null, 0, Player.whoAmI, targetPos.X, targetPos.Y, 1);
-				}
-
-				Main.NewText($"✦ [Undying Bond] Respawned next to {owner.name}! ✦", Color.Cyan);
+				undyingBondNeedsTeleport = true;
 			}
 		}
 
@@ -1222,6 +1266,7 @@ namespace Augments
 
 		public override void Kill(double damage, int hitDirection, bool pvp, PlayerDeathReason damageSource)
 		{
+			undyingBondNeedsTeleport = false;
 			undyingBondRedirectSent = false;
 			undyingBondRequestTimer = 0;
 			mendingAuraHealTimer = 0;

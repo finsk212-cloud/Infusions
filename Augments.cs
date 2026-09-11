@@ -14,6 +14,8 @@ namespace Augments
 		BossDamageParticipation,  // client → server: "I damaged boss type X this fight"
 		SupportHealVisual,
 		LifelineTrigger,
+		SoulMartyrTrigger,
+		SoulMartyrDamage,
 		UndyingBondRequest,
 		UndyingBondRedirect,
 		OpenRewardChoices,
@@ -112,6 +114,14 @@ namespace Augments
 
 				case AugmentPacketType.LifelineTrigger:
 					SupportEffects.HandleLifelineRequest(whoAmI);
+					break;
+
+				case AugmentPacketType.SoulMartyrTrigger:
+					SupportEffects.HandleSoulMartyrTrigger(whoAmI, reader.ReadByte(), reader.ReadInt32());
+					break;
+
+				case AugmentPacketType.SoulMartyrDamage:
+					SupportEffects.HandleSoulMartyrDamage(reader.ReadInt32());
 					break;
 
 				case AugmentPacketType.UndyingBondRequest:

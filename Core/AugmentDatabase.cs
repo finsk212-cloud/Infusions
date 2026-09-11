@@ -122,6 +122,7 @@ namespace Augments
             Register(new LastRitesAugment());
             Register(new LifelineAugment());
             Register(new UndyingBondAugment());
+            Register(new SoulMartyrAugment());
             Register(new RevitalizingWaveAugment());
             Register(new TauntAugment());
             Register(new CleanseAugment());
