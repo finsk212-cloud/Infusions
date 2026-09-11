@@ -171,6 +171,28 @@ namespace Augments
 			owner.GetModPlayer<AugmentPlayer>().TryTriggerCleanseServer();
 		}
 
+		public static void HandleMediGunHealRequest(int senderWhoAmI, byte targetPlayerIndex, int healAmount)
+		{
+			if (Main.netMode != NetmodeID.Server || senderWhoAmI < 0 || senderWhoAmI >= Main.maxPlayers || targetPlayerIndex >= Main.maxPlayers)
+				return;
+
+			Player sender = Main.player[senderWhoAmI];
+			Player target = Main.player[targetPlayerIndex];
+
+			if (!sender.active || sender.dead || !target.active || target.dead)
+				return;
+
+			if (!AreAllies(sender, target))
+				return;
+
+			// Range check (~850f safety buffer against slight latency)
+			if (Vector2.DistanceSquared(sender.Center, target.Center) > 850f * 850f)
+				return;
+
+			int clampedHeal = Math.Clamp(healAmount, 1, 50);
+			ServerHealPlayer(target, clampedHeal);
+		}
+
 		public static void HandleLifelineRequest(int whoAmI)
 		{
 			if (Main.netMode != NetmodeID.Server || whoAmI < 0 || whoAmI >= Main.maxPlayers)

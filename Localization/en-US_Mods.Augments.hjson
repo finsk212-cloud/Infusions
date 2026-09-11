@@ -32,6 +32,16 @@ Items: {
 		DisplayName: Infusion Essence
 		Tooltip: Used to buy or re-acquire Infusions from the vendor.
 	}
+
+	MediGunItem: {
+		DisplayName: Medi Gun
+		Tooltip:
+			'''
+			Hold to lock onto a nearby teammate and channel a healing beam
+			Heals 5 HP every half-second pulse
+			Tether breaks if line of sight is obstructed or distance exceeds range
+			'''
+	}
 }
 
 Buffs: {
@@ -68,4 +78,5 @@ Projectiles: {
 	EldritchEyeProjectile.DisplayName: Eldritch Eye Projectile
 	EldritchLaserProjectile.DisplayName: Eldritch Laser Projectile
 	WarGodShockwaveProjectile.DisplayName: War God Shockwave Projectile
+	MediGunBeamProjectile.DisplayName: Medi Gun Beam
 }

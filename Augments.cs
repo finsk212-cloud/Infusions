@@ -12,6 +12,7 @@ namespace Augments
 		RevitalizingWaveRequest,
 		CleanseRequest,
 		CleanseClearDebuffs,
+		MediGunHealRequest,
 		BossDamageParticipation,  // client → server: "I damaged boss type X this fight"
 		SupportHealVisual,
 		LifelineTrigger,
@@ -111,6 +112,10 @@ namespace Augments
 
 				case AugmentPacketType.CleanseClearDebuffs:
 					SupportEffects.HandleCleanseClearDebuffs();
+					break;
+
+				case AugmentPacketType.MediGunHealRequest:
+					SupportEffects.HandleMediGunHealRequest(whoAmI, reader.ReadByte(), reader.ReadInt32());
 					break;
 
 				case AugmentPacketType.SupportHealVisual:
