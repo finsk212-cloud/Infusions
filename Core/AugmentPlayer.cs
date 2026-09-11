@@ -1133,11 +1133,35 @@ namespace Augments
 				packet.Write((byte)AugmentPacketType.LifelineTrigger);
 				packet.Send();
 				lifelineProtectionAuthorized = false;
+				LifelineCooldown = 5400;
+				lifelineInvulnTicks = 120;
 				Player.statLife = 1;
+				Player.AddBuff(ModContent.BuffType<LifelineCooldownBuff>(), 5400);
+				SoundEngine.PlaySound(SoundID.Item29, Player.Center);
+				Main.NewText("✦ [Lifeline] Fatal damage prevented! (90s cooldown) ✦", Color.Gold);
 				return false;
 			}
 
 			return !TryConsumeLifelineServer();
+		}
+
+		// Undying Bond: when the player respawns, redirect directly to the living Support ally.
+		public override void OnRespawn()
+		{
+			if (SupportEffects.TryFindSupportOwner(Player, "undying_bond", -1f, out Player owner))
+			{
+				Vector2 targetPos = new Vector2(owner.Center.X - Player.width / 2f, owner.Center.Y - Player.height / 2f);
+				Player.Teleport(targetPos, 1);
+				Player.velocity = Vector2.Zero;
+				SoundEngine.PlaySound(SoundID.Item6, Player.Center);
+
+				if (Main.netMode == NetmodeID.MultiplayerClient)
+				{
+					NetMessage.SendData(MessageID.TeleportEntity, -1, -1, null, 0, Player.whoAmI, targetPos.X, targetPos.Y, 1);
+				}
+
+				Main.NewText($"✦ [Undying Bond] Respawned next to {owner.name}! ✦", Color.Cyan);
+			}
 		}
 
 		// Undying Bond: fires every tick while the local player is dead.
