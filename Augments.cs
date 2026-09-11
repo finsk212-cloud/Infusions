@@ -9,6 +9,7 @@ namespace Augments
 	{
 		SoulLinkRequest,
 		RevitalizingWaveVisual,
+		RevitalizingWaveRequest,
 		CleanseRequest,
 		BossDamageParticipation,  // client → server: "I damaged boss type X this fight"
 		SupportHealVisual,
@@ -95,6 +96,10 @@ namespace Augments
 
 				case AugmentPacketType.RevitalizingWaveVisual:
 					SupportEffects.HandleRevitalizingWaveVisual(reader.ReadByte());
+					break;
+
+				case AugmentPacketType.RevitalizingWaveRequest:
+					SupportEffects.HandleRevitalizingWaveRequest(whoAmI);
 					break;
 
 				case AugmentPacketType.CleanseRequest:

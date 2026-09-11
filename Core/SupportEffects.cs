@@ -158,6 +158,20 @@ namespace Augments
 			packet.Send(target.whoAmI);
 		}
 
+		public static void HandleRevitalizingWaveRequest(int whoAmI)
+		{
+			if (!TryGetRequestOwner(whoAmI, "revitalizing_wave", out Player owner))
+				return;
+
+			BroadcastRevitalizingWaveVisual(owner);
+
+			foreach (Player target in Main.player)
+			{
+				if (IsAllyInRange(owner, target, AuraRadius))
+					ServerHealPlayer(target, 25);
+			}
+		}
+
 		public static void HandleRevitalizingWaveVisual(int ownerIndex)
 		{
 			if (Main.netMode == NetmodeID.MultiplayerClient && ownerIndex >= 0 && ownerIndex < Main.maxPlayers)
@@ -166,8 +180,26 @@ namespace Augments
 
 		public static void HandleHealVisual(int targetIndex, int amount)
 		{
-			if (Main.netMode == NetmodeID.MultiplayerClient && targetIndex >= 0 && targetIndex < Main.maxPlayers && amount > 0)
-				Main.player[targetIndex].HealEffect(amount, false);
+			if (Main.netMode != NetmodeID.MultiplayerClient || targetIndex < 0 || targetIndex >= Main.maxPlayers || amount <= 0)
+				return;
+
+			Player player = Main.player[targetIndex];
+			if (!player.active || player.dead)
+				return;
+
+			// Floating combat text for all nearby clients
+			player.HealEffect(amount, false);
+
+			// If this client is the target being healed, we MUST update our own local statLife!
+			// In vanilla Terraria, a client's own statLife is client-authoritative and ignores
+			// incoming PlayerLifeMana (packet 16) from the server when whoAmI == Main.myPlayer.
+			// Without this local update, the client would report their old HP on next sync,
+			// causing the heal to rubberband backwards.
+			if (targetIndex == Main.myPlayer)
+			{
+				player.statLife = Math.Min(player.statLifeMax2, player.statLife + amount);
+				NetMessage.SendData(MessageID.PlayerLifeMana, -1, -1, null, Main.myPlayer);
+			}
 		}
 
 		public static void HandleUndyingBondRedirect(int spawnX, int spawnY)

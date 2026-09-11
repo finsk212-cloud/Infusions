@@ -544,29 +544,29 @@ namespace Augments
 
 				if (RevitalizingWaveTimer == 0)
 				{
-					bool healedAny = false;
-					foreach (Player target in Main.player)
-					{
-						if (!SupportEffects.IsAllyInRange(Player, target, SupportEffects.AuraRadius))
-							continue;
-
-						int healed = SupportEffects.ServerHealPlayer(target, 25);
-						if (healed > 0)
-							healedAny = true;
-					}
-
-					if (healedAny)
+					if (Player.whoAmI == Main.myPlayer)
 					{
 						RevitalizingWaveTimer = 1200;
-						if (Main.netMode == NetmodeID.Server)
+						RevitalizingWaveAugment.SpawnBurst(Player);
+
+						if (Main.netMode == NetmodeID.SinglePlayer)
 						{
-							SupportEffects.BroadcastRevitalizingWaveVisual(Player);
-							AugmentNet.SendSyncPlayer(Player);
+							foreach (Player target in Main.player)
+							{
+								if (SupportEffects.IsAllyInRange(Player, target, SupportEffects.AuraRadius))
+									SupportEffects.ServerHealPlayer(target, 25);
+							}
 						}
-						else
+						else if (Main.netMode == NetmodeID.MultiplayerClient)
 						{
-							RevitalizingWaveAugment.SpawnBurst(Player);
+							ModPacket packet = ModContent.GetInstance<Augments>().GetPacket();
+							packet.Write((byte)AugmentPacketType.RevitalizingWaveRequest);
+							packet.Send();
 						}
+					}
+					else if (Main.netMode == NetmodeID.Server)
+					{
+						RevitalizingWaveTimer = 1200;
 					}
 				}
 			}
