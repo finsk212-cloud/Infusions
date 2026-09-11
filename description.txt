@@ -1,4 +1,4 @@
-[b]Infusions[/b] is a progression-focused Terraria mod that adds permanent character upgrades earned by defeating bosses.
+[b]Automata: Plug-in Chips[/b] is a progression-focused Terraria mod that adds permanent character upgrades earned by defeating bosses.
 
 Instead of bosses only dropping items, this mod gives you a choice between several powerful infusions after a boss kill. Each infusion becomes a permanent part of your character for that playthrough, changing how you fight, survive, and build your character over time.
 
