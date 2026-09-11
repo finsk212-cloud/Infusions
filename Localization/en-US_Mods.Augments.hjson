@@ -23,6 +23,8 @@ NPCs: {
 			Princess_LovesNPC: I like {NPCName}.
 		}
 	}
+
+	TestDummyNPC.DisplayName: Test Dummy N P C
 }
 
 Items: {

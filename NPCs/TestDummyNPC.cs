@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using Terraria;
 using Terraria.Audio;
 using Terraria.ID;
@@ -22,12 +22,12 @@ namespace Augments
 
 		public override void SetDefaults()
 		{
-			NPC.width = 32;
-			NPC.height = 48;
+			NPC.width = 28;
+			NPC.height = 40;
 			NPC.damage = 0;
 			NPC.defense = 0;
-			NPC.lifeMax = 1000000;
-			NPC.life = 1000000;
+			NPC.lifeMax = 10000000;
+			NPC.life = 10000000;
 			NPC.HitSound = SoundID.NPCHit15;
 			NPC.DeathSound = SoundID.NPCDeath1;
 			NPC.knockBackResist = 0f;
@@ -37,6 +37,8 @@ namespace Augments
 			NPC.immortal = false;
 			NPC.dontTakeDamage = false;
 			NPC.chaseable = true;
+			NPC.friendly = false;
+			NPC.townNPC = false;
 		}
 
 		public override bool CheckActive()
@@ -53,24 +55,9 @@ namespace Augments
 			}
 		}
 
-		public override bool CanChat()
-		{
-			return true;
-		}
-
-		public override void SetChatButtons(ref string button, ref string button2)
-		{
-			button = "Remove Dummy";
-		}
-
-		public override void OnChatButtonClicked(bool firstButton, ref string shopName)
-		{
-			if (firstButton)
-			{
-				NPC.active = false;
-				SoundEngine.PlaySound(SoundID.NPCDeath1, NPC.Center);
-				Main.NewText("Target Dummy removed.", Color.Orange);
-			}
-		}
+		public override bool? CanBeHitByItem(Player player, Item item) => true;
+		public override bool? CanBeHitByProjectile(Projectile projectile) => true;
+		public override bool CanBeHitByNPC(NPC attacker) => true;
+		public override bool CanHitPlayer(Player target, ref int cooldownSlot) => false;
 	}
 }

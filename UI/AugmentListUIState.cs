@@ -113,7 +113,7 @@ namespace Augments
 
 			devBadge = new DevBadgeElement(this);
 			devBadge.Left.Set(295f, 0f);
-			devBadge.Top.Set(4f, 0f);
+			devBadge.Top.Set(3f, 0f);
 			titleContainer.Append(devBadge);
 
 			titleContainer.OnLeftClick += (evt, elem) => OnTitleClicked();
@@ -304,20 +304,49 @@ namespace Augments
 			spawnDummyBtn.Clicked += () =>
 			{
 				var player = Main.LocalPlayer;
+
+				// Despawn any existing dummy so there is ONLY ever ONE dummy in the world
+				int dummyType = ModContent.NPCType<TestDummyNPC>();
+				for (int i = 0; i < Main.maxNPCs; i++)
+				{
+					if (Main.npc[i].active && Main.npc[i].type == dummyType)
+					{
+						Main.npc[i].active = false;
+					}
+				}
+
 				int spawnX = (int)(player.Center.X + player.direction * 80);
 				int spawnY = (int)player.Bottom.Y - 24;
 
 				if (Main.netMode == NetmodeID.SinglePlayer)
 				{
-					int npcIndex = NPC.NewNPC(player.GetSource_FromThis(), spawnX, spawnY, ModContent.NPCType<TestDummyNPC>());
+					int npcIndex = NPC.NewNPC(player.GetSource_FromThis(), spawnX, spawnY, dummyType);
 					if (npcIndex >= 0 && npcIndex < Main.maxNPCs)
 						Main.npc[npcIndex].netUpdate = true;
 					SoundEngine.PlaySound(SoundID.Dig, player.Center);
-					Main.NewText("✦ [DEV] Target Dummy spawned! ✦ (Right-click dummy to remove)", Color.LimeGreen);
+					Main.NewText("✦ [DEV] Target Dummy spawned! (Right-click this button to remove) ✦", Color.LimeGreen);
 				}
 				else
 				{
 					Main.NewText("✦ [DEV] Dummy spawn is available in SinglePlayer! ✦", Color.Orange);
+				}
+			};
+			spawnDummyBtn.RightClicked += () =>
+			{
+				int dummyType = ModContent.NPCType<TestDummyNPC>();
+				bool removed = false;
+				for (int i = 0; i < Main.maxNPCs; i++)
+				{
+					if (Main.npc[i].active && Main.npc[i].type == dummyType)
+					{
+						Main.npc[i].active = false;
+						removed = true;
+					}
+				}
+				if (removed)
+				{
+					SoundEngine.PlaySound(SoundID.NPCDeath1, Main.LocalPlayer.Center);
+					Main.NewText("✦ [DEV] Target Dummy removed. ✦", Color.Orange);
 				}
 			};
 			devBarContainer.Append(spawnDummyBtn);
@@ -1158,16 +1187,26 @@ namespace Augments
 		}
 
 		// Secret Dev Badge displayed next to Title when Dev Mode is active
-		private class DevBadgeElement : UIElement
+		private class DevBadgeElement : UIPanel
 		{
 			private readonly AugmentListUIState parent;
+			private readonly UIText label;
 			private bool isHovered;
 
 			public DevBadgeElement(AugmentListUIState parent)
 			{
 				this.parent = parent;
-				Width.Set(46f, 0f);
-				Height.Set(18f, 0f);
+				SetPadding(0f);
+				Width.Set(52f, 0f);
+				Height.Set(22f, 0f);
+
+				label = new UIText("[DEV]", 0.72f)
+				{
+					HAlign = 0.5f,
+					VAlign = 0.5f,
+					TextColor = new Color(255, 215, 80)
+				};
+				Append(label);
 			}
 
 			public override void MouseOver(UIMouseEvent evt)
@@ -1198,30 +1237,24 @@ namespace Augments
 				if (!IsDevMode)
 					return;
 
-				CalculatedStyle dims = GetDimensions();
-				var rect = new Rectangle((int)dims.X, (int)dims.Y, (int)dims.Width, (int)dims.Height);
 				float time = (float)Main.GlobalTimeWrappedHourly;
 				float pulse = (float)Math.Sin(time * 5f) * 0.5f + 0.5f;
 
-				Color bg = new Color(30, 20, 10) * (isHovered ? 0.98f : 0.88f);
-				Color border = Color.Lerp(new Color(255, 175, 30), new Color(255, 240, 140), pulse);
+				BackgroundColor = new Color(32, 20, 10) * (isHovered ? 0.98f : 0.88f);
+				BorderColor = Color.Lerp(new Color(255, 160, 25), new Color(255, 235, 120), pulse);
 
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, rect, bg);
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X, rect.Y, rect.Width, 1), border);
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X, rect.Bottom - 1, rect.Width, 1), border);
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X, rect.Y, 1, rect.Height), border);
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right - 1, rect.Y, 1, rect.Height), border);
-
-				var font = FontAssets.MouseText.Value;
-				string text = "[DEV]";
-				Vector2 size = ChatManager.GetStringSize(font, text, new Vector2(0.65f));
-				Vector2 textPos = new Vector2(rect.X + (rect.Width - size.X) * 0.5f, rect.Y + (rect.Height - size.Y) * 0.5f - 1f);
-				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, text, textPos, border, 0f, Vector2.Zero, new Vector2(0.65f));
+				base.DrawSelf(spriteBatch);
 
 				if (isHovered)
 				{
 					Main.instance.MouseText("Click to disable Dev Mode");
 				}
+			}
+
+			protected override void DrawChildren(SpriteBatch spriteBatch)
+			{
+				if (IsDevMode)
+					base.DrawChildren(spriteBatch);
 			}
 		}
 
