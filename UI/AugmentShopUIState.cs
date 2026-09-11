@@ -80,6 +80,7 @@ namespace Augments
 			backPanel.Append(removeHeader);
 
 			buyBackList = new UIList();
+			buyBackList.ManualSortMethod = _ => { };
 			buyBackList.Top.Set(ListsTop, 0f);
 			buyBackList.Left.Set(10f, 0f);
 			buyBackList.Width.Set(-45f, 0.5f);
@@ -95,6 +96,7 @@ namespace Augments
 			backPanel.Append(buyBackScrollbar);
 
 			removeList = new UIList();
+			removeList.ManualSortMethod = _ => { };
 			removeList.Top.Set(ListsTop, 0f);
 			removeList.Left.Set(15f, 0.5f);
 			removeList.Width.Set(-45f, 0.5f);

@@ -102,6 +102,7 @@ namespace Augments
 
 			// Left: Grid List Container for Inventory Slot Boxes
 			gridList = new UIList();
+			gridList.ManualSortMethod = _ => { };
 			gridList.Top.Set(74f, 0f);
 			gridList.Left.Set(12f, 0f);
 			gridList.Width.Set(515f, 0f);
@@ -462,11 +463,11 @@ namespace Augments
 				{
 					AugmentSortMode.NameAZ => string.Compare(a.DisplayName, b.DisplayName, StringComparison.OrdinalIgnoreCase),
 					AugmentSortMode.NameZA => string.Compare(b.DisplayName, a.DisplayName, StringComparison.OrdinalIgnoreCase),
-					AugmentSortMode.RarityHighLow => b.Rarity.CompareTo(a.Rarity) != 0
-						? b.Rarity.CompareTo(a.Rarity)
+					AugmentSortMode.RarityHighLow => ((int)b.Rarity).CompareTo((int)a.Rarity) != 0
+						? ((int)b.Rarity).CompareTo((int)a.Rarity)
 						: string.Compare(a.DisplayName, b.DisplayName, StringComparison.OrdinalIgnoreCase),
-					AugmentSortMode.RarityLowHigh => a.Rarity.CompareTo(b.Rarity) != 0
-						? a.Rarity.CompareTo(b.Rarity)
+					AugmentSortMode.RarityLowHigh => ((int)a.Rarity).CompareTo((int)b.Rarity) != 0
+						? ((int)a.Rarity).CompareTo((int)b.Rarity)
 						: string.Compare(a.DisplayName, b.DisplayName, StringComparison.OrdinalIgnoreCase),
 					AugmentSortMode.Class => a.Class.CompareTo(b.Class) != 0
 						? a.Class.CompareTo(b.Class)
@@ -487,6 +488,7 @@ namespace Augments
 			}
 
 			// Group into rows of SlotsPerRow
+			var rows = new List<UIElement>();
 			UIElement currentRow = null;
 			int slotIndexInRow = 0;
 
@@ -497,7 +499,7 @@ namespace Augments
 					currentRow = new UIElement();
 					currentRow.Width.Set(0f, 1f);
 					currentRow.Height.Set(SlotHeight + 5f, 0f);
-					gridList.Add(currentRow);
+					rows.Add(currentRow);
 				}
 
 				Augment aug = filtered[i];
@@ -516,6 +518,8 @@ namespace Augments
 				if (slotIndexInRow >= SlotsPerRow)
 					slotIndexInRow = 0;
 			}
+
+			gridList.AddRange(rows);
 
 			if (gridScrollbar != null)
 				gridScrollbar.ViewPosition = prevScroll;
