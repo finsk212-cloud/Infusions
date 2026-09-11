@@ -27,6 +27,7 @@ namespace Augments
 		public bool IsOwned { get; set; }
 
 		public event Action<Augment> Clicked;
+		public event Action<Augment> RightClicked;
 
 		private bool isHovered;
 
@@ -58,6 +59,12 @@ namespace Augments
 			base.LeftClick(evt);
 			SoundEngine.PlaySound(SoundID.MenuTick);
 			Clicked?.Invoke(Augment);
+		}
+
+		public override void RightClick(UIMouseEvent evt)
+		{
+			base.RightClick(evt);
+			RightClicked?.Invoke(Augment);
 		}
 
 		protected override void DrawSelf(SpriteBatch spriteBatch)

@@ -403,7 +403,7 @@ namespace Augments
 			switch (command)
 			{
 			case DebugAugmentCommandType.Add:
-					return augmentPlayer.GrantAugmentByIdServerAuthoritative(augmentId, false);
+					return augmentPlayer.GrantAugmentByIdServerAuthoritative(augmentId, false, true);
 				case DebugAugmentCommandType.Remove:
 					return augmentPlayer.RemoveAugmentByIdServerAuthoritative(augmentId, false);
 				case DebugAugmentCommandType.AddAll:

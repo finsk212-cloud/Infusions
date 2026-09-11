@@ -35,6 +35,7 @@ namespace Augments
 	// with an interactive inspector panel on the right showing full detailed info when clicked.
 	public class AugmentListUIState : UIState
 	{
+		public static bool IsDevMode = false;
 		public static Asset<Texture2D> RarityStarAsset;
 
 		private UIPanel backPanel;
@@ -42,6 +43,11 @@ namespace Augments
 		private UIScrollbar gridScrollbar;
 		private AugmentDetailPanel detailPanel;
 		private SupportClassTagElement supportTag;
+
+		private UIElement devBarContainer;
+		private DevBadgeElement devBadge;
+		private int titleClickCount = 0;
+		private double lastTitleClickTime = 0;
 
 		private string currentTab = "All";
 		private Augment selectedAugment;
@@ -76,13 +82,29 @@ namespace Augments
 			backPanel.BackgroundColor = new Color(28, 38, 70) * 0.96f;
 			backPanel.BorderColor = new Color(14, 20, 42);
 
-			// Title
-			UIText title = new UIText("Infusions Codex", 1.05f)
+			// Title Header & Secret Dev Badge
+			UIElement titleContainer = new UIElement();
+			titleContainer.Width.Set(300f, 0f);
+			titleContainer.Height.Set(26f, 0f);
+			titleContainer.HAlign = 0.5f;
+			titleContainer.Top.Set(8f, 0f);
+
+			UIText title = new UIText("Infusion List", 1.05f)
 			{
-				HAlign = 0.5f
+				HAlign = 0.45f,
+				VAlign = 0.5f
 			};
-			title.Top.Set(8f, 0f);
-			backPanel.Append(title);
+			titleContainer.Append(title);
+
+			devBadge = new DevBadgeElement(this);
+			devBadge.Left.Set(205f, 0f);
+			devBadge.Top.Set(2f, 0f);
+			titleContainer.Append(devBadge);
+
+			titleContainer.OnLeftClick += (evt, elem) => OnTitleClicked();
+			title.OnLeftClick += (evt, elem) => OnTitleClicked();
+
+			backPanel.Append(titleContainer);
 
 			// Close Button in top-right corner
 			var closeButton = new CloseButton();
@@ -119,7 +141,7 @@ namespace Augments
 			backPanel.Append(gridScrollbar);
 
 			// Right: Detailed Info Inspector Panel
-			detailPanel = new AugmentDetailPanel();
+			detailPanel = new AugmentDetailPanel(this);
 			detailPanel.Top.Set(74f, 0f);
 			detailPanel.Left.Set(568f, 0f);
 			detailPanel.Width.Set(288f, 0f);
@@ -133,6 +155,11 @@ namespace Augments
 			supportTag.Height.Set(30f, 0f);
 			supportTag.Top.Set(516f, 0f);
 			backPanel.Append(supportTag);
+
+			// Bottom-Left: Dev Mode Action Bar
+			CreateDevBarControls();
+			if (IsDevMode)
+				backPanel.Append(devBarContainer);
 
 			Append(backPanel);
 		}
@@ -208,6 +235,156 @@ namespace Augments
 			filterPanel.Top.Set(68f, 0f);
 			filterPanel.Width.Set(320f, 0f);
 			filterPanel.Height.Set(330f, 0f);
+		}
+
+		private void CreateDevBarControls()
+		{
+			devBarContainer = new UIElement();
+			devBarContainer.Left.Set(14f, 0f);
+			devBarContainer.Top.Set(516f, 0f);
+			devBarContainer.Width.Set(515f, 0f);
+			devBarContainer.Height.Set(28f, 0f);
+
+			var clearAllBtn = new CodexFilterButton("🗑 Clear All", 0.72f);
+			clearAllBtn.Left.Set(0f, 0f);
+			clearAllBtn.Top.Set(0f, 0f);
+			clearAllBtn.Width.Set(100f, 0f);
+			clearAllBtn.Height.Set(26f, 0f);
+			clearAllBtn.CustomActiveBorder = new Color(255, 100, 100);
+			clearAllBtn.Clicked += () =>
+			{
+				if (Main.netMode == NetmodeID.MultiplayerClient)
+					AugmentNet.SendDebugCommandRequest(DebugAugmentCommandType.Clear);
+				else
+					AugmentNet.ApplyDebugCommand(Main.LocalPlayer, DebugAugmentCommandType.Clear);
+
+				SoundEngine.PlaySound(SoundID.Shatter);
+				Main.NewText("✦ [DEV] All equipped augments cleared! ✦", Color.Yellow);
+				PopulateGrid();
+				if (selectedAugment != null)
+					detailPanel.SetAugment(selectedAugment, false);
+			};
+			devBarContainer.Append(clearAllBtn);
+
+			var resetCdsBtn = new CodexFilterButton("⏱ Reset CDs", 0.72f);
+			resetCdsBtn.Left.Set(108f, 0f);
+			resetCdsBtn.Top.Set(0f, 0f);
+			resetCdsBtn.Width.Set(105f, 0f);
+			resetCdsBtn.Height.Set(26f, 0f);
+			resetCdsBtn.CustomActiveBorder = new Color(100, 220, 255);
+			resetCdsBtn.Clicked += () =>
+			{
+				Main.LocalPlayer.GetModPlayer<AugmentPlayer>().ResetAllCooldowns();
+				SoundEngine.PlaySound(SoundID.MaxMana, Main.LocalPlayer.Center);
+				Main.NewText("✦ [DEV] All augment cooldowns have been reset to 0! ✦", Color.Cyan);
+			};
+			devBarContainer.Append(resetCdsBtn);
+
+			var spawnDummyBtn = new CodexFilterButton("🎯 Spawn Dummy", 0.72f);
+			spawnDummyBtn.Left.Set(221f, 0f);
+			spawnDummyBtn.Top.Set(0f, 0f);
+			spawnDummyBtn.Width.Set(125f, 0f);
+			spawnDummyBtn.Height.Set(26f, 0f);
+			spawnDummyBtn.CustomActiveBorder = new Color(120, 255, 120);
+			spawnDummyBtn.Clicked += () =>
+			{
+				var player = Main.LocalPlayer;
+				int spawnX = (int)(player.Center.X + player.direction * 80);
+				int spawnY = (int)player.Center.Y;
+
+				if (Main.netMode == NetmodeID.SinglePlayer)
+				{
+					int npcIndex = NPC.NewNPC(player.GetSource_FromThis(), spawnX, spawnY, NPCID.TargetDummy);
+					if (npcIndex >= 0 && npcIndex < Main.maxNPCs)
+						Main.npc[npcIndex].netUpdate = true;
+					SoundEngine.PlaySound(SoundID.Dig, player.Center);
+					Main.NewText("✦ [DEV] Target Dummy spawned! ✦", Color.LimeGreen);
+				}
+				else
+				{
+					Main.NewText("✦ [DEV] Dummy spawn is available in SinglePlayer! ✦", Color.Orange);
+				}
+			};
+			devBarContainer.Append(spawnDummyBtn);
+
+			var testRollBtn = new CodexFilterButton("🎲 Test 3-Card Roll", 0.72f);
+			testRollBtn.Left.Set(354f, 0f);
+			testRollBtn.Top.Set(0f, 0f);
+			testRollBtn.Width.Set(145f, 0f);
+			testRollBtn.Height.Set(26f, 0f);
+			testRollBtn.CustomActiveBorder = new Color(255, 215, 80);
+			testRollBtn.Clicked += () =>
+			{
+				if (Main.netMode == NetmodeID.SinglePlayer)
+					AugmentRewardLogic.GrantReward(Main.LocalPlayer, RarityBracket.FinalCalamity);
+				else if (Main.netMode == NetmodeID.MultiplayerClient)
+					AugmentNet.SendDebugRewardRequest();
+
+				SoundEngine.PlaySound(SoundID.MenuOpen);
+			};
+			devBarContainer.Append(testRollBtn);
+		}
+
+		private void OnTitleClicked()
+		{
+			double now = Main.gameTimeCache?.TotalGameTime.TotalSeconds ?? 0;
+			if (now - lastTitleClickTime > 2.5)
+			{
+				titleClickCount = 0;
+			}
+			lastTitleClickTime = now;
+			titleClickCount++;
+
+			if (titleClickCount >= 5)
+			{
+				titleClickCount = 0;
+				ToggleDevMode();
+			}
+			else
+			{
+				SoundEngine.PlaySound(SoundID.MenuTick);
+			}
+		}
+
+		public void ToggleDevMode()
+		{
+			IsDevMode = !IsDevMode;
+			if (IsDevMode)
+			{
+				SoundEngine.PlaySound(SoundID.Item4);
+				Main.NewText("✦ [DEV MODE ACTIVATED] ✦ Right-click any augment to toggle equip!", Color.Gold);
+			}
+			else
+			{
+				SoundEngine.PlaySound(SoundID.MenuClose);
+				Main.NewText("✦ [DEV MODE DEACTIVATED] ✦", Color.Orange);
+			}
+
+			UpdateDevModeVisuals();
+			PopulateGrid();
+		}
+
+		public void UpdateDevModeVisuals()
+		{
+			if (backPanel == null)
+				return;
+
+			if (IsDevMode)
+			{
+				if (devBarContainer != null && !backPanel.HasChild(devBarContainer))
+					backPanel.Append(devBarContainer);
+			}
+			else
+			{
+				if (devBarContainer != null && backPanel.HasChild(devBarContainer))
+					backPanel.RemoveChild(devBarContainer);
+			}
+
+			if (selectedAugment != null && detailPanel != null)
+			{
+				bool isOwned = Main.LocalPlayer.GetModPlayer<AugmentPlayer>().HasAugment(selectedAugment.Id);
+				detailPanel.SetAugment(selectedAugment, isOwned);
+			}
 		}
 
 		private void CycleClassForward()
@@ -406,6 +583,7 @@ namespace Augments
 			if (gridList == null)
 				return;
 
+			UpdateDevModeVisuals();
 			UpdateFilterControlStates();
 			PopulateGrid();
 
@@ -511,6 +689,7 @@ namespace Augments
 				slot.Left.Set(slotIndexInRow * (SlotWidth + SlotSpacing), 0f);
 				slot.Top.Set(0f, 0f);
 				slot.Clicked += SelectAugment;
+				slot.RightClicked += OnSlotRightClicked;
 
 				currentRow.Append(slot);
 
@@ -533,6 +712,24 @@ namespace Augments
 
 			// Refresh grid selection state
 			PopulateGrid();
+		}
+
+		private void OnSlotRightClicked(Augment aug)
+		{
+			if (!IsDevMode)
+				return;
+
+			var ap = Main.LocalPlayer.GetModPlayer<AugmentPlayer>();
+			bool isOwned = ap.HasAugment(aug.Id);
+			var cmd = isOwned ? DebugAugmentCommandType.Remove : DebugAugmentCommandType.Add;
+
+			if (Main.netMode == NetmodeID.MultiplayerClient)
+				AugmentNet.SendDebugCommandRequest(cmd, aug.Id);
+			else
+				AugmentNet.ApplyDebugCommand(Main.LocalPlayer, cmd, aug.Id);
+
+			SoundEngine.PlaySound(isOwned ? SoundID.MenuClose : SoundID.Item4);
+			SelectAugment(aug);
 		}
 
 		// Tab button for tier category filters
@@ -589,20 +786,68 @@ namespace Augments
 		// Right-hand Detail Inspector Panel
 		private class AugmentDetailPanel : UIPanel
 		{
+			private readonly AugmentListUIState parentState;
 			private Augment currentAugment;
 			private bool currentIsOwned;
+			private CodexFilterButton devEquipBtn;
 
-			public AugmentDetailPanel()
+			public AugmentDetailPanel(AugmentListUIState parentState)
 			{
+				this.parentState = parentState;
 				SetPadding(10f);
 				BackgroundColor = new Color(18, 24, 46) * 0.95f;
 				BorderColor = new Color(38, 50, 92);
+
+				devEquipBtn = new CodexFilterButton("[ + Equip ]", 0.72f);
+				devEquipBtn.Width.Set(95f, 0f);
+				devEquipBtn.Height.Set(20f, 0f);
+				devEquipBtn.Left.Set(-9999f, 0f);
+				devEquipBtn.Top.Set(48f, 0f);
+				devEquipBtn.Clicked += OnDevEquipClicked;
+				Append(devEquipBtn);
+			}
+
+			private void OnDevEquipClicked()
+			{
+				if (currentAugment == null || !IsDevMode)
+					return;
+
+				var ap = Main.LocalPlayer.GetModPlayer<AugmentPlayer>();
+				bool isOwned = ap.HasAugment(currentAugment.Id);
+				var cmd = isOwned ? DebugAugmentCommandType.Remove : DebugAugmentCommandType.Add;
+
+				if (Main.netMode == NetmodeID.MultiplayerClient)
+					AugmentNet.SendDebugCommandRequest(cmd, currentAugment.Id);
+				else
+					AugmentNet.ApplyDebugCommand(Main.LocalPlayer, cmd, currentAugment.Id);
+
+				SoundEngine.PlaySound(isOwned ? SoundID.MenuClose : SoundID.Item4);
+				currentIsOwned = !isOwned;
+				UpdateDevEquipBtnText();
+				parentState?.PopulateGrid();
 			}
 
 			public void SetAugment(Augment augment, bool isOwned)
 			{
 				currentAugment = augment;
 				currentIsOwned = isOwned;
+				UpdateDevEquipBtnText();
+			}
+
+			public void UpdateDevEquipBtnText()
+			{
+				if (!IsDevMode || currentAugment == null)
+				{
+					devEquipBtn.Left.Set(-9999f, 0f);
+				}
+				else
+				{
+					devEquipBtn.Left.Set(176f, 0f);
+					devEquipBtn.Top.Set(48f, 0f);
+					devEquipBtn.SetText(currentIsOwned ? "[ - Unequip ]" : "[ + Equip ]");
+					devEquipBtn.BorderColor = currentIsOwned ? new Color(255, 100, 100) : new Color(100, 255, 140);
+					devEquipBtn.SetTextColor(currentIsOwned ? new Color(255, 130, 130) : new Color(130, 255, 160));
+				}
 			}
 
 			protected override void DrawSelf(SpriteBatch spriteBatch)
@@ -892,6 +1137,74 @@ namespace Augments
 					ChatManager.DrawColorCodedStringWithShadow(
 						spriteBatch, font, kbText, new Vector2(x, y), kbColor, 0f, Vector2.Zero, new Vector2(0.75f)
 					);
+				}
+			}
+		}
+
+		// Secret Dev Badge displayed next to Title when Dev Mode is active
+		private class DevBadgeElement : UIElement
+		{
+			private readonly AugmentListUIState parent;
+			private bool isHovered;
+
+			public DevBadgeElement(AugmentListUIState parent)
+			{
+				this.parent = parent;
+				Width.Set(52f, 0f);
+				Height.Set(20f, 0f);
+			}
+
+			public override void MouseOver(UIMouseEvent evt)
+			{
+				base.MouseOver(evt);
+				if (IsDevMode)
+				{
+					isHovered = true;
+					SoundEngine.PlaySound(SoundID.MenuTick);
+				}
+			}
+
+			public override void MouseOut(UIMouseEvent evt)
+			{
+				base.MouseOut(evt);
+				isHovered = false;
+			}
+
+			public override void LeftClick(UIMouseEvent evt)
+			{
+				base.LeftClick(evt);
+				if (IsDevMode)
+					parent.ToggleDevMode();
+			}
+
+			protected override void DrawSelf(SpriteBatch spriteBatch)
+			{
+				if (!IsDevMode)
+					return;
+
+				CalculatedStyle dims = GetDimensions();
+				var rect = new Rectangle((int)dims.X, (int)dims.Y, (int)dims.Width, (int)dims.Height);
+				float time = (float)Main.GlobalTimeWrappedHourly;
+				float pulse = (float)Math.Sin(time * 5f) * 0.5f + 0.5f;
+
+				Color bg = new Color(30, 20, 10) * (isHovered ? 0.98f : 0.88f);
+				Color border = Color.Lerp(new Color(255, 175, 30), new Color(255, 240, 140), pulse);
+
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, rect, bg);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X, rect.Y, rect.Width, 1), border);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X, rect.Bottom - 1, rect.Width, 1), border);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X, rect.Y, 1, rect.Height), border);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right - 1, rect.Y, 1, rect.Height), border);
+
+				var font = FontAssets.MouseText.Value;
+				string text = "[ DEV ]";
+				Vector2 size = ChatManager.GetStringSize(font, text, new Vector2(0.72f));
+				Vector2 textPos = new Vector2(rect.X + (rect.Width - size.X) * 0.5f, rect.Y + (rect.Height - size.Y) * 0.5f - 1f);
+				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, text, textPos, border, 0f, Vector2.Zero, new Vector2(0.72f));
+
+				if (isHovered)
+				{
+					Main.instance.MouseText("Click to disable Dev Mode");
 				}
 			}
 		}

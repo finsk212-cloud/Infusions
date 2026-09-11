@@ -62,15 +62,18 @@ namespace Augments
 				Main.NewText(message, color);
 		}
 
-		public bool GrantAugmentByIdServerAuthoritative(string id, bool sync = true)
+		public bool GrantAugmentByIdServerAuthoritative(string id, bool sync = true, bool ignoreCaps = false)
 		{
 			if (Main.netMode == NetmodeID.MultiplayerClient)
 				return false;
 
 			Augment augment = AugmentDatabase.GetById(id);
-			if (augment == null || ownedIds.Contains(id) || soldAugmentIds.Contains(id) || ownedIds.Count >= MaxOwnedAugments)
+			if (augment == null || ownedIds.Contains(id))
+				return false;
+			if (!ignoreCaps && (soldAugmentIds.Contains(id) || ownedIds.Count >= MaxOwnedAugments))
 				return false;
 
+			soldAugmentIds.Remove(id);
 			ownedIds.Add(id);
 			everOwnedIds.Add(id);
 			if (augment.KeystoneFamily != null)
@@ -953,6 +956,35 @@ namespace Augments
 			// its own before that wiring happens.
 			if (Augments.DebugToggleShopKeybind.JustPressed)
 				ModContent.GetInstance<AugmentUISystem>().ToggleShop();
+
+			if (Augments.ResetCooldownsKeybind?.JustPressed == true)
+			{
+				ResetAllCooldowns();
+				SoundEngine.PlaySound(SoundID.MaxMana, Player.Center);
+				Main.NewText("✦ [DEV] All augment cooldowns have been reset to 0! ✦", Color.Cyan);
+			}
+		}
+
+		public void ResetAllCooldowns()
+		{
+			CleanseCooldown = 0;
+			LastRitesCooldown = 0;
+			LifelineCooldown = 0;
+			soulLinkRequestCooldown = 0;
+			FinalStandCooldown = 0;
+			FinalStandActiveTicks = 0;
+			GodslayerBladeCooldown = 0;
+			IronWillCooldown = 0;
+			IronWillDurationRemaining = 0;
+			LastStandCooldown = 0;
+			LastStandArmedThisHit = false;
+			PhoenixHeartCooldown = 0;
+			PhoenixHeartArmedThisHit = false;
+			PiedPiperCooldown = 0;
+			SecondWindCooldown = 0;
+
+			Player.ClearBuff(ModContent.BuffType<LastRitesCooldownBuff>());
+			Player.ClearBuff(ModContent.BuffType<LifelineCooldownBuff>());
 		}
 
 		// Fires on every melee/weapon hit - dispatches to whichever owned

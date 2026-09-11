@@ -1,10 +1,11 @@
 Keybinds: {
-	OpenAugmentList.DisplayName: Open Infusions Codex
+	OpenAugmentList.DisplayName: Open Infusion List
 	DebugTriggerPopup.DisplayName: Debug Trigger Popup
 	DebugSpawnVendor.DisplayName: Debug Spawn Vendor
 	DebugToggleShop.DisplayName: Debug Toggle Shop
 	Cleanse.DisplayName: Cleanse
 	UndoReforge.DisplayName: Undo Reforge
+	ResetCooldowns.DisplayName: Reset Augment Cooldowns (Dev)
 }
 
 NPCs: {
