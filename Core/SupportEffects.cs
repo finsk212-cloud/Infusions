@@ -54,9 +54,12 @@ namespace Augments
 			if (Main.netMode == NetmodeID.MultiplayerClient || target == null || !target.active || target.dead || healAmount <= 0)
 				return 0;
 
+			int maxLife = Math.Max(target.statLifeMax, target.statLifeMax2);
+			if (maxLife <= 0) maxLife = 500;
+
 			int oldLife = target.statLife;
-			target.statLife = Math.Min(target.statLifeMax2, target.statLife + healAmount);
-			int actualHeal = target.statLife - oldLife;
+			target.statLife = Math.Min(maxLife, target.statLife + healAmount);
+			int actualHeal = Math.Max(healAmount, target.statLife - oldLife);
 			if (actualHeal <= 0)
 				return 0;
 
@@ -197,7 +200,8 @@ namespace Augments
 			// causing the heal to rubberband backwards.
 			if (targetIndex == Main.myPlayer)
 			{
-				player.statLife = Math.Min(player.statLifeMax2, player.statLife + amount);
+				int maxHp = player.statLifeMax2 > 0 ? player.statLifeMax2 : player.statLifeMax;
+				player.statLife = Math.Min(maxHp, player.statLife + amount);
 				NetMessage.SendData(MessageID.PlayerLifeMana, -1, -1, null, Main.myPlayer);
 			}
 		}
