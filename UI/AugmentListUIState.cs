@@ -305,26 +305,31 @@ namespace Augments
 			{
 				var player = Main.LocalPlayer;
 
-				// Despawn any existing dummy so there is ONLY ever ONE dummy in the world
+				// Despawn ALL existing test dummies (both custom and vanilla 488) so there is ONLY ever ONE
 				int dummyType = ModContent.NPCType<TestDummyNPC>();
 				for (int i = 0; i < Main.maxNPCs; i++)
 				{
-					if (Main.npc[i].active && Main.npc[i].type == dummyType)
+					if (Main.npc[i].active && (Main.npc[i].type == dummyType || Main.npc[i].type == NPCID.TargetDummy))
 					{
 						Main.npc[i].active = false;
+						Main.npc[i].type = NPCID.None;
+						Main.npc[i].netUpdate = true;
 					}
 				}
 
-				int spawnX = (int)(player.Center.X + player.direction * 80);
-				int spawnY = (int)player.Bottom.Y - 24;
+				// Spawn 42 pixels in front of player at player's center height (well within sword & weapon reach)
+				int spawnX = (int)(player.Center.X + player.direction * 42);
+				int spawnY = (int)player.Center.Y;
 
 				if (Main.netMode == NetmodeID.SinglePlayer)
 				{
 					int npcIndex = NPC.NewNPC(player.GetSource_FromThis(), spawnX, spawnY, dummyType);
 					if (npcIndex >= 0 && npcIndex < Main.maxNPCs)
+					{
 						Main.npc[npcIndex].netUpdate = true;
+					}
 					SoundEngine.PlaySound(SoundID.Dig, player.Center);
-					Main.NewText("✦ [DEV] Target Dummy spawned! (Right-click this button to remove) ✦", Color.LimeGreen);
+					Main.NewText("✦ [DEV] Target Dummy spawned in front of you! (Right-click button to remove) ✦", Color.LimeGreen);
 				}
 				else
 				{
@@ -337,9 +342,11 @@ namespace Augments
 				bool removed = false;
 				for (int i = 0; i < Main.maxNPCs; i++)
 				{
-					if (Main.npc[i].active && Main.npc[i].type == dummyType)
+					if (Main.npc[i].active && (Main.npc[i].type == dummyType || Main.npc[i].type == NPCID.TargetDummy))
 					{
 						Main.npc[i].active = false;
+						Main.npc[i].type = NPCID.None;
+						Main.npc[i].netUpdate = true;
 						removed = true;
 					}
 				}

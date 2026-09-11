@@ -12,7 +12,7 @@ namespace Augments
 
 		public override void SetStaticDefaults()
 		{
-			Main.npcFrameCount[Type] = 1;
+			Main.npcFrameCount[Type] = Main.npcFrameCount[NPCID.TargetDummy];
 			NPCID.Sets.NPCBestiaryDrawModifiers drawModifiers = new NPCID.Sets.NPCBestiaryDrawModifiers()
 			{
 				Hide = true
@@ -31,8 +31,8 @@ namespace Augments
 			NPC.HitSound = SoundID.NPCHit15;
 			NPC.DeathSound = SoundID.NPCDeath1;
 			NPC.knockBackResist = 0f;
-			NPC.noGravity = false;
-			NPC.noTileCollide = false;
+			NPC.noGravity = true;
+			NPC.noTileCollide = true;
 			NPC.aiStyle = -1;
 			NPC.immortal = false;
 			NPC.dontTakeDamage = false;
@@ -41,18 +41,43 @@ namespace Augments
 			NPC.townNPC = false;
 		}
 
-		public override bool CheckActive()
-		{
-			return false;
-		}
+		public override bool CheckActive() => false;
 
 		public override void AI()
 		{
-			NPC.velocity.X = 0f;
+			NPC.velocity = Vector2.Zero;
 			if (NPC.life < NPC.lifeMax)
 			{
 				NPC.life = NPC.lifeMax;
 			}
+			if (NPC.localAI[0] > 0f)
+			{
+				NPC.localAI[0]--;
+			}
+		}
+
+		public override void FindFrame(int frameHeight)
+		{
+			if (NPC.localAI[0] > 0f)
+			{
+				int wobbleFrame = 1 + (int)((24f - NPC.localAI[0]) / 5f) % 5;
+				NPC.frame.Y = wobbleFrame * frameHeight;
+			}
+			else
+			{
+				NPC.frame.Y = 0;
+			}
+		}
+
+		public override void HitEffect(NPC.HitInfo hit)
+		{
+			NPC.localAI[0] = 24f;
+		}
+
+		public override bool CheckDead()
+		{
+			NPC.life = NPC.lifeMax;
+			return false;
 		}
 
 		public override bool? CanBeHitByItem(Player player, Item item) => true;
