@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Terraria;
+using Terraria.Audio;
 using Terraria.GameContent;
 using Terraria.GameContent.UI.Elements;
+using Terraria.ID;
 using Terraria.ModLoader;
 using Terraria.UI;
 
@@ -587,20 +589,20 @@ namespace Augments
 
 			protected override void DrawSelf(SpriteBatch spriteBatch)
 			{
-				float pulse = (float)Math.Sin(pulseTimer * PulseSpeed) * 0.5f + 0.5f;
-
-				CalculatedStyle dims = GetDimensions();
-				float glowSize = 4f + pulse * PulseStrength * 18f;
-				Rectangle glowRect = new Rectangle(
-					(int)(dims.X - glowSize),
-					(int)(dims.Y - glowSize),
-					(int)(dims.Width + glowSize * 2f),
-					(int)(dims.Height + glowSize * 2f));
-
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, glowRect, BaseBorderColor * (pulse * PulseStrength * 0.5f));
-				BorderColor = Color.Lerp(BaseBorderColor, Color.White, pulse * PulseStrength);
-
 				base.DrawSelf(spriteBatch);
+			}
+
+			public override void MouseOver(UIMouseEvent evt)
+			{
+				base.MouseOver(evt);
+				BorderColor = Color.White;
+				SoundEngine.PlaySound(SoundID.MenuTick);
+			}
+
+			public override void MouseOut(UIMouseEvent evt)
+			{
+				base.MouseOut(evt);
+				BorderColor = BaseBorderColor;
 			}
 
 			public override void LeftClick(UIMouseEvent evt)

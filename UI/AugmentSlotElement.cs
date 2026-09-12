@@ -181,6 +181,26 @@ namespace Augments
 				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right - 2, rect.Y - 1, 3, 3), gemColor);
 				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X - 1, rect.Bottom - 2, 3, 3), gemColor);
 				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right - 2, rect.Bottom - 2, 3, 3), gemColor);
+
+				// Twinkling Amethyst Star Sparkles along the borders for Epic
+				(int x, int y, float offset)[] spPoints = new (int, int, float)[]
+				{
+					(rect.Right - 1, rect.Y, 0.0f),
+					(rect.X + 1, rect.Bottom - 1, 1.2f),
+					(rect.X, rect.Y + (int)(rect.Height * 0.45f), 2.4f),
+					(rect.Right - 1, rect.Y + (int)(rect.Height * 0.65f), 0.6f)
+				};
+
+				foreach (var sp in spPoints)
+				{
+					float spPhase = (time * 1.1f + sp.offset + (rect.X * 0.02f)) % 3.6f;
+					if (spPhase < 1.3f)
+					{
+						float prog = spPhase / 1.3f;
+						float intensity = (float)Math.Sin(prog * MathHelper.Pi);
+						DrawAmethystSparkle(spriteBatch, sp.x, sp.y, intensity);
+					}
+				}
 			}
 			else if (Augment.Rarity == AugmentRarity.Legendary)
 			{
@@ -409,6 +429,35 @@ namespace Augments
 				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + d, cy - d, 1, 1), goldRay);
 				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - d, cy + d, 1, 1), goldRay);
 				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + d, cy + d, 1, 1), goldRay);
+			}
+
+			// Inner brilliant white core
+			int innerRay = (int)(rayLen * 0.45f);
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx, cy - innerRay, 1, innerRay * 2 + 1), whiteRay);
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - innerRay, cy, innerRay * 2 + 1, 1), whiteRay);
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 1, cy - 1, 3, 3), Color.White * (intensity * 0.95f));
+		}
+
+		public static void DrawAmethystSparkle(SpriteBatch spriteBatch, int cx, int cy, float intensity)
+		{
+			if (intensity <= 0.05f) return;
+
+			int rayLen = 2 + (int)(intensity * 5f);
+			Color violetRay = new Color(215, 140, 255) * (intensity * 0.9f);
+			Color whiteRay = Color.White * intensity;
+
+			// Cross rays
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx, cy - rayLen, 1, rayLen * 2 + 1), violetRay);
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - rayLen, cy, rayLen * 2 + 1, 1), violetRay);
+
+			// 8-point spikes when intensity > 0.55f
+			if (intensity > 0.55f)
+			{
+				int d = (int)(rayLen * 0.6f);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - d, cy - d, 1, 1), violetRay);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + d, cy - d, 1, 1), violetRay);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - d, cy + d, 1, 1), violetRay);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + d, cy + d, 1, 1), violetRay);
 			}
 
 			// Inner brilliant white core

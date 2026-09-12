@@ -146,9 +146,6 @@ namespace Augments
 			int cx = rect.X + rect.Width / 2;
 			int cy = rect.Y + 44;
 
-			// Halo animation behind icon
-			DrawIconHalo(spriteBatch, cx, cy, pulse);
-
 			// Draw Class Icon (Larger: 52x52)
 			Texture2D iconTex = AugmentSlotElement.GetClassIcon(Augment.Class);
 			if (iconTex != null)
@@ -256,10 +253,10 @@ namespace Augments
 
 		private void DrawHoloSweep(SpriteBatch spriteBatch, Rectangle rect, float time)
 		{
-			if (Augment.Rarity != AugmentRarity.Legendary && Augment.Rarity != AugmentRarity.Epic)
+			if (Augment.Rarity != AugmentRarity.Legendary)
 				return;
 
-			float sweepPeriod = Augment.Rarity == AugmentRarity.Legendary ? 3.5f : 4.2f;
+			float sweepPeriod = 3.5f;
 			float sweepTime = time % sweepPeriod;
 			float sweepDuration = 1.6f;
 
@@ -267,8 +264,8 @@ namespace Augments
 			{
 				float t = sweepTime / sweepDuration;
 				float sweepCenter = (rect.Width + rect.Height) * t;
-				int beamWidth = Augment.Rarity == AugmentRarity.Legendary ? 28 : 22;
-				Color beamColor = Augment.Rarity == AugmentRarity.Legendary ? new Color(255, 245, 215) : new Color(225, 185, 255);
+				int beamWidth = 28;
+				Color beamColor = new Color(255, 245, 215);
 
 				for (int py = 4; py < rect.Height - 4; py += 3)
 				{
@@ -278,7 +275,7 @@ namespace Augments
 					if (endPx > startPx)
 					{
 						float dist = Math.Abs((startPx + endPx) * 0.5f - centerPx);
-						float beamA = (1f - dist / (beamWidth * 0.6f)) * (Augment.Rarity == AugmentRarity.Legendary ? 0.24f : 0.18f);
+						float beamA = (1f - dist / (beamWidth * 0.6f)) * 0.24f;
 						if (isHovered) beamA *= 1.35f;
 						if (beamA > 0.02f)
 						{
@@ -344,19 +341,6 @@ namespace Augments
 			}
 		}
 
-		private void DrawIconHalo(SpriteBatch spriteBatch, int cx, int cy, float pulse)
-		{
-			if (Augment.Rarity == AugmentRarity.Legendary)
-			{
-				AugmentSlotElement.DrawStarSparkle(spriteBatch, cx, cy, 0.45f + pulse * 0.35f);
-			}
-			else if (Augment.Rarity == AugmentRarity.Epic)
-			{
-				int haloSize = (int)(28 + pulse * 10);
-				Rectangle haloRect = new Rectangle(cx - haloSize / 2, cy - haloSize / 2, haloSize, haloSize);
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, haloRect, new Color(195, 115, 255) * (0.20f + pulse * 0.20f));
-			}
-		}
 
 		private void DrawProceduralSparkles(SpriteBatch spriteBatch, Rectangle rect, float time)
 		{

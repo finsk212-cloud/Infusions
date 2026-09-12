@@ -1083,6 +1083,27 @@ namespace Augments
 					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right - 3, rect.Y - 1, 4, 4), gemColor);
 					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X - 1, rect.Bottom - 3, 4, 4), gemColor);
 					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right - 3, rect.Bottom - 3, 4, 4), gemColor);
+
+					// Twinkling Amethyst Star Sparkles along the card borders
+					(int x, int y, float offset)[] spPoints = new (int, int, float)[]
+					{
+						(rect.Right - 2, rect.Y, 0.0f),
+						(rect.X + 2, rect.Bottom - 2, 1.2f),
+						(rect.X, rect.Y + (int)(rect.Height * 0.35f), 2.2f),
+						(rect.Right - 1, rect.Y + (int)(rect.Height * 0.65f), 0.7f),
+						(rect.X + (int)(rect.Width * 0.5f), rect.Y + 1, 1.7f)
+					};
+
+					foreach (var sp in spPoints)
+					{
+						float spPhase = (time * 1.0f + sp.offset + (rect.X * 0.02f)) % 3.8f;
+						if (spPhase < 1.4f)
+						{
+							float prog = spPhase / 1.4f;
+							float intensity = (float)Math.Sin(prog * MathHelper.Pi);
+							AugmentSlotElement.DrawAmethystSparkle(spriteBatch, sp.x, sp.y, intensity);
+						}
+					}
 				}
 				else if (currentAugment.Rarity == AugmentRarity.Legendary)
 				{
