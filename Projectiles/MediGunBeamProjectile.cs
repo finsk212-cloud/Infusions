@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Terraria;
@@ -13,8 +13,8 @@ namespace Augments.Projectiles
     {
         private const float MaxAcquireRange = 650f;
         private const float MaxBreakRange = 750f;
-        private const int HealPulseInterval = 20; // 3 pulses per second (3 HP/sec)
-        private const int HealAmount = 1;
+        private const int HealPulseInterval = 60; // 1s per pulse (3 HP/sec)
+        private const int HealAmount = 3;
 
         private int targetPlayerWhoAmI = -1;
         private int targetNPCWhoAmI = -1;

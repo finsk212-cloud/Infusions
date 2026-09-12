@@ -34,11 +34,11 @@ Items: {
 	}
 
 	MediGunItem: {
-		DisplayName: Medi Gun
+		DisplayName: Medi Gun MK I
 		Tooltip:
 			'''
 			Hold to lock onto a nearby teammate and channel a healing beam
-			Heals 5 HP every half-second pulse
+			Heals 3 HP per second
 			Tether breaks if line of sight is obstructed or distance exceeds range
 			'''
 	}
