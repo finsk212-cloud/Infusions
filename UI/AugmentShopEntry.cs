@@ -36,11 +36,11 @@ namespace Augments
 			Height.Set(54f, 0f);
 
 			actionButton = new ActionButton(actionLabel, isBuyAction, isPermanent);
-			actionButton.Width.Set(136f, 0f);
-			actionButton.Height.Set(30f, 0f);
+			actionButton.Width.Set(116f, 0f);
+			actionButton.Height.Set(26f, 0f);
 			actionButton.HAlign = 1f;
 			actionButton.VAlign = 0.5f;
-			actionButton.Left.Set(-10f, 0f);
+			actionButton.Left.Set(-8f, 0f);
 			if (!isPermanent && onAction != null)
 			{
 				actionButton.Clicked += () => onAction(augment);
@@ -172,7 +172,7 @@ namespace Augments
 				BackgroundColor = idleBg;
 				BorderColor = borderCol;
 
-				UIText labelText = new UIText(label, 0.74f)
+				UIText labelText = new UIText(label, 0.70f)
 				{
 					HAlign = 0.5f,
 					VAlign = 0.5f,

@@ -33,7 +33,7 @@ namespace Augments
 			backPanel.Height.Set(PanelHeight, 0f);
 			backPanel.HAlign = 0.5f;
 			backPanel.VAlign = 0.5f;
-			backPanel.BackgroundColor = new Color(22, 30, 58) * 0.98f;
+			backPanel.BackgroundColor = new Color(20, 28, 54);
 			backPanel.BorderColor = new Color(38, 52, 98);
 
 			// Title Header (no unicode stars)
@@ -83,16 +83,15 @@ namespace Augments
 			essenceBadge.Append(essenceText);
 			backPanel.Append(essenceBadge);
 
-			// Optional Undo Reforge Bar
+			// Optional Undo Reforge Bar (only added when player owns Reforger's Patience)
 			undoReforgeBar = new UndoReforgeBar(TryUndoReforge);
 			undoReforgeBar.Width.Set(-24f, 1f);
 			undoReforgeBar.HAlign = 0.5f;
 			undoReforgeBar.Top.Set(88f, 0f);
 			undoReforgeBar.Height.Set(26f, 0f);
-			backPanel.Append(undoReforgeBar);
 
 			// Column Headers
-			UIText buyBackHeader = new UIText("📥  Re-acquire (Buy Back)", 0.85f)
+			UIText buyBackHeader = new UIText("Re-acquire (Buy Back)", 0.85f)
 			{
 				HAlign = 0f,
 				TextColor = new Color(150, 225, 255)
@@ -101,7 +100,7 @@ namespace Augments
 			buyBackHeader.Top.Set(108f, 0f);
 			backPanel.Append(buyBackHeader);
 
-			UIText removeHeader = new UIText("📤  Equipped (Dismantle)", 0.85f)
+			UIText removeHeader = new UIText("Equipped (Dismantle)", 0.85f)
 			{
 				HAlign = 0f,
 				TextColor = new Color(255, 185, 160)
@@ -222,7 +221,18 @@ namespace Augments
 			bool owns = augmentPlayer.HasAugment("reforgers_patience");
 			bool pending = owns && augmentPlayer.HasPendingReforgeUndo;
 
-			undoReforgeBar.SetState(owns, pending, pending ? augmentPlayer.LastReforgedItem : null, pending ? augmentPlayer.LastReforgeCost : 0);
+			if (!owns)
+			{
+				if (backPanel.HasChild(undoReforgeBar))
+					backPanel.RemoveChild(undoReforgeBar);
+				undoReforgeBar.SetState(false, false, null, 0);
+				return;
+			}
+
+			if (!backPanel.HasChild(undoReforgeBar))
+				backPanel.Append(undoReforgeBar);
+
+			undoReforgeBar.SetState(true, pending, pending ? augmentPlayer.LastReforgedItem : null, pending ? augmentPlayer.LastReforgeCost : 0);
 		}
 
 		private void TryUndoReforge()
@@ -361,6 +371,7 @@ namespace Augments
 			private static readonly Color HoverColor = new Color(90, 105, 160);
 			private static readonly Color DisabledColor = new Color(50, 50, 55);
 
+			private bool owns;
 			private bool enabled;
 
 			public UndoReforgeBar(Action onUndo)
@@ -380,7 +391,8 @@ namespace Augments
 
 			public void SetState(bool owns, bool pending, Item item, int cost)
 			{
-				Width.Set(0f, owns ? 1f : 0f);
+				this.owns = owns;
+				Width.Set(-24f, owns ? 1f : 0f);
 				Height.Set(owns ? 26f : 0f, 0f);
 
 				if (!owns)
@@ -394,8 +406,19 @@ namespace Augments
 					: "Undo Reforge: nothing to undo");
 			}
 
+			public override void Draw(SpriteBatch spriteBatch)
+			{
+				if (!owns)
+					return;
+
+				base.Draw(spriteBatch);
+			}
+
 			public override void LeftClick(UIMouseEvent evt)
 			{
+				if (!owns)
+					return;
+
 				base.LeftClick(evt);
 				if (enabled)
 				{
@@ -406,6 +429,9 @@ namespace Augments
 
 			public override void MouseOver(UIMouseEvent evt)
 			{
+				if (!owns)
+					return;
+
 				base.MouseOver(evt);
 				if (enabled)
 				{
@@ -416,6 +442,9 @@ namespace Augments
 
 			public override void MouseOut(UIMouseEvent evt)
 			{
+				if (!owns)
+					return;
+
 				base.MouseOut(evt);
 				BackgroundColor = enabled ? IdleColor : DisabledColor;
 			}
