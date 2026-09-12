@@ -38,8 +38,6 @@ namespace Augments
 		private static readonly Color SupportTagColor = new Color(90, 230, 140);
 		private static readonly Color FortuneTagColor = new Color(255, 205, 65);
 
-		private static Asset<Texture2D> RarityStarAsset;
-
 		// Animation timings & parameters
 		private static readonly float[] PulseSpeeds = { 1.0f, 1.8f, 2.6f, 3.4f };
 
@@ -143,28 +141,22 @@ namespace Augments
 			DrawCardBorders(spriteBatch, rect, borderColor, pulse);
 
 			// =================================================================
-			// 5. CLASS ICON BOX & ROTATING/PULSING HALO
+			// 5. CLASS ICON (Larger, no box border, no black background)
 			// =================================================================
-			int iconBoxSize = 44;
-			int iconBoxX = rect.X + (rect.Width - iconBoxSize) / 2;
-			int iconBoxY = rect.Y + 12;
-			Rectangle iconBox = new Rectangle(iconBoxX, iconBoxY, iconBoxSize, iconBoxSize);
-
-			// Icon box inner chassis
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, iconBox, new Color(10, 14, 28) * 0.95f);
-			DrawRectBorder(spriteBatch, iconBox, borderColor * 0.7f, 1);
+			int cx = rect.X + rect.Width / 2;
+			int cy = rect.Y + 44;
 
 			// Halo animation behind icon
-			DrawIconHalo(spriteBatch, iconBoxX, iconBoxY, iconBoxSize, pulse);
+			DrawIconHalo(spriteBatch, cx, cy, pulse);
 
-			// Draw Class Icon
+			// Draw Class Icon (Larger: 52x52)
 			Texture2D iconTex = AugmentSlotElement.GetClassIcon(Augment.Class);
 			if (iconTex != null)
 			{
-				float iconScale = Math.Min(30f / iconTex.Width, 30f / iconTex.Height);
+				float iconScale = Math.Min(52f / iconTex.Width, 52f / iconTex.Height);
 				Vector2 iconPos = new Vector2(
-					iconBoxX + (iconBoxSize - iconTex.Width * iconScale) * 0.5f,
-					iconBoxY + (iconBoxSize - iconTex.Height * iconScale) * 0.5f
+					cx - iconTex.Width * iconScale * 0.5f,
+					cy - iconTex.Height * iconScale * 0.5f
 				);
 				Color iconColor = isHovered ? Color.White : rarityColor;
 				if (Augment.Rarity == AugmentRarity.Common) iconColor = new Color(225, 230, 240);
@@ -172,23 +164,17 @@ namespace Augments
 			}
 
 			// =================================================================
-			// 6. RARITY STARS & CLASS PILL BADGE
+			// 6. AUGMENT DISPLAY NAME (Directly under icon, no star/class pill)
 			// =================================================================
-			int pillY = iconBoxY + iconBoxSize + 6; // Y = 62
-			DrawRarityBadge(spriteBatch, font, rect, pillY, borderColor, pulse);
-
-			// =================================================================
-			// 7. AUGMENT DISPLAY NAME
-			// =================================================================
-			float nameY = pillY + 22f; // Y = 84
+			float nameY = cy + 34f;
 			float centerX = rect.X + rect.Width * 0.5f;
 			Color nameColor = isHovered ? Color.Lerp(rarityColor, Color.White, 0.45f) : rarityColor;
 			nameY = DrawCenteredLines(spriteBatch, font, nameLines, NameScale, centerX, nameY, nameColor);
 
 			// =================================================================
-			// 8. GLOWING HEADER DIVIDER LINE
+			// 7. GLOWING HEADER DIVIDER LINE
 			// =================================================================
-			float divY = Math.Max(nameY + 4f, rect.Y + 128f);
+			float divY = Math.Max(nameY + 6f, rect.Y + 118f);
 			int divLeft = rect.X + 16;
 			int divW = rect.Width - 32;
 			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(divLeft, (int)divY, divW, 1), borderColor * 0.45f);
@@ -358,79 +344,18 @@ namespace Augments
 			}
 		}
 
-		private void DrawIconHalo(SpriteBatch spriteBatch, int iconBoxX, int iconBoxY, int iconBoxSize, float pulse)
+		private void DrawIconHalo(SpriteBatch spriteBatch, int cx, int cy, float pulse)
 		{
-			int cx = iconBoxX + iconBoxSize / 2;
-			int cy = iconBoxY + iconBoxSize / 2;
-
 			if (Augment.Rarity == AugmentRarity.Legendary)
 			{
 				AugmentSlotElement.DrawStarSparkle(spriteBatch, cx, cy, 0.45f + pulse * 0.35f);
 			}
 			else if (Augment.Rarity == AugmentRarity.Epic)
 			{
-				int haloSize = (int)(22 + pulse * 8);
+				int haloSize = (int)(28 + pulse * 10);
 				Rectangle haloRect = new Rectangle(cx - haloSize / 2, cy - haloSize / 2, haloSize, haloSize);
 				spriteBatch.Draw(TextureAssets.MagicPixel.Value, haloRect, new Color(195, 115, 255) * (0.20f + pulse * 0.20f));
 			}
-		}
-
-		private void DrawRarityBadge(SpriteBatch spriteBatch, DynamicSpriteFont font, Rectangle rect, int pillY, Color borderColor, float pulse)
-		{
-			string classLabel = Augment.Class.ToString().ToUpper();
-			string rarityLabel = Augment.Rarity.ToString().ToUpper();
-			string badgeText = $"{rarityLabel}  •  {classLabel}";
-			Vector2 badgeTextSize = ChatManager.GetStringSize(font, badgeText, new Vector2(0.68f));
-
-			if (RarityStarAsset == null)
-				RarityStarAsset = ModContent.Request<Texture2D>("Augments/UI/RarityStar", AssetRequestMode.ImmediateLoad);
-
-			int starCount = Augment.Rarity switch
-			{
-				AugmentRarity.Common => 1,
-				AugmentRarity.Rare => 2,
-				AugmentRarity.Epic => 3,
-				AugmentRarity.Legendary => 4,
-				_ => 1
-			};
-
-			float starW = 12f;
-			float starSpacing = 2f;
-			float totalStarsW = (starCount * starW) + ((starCount - 1) * starSpacing);
-			float totalBadgeW = badgeTextSize.X + totalStarsW + 18f;
-
-			int pillW = (int)totalBadgeW;
-			int pillH = 18;
-			int pillX = rect.X + (rect.Width - pillW) / 2;
-			Rectangle pillRect = new Rectangle(pillX, pillY, pillW, pillH);
-
-			// Pill background & border
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, pillRect, new Color(10, 14, 28) * 0.9f);
-			DrawRectBorder(spriteBatch, pillRect, borderColor * 0.55f, 1);
-
-			// Draw Stars
-			float currentX = pillRect.X + 8f;
-			float starY = pillRect.Y + (pillH - starW) * 0.5f;
-
-			if (RarityStarAsset?.IsLoaded == true)
-			{
-				Texture2D starTex = RarityStarAsset.Value;
-				float scale = starW / starTex.Width;
-				for (int s = 0; s < starCount; s++)
-				{
-					Color starCol = borderColor;
-					if (Augment.Rarity == AugmentRarity.Legendary)
-						starCol = Color.Lerp(new Color(255, 215, 80), Color.White, pulse * 0.4f);
-
-					spriteBatch.Draw(starTex, new Vector2(currentX, starY), null, starCol, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
-					currentX += starW + starSpacing;
-				}
-			}
-
-			// Draw Badge Text
-			currentX += 4f;
-			Vector2 textPos = new Vector2(currentX, pillRect.Y + (pillH - badgeTextSize.Y) * 0.5f);
-			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, badgeText, textPos, borderColor, 0f, Vector2.Zero, new Vector2(0.68f));
 		}
 
 		private void DrawProceduralSparkles(SpriteBatch spriteBatch, Rectangle rect, float time)
@@ -548,30 +473,12 @@ namespace Augments
 
 		private void DrawInstallActionBar(SpriteBatch spriteBatch, DynamicSpriteFont font, Rectangle rect, Color borderColor)
 		{
-			int barH = 24;
-			int barW = rect.Width - 30;
-			int barX = rect.X + 15;
-			int barY = rect.Bottom - 32;
-			Rectangle barRect = new Rectangle(barX, barY, barW, barH);
-
-			Color barBg = isHovered ? (Augment.Rarity switch
-			{
-				AugmentRarity.Legendary => new Color(75, 52, 18) * 0.95f,
-				AugmentRarity.Epic => new Color(55, 28, 80) * 0.95f,
-				AugmentRarity.Rare => new Color(24, 52, 85) * 0.95f,
-				_ => new Color(35, 45, 70) * 0.95f
-			}) : new Color(14, 18, 36) * 0.75f;
-
-			Color barBorder = isHovered ? borderColor : borderColor * 0.4f;
-
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, barRect, barBg);
-			DrawRectBorder(spriteBatch, barRect, barBorder, 1);
-
+			float textY = rect.Bottom - 26f;
 			string installText = isHovered ? "▶  CLICK TO INSTALL  ◀" : "Click to select";
-			Vector2 installScale = new Vector2(isHovered ? 0.72f : 0.65f);
+			Vector2 installScale = new Vector2(isHovered ? 0.74f : 0.68f);
 			Vector2 installSize = ChatManager.GetStringSize(font, installText, installScale);
-			Vector2 installPos = new Vector2(barRect.X + (barRect.Width - installSize.X) * 0.5f, barRect.Y + (barRect.Height - installSize.Y) * 0.5f);
-			Color installColor = isHovered ? Color.White : new Color(130, 148, 180);
+			Vector2 installPos = new Vector2(rect.X + (rect.Width - installSize.X) * 0.5f, textY);
+			Color installColor = isHovered ? Color.White : new Color(130, 150, 185) * 0.85f;
 			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, installText, installPos, installColor, 0f, Vector2.Zero, installScale);
 		}
 

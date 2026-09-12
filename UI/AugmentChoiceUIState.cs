@@ -46,7 +46,7 @@ namespace Augments
 		private const float PanelWidth = 880f;
 		private const float CardWidth = 270f;
 		private const float CardSpacing = 16f;
-		private const float CardsTop = 82f;
+		private const float CardsTop = 102f;
 		private const float BottomMargin = 20f;
 
 		// Dedicated strip below the cards for the reroll button
@@ -74,7 +74,7 @@ namespace Augments
 				HAlign = 0.5f,
 				TextColor = new Color(255, 225, 150)
 			};
-			titleText.Top.Set(14f, 0f);
+			titleText.Top.Set(18f, 0f);
 			backPanel.Append(titleText);
 
 			UIText subtitle = new UIText("Select a plug-in chip to install into your neural frame", 0.76f)
@@ -82,7 +82,7 @@ namespace Augments
 				HAlign = 0.5f,
 				TextColor = new Color(150, 170, 205)
 			};
-			subtitle.Top.Set(38f, 0f);
+			subtitle.Top.Set(48f, 0f);
 			backPanel.Append(subtitle);
 
 			capNoticeText = new UIText("", 0.78f)
@@ -90,7 +90,7 @@ namespace Augments
 				HAlign = 0.5f,
 				TextColor = AugmentTextColors.Cooldown
 			};
-			capNoticeText.Top.Set(56f, 0f);
+			capNoticeText.Top.Set(68f, 0f);
 			backPanel.Append(capNoticeText);
 
 			// Reroll and Skip sit side by side on the same row, centered as a pair
@@ -619,7 +619,7 @@ namespace Augments
 				CalculatedStyle dims = GetDimensions();
 
 				// Header horizontal divider
-				int divY = (int)dims.Y + 70;
+				int divY = (int)dims.Y + 84;
 				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle((int)dims.X + 24, divY, (int)dims.Width - 48, 1), new Color(45, 62, 105) * 0.7f);
 
 				// Center diamond node
