@@ -249,25 +249,26 @@ namespace Augments.Projectiles
             {
                 Lighting.AddLight(aimTarget, 0.15f, 0.8f, 0.5f);
 
-                // Stream nano-particles along the beam
+                // Stream particles forward from gun towards ally
                 if (Main.rand.NextBool(2))
                 {
                     float t = Main.rand.NextFloat();
-                    Vector2 beamPt = GetBezierPoint(Projectile.Center, aimTarget, t, true);
-                    Dust d = Dust.NewDustDirect(beamPt - new Vector2(3, 3), 6, 6, DustID.GemEmerald);
+                    Vector2 beamPt = Vector2.Lerp(Projectile.Center, aimTarget, t);
+                    Dust d = Dust.NewDustDirect(beamPt - new Vector2(2, 2), 4, 4, DustID.GemEmerald);
                     d.noGravity = true;
-                    d.velocity = (aimTarget - beamPt).SafeNormalize(Vector2.Zero) * Main.rand.NextFloat(2f, 4f);
-                    d.scale = Main.rand.NextFloat(0.7f, 1.1f);
+                    // Velocity points toward ally
+                    d.velocity = (aimTarget - beamPt).SafeNormalize(Vector2.Zero) * Main.rand.NextFloat(3f, 5f);
+                    d.scale = Main.rand.NextFloat(0.6f, 0.9f);
                 }
 
                 // Healing aura sparkles drifting upward from target
                 if (Main.rand.NextBool(3))
                 {
-                    Vector2 auraOffset = new Vector2(Main.rand.NextFloat(-16f, 16f), Main.rand.NextFloat(-8f, 20f));
+                    Vector2 auraOffset = new Vector2(Main.rand.NextFloat(-14f, 14f), Main.rand.NextFloat(-8f, 18f));
                     Dust d = Dust.NewDustDirect(aimTarget + auraOffset, 4, 4, DustID.GreenFairy);
                     d.noGravity = true;
-                    d.velocity = new Vector2(Main.rand.NextFloat(-0.5f, 0.5f), -Main.rand.NextFloat(1.2f, 2.5f));
-                    d.scale = Main.rand.NextFloat(0.6f, 1.0f);
+                    d.velocity = new Vector2(Main.rand.NextFloat(-0.4f, 0.4f), -Main.rand.NextFloat(1.2f, 2.2f));
+                    d.scale = Main.rand.NextFloat(0.6f, 0.95f);
                 }
             }
             else
@@ -278,36 +279,9 @@ namespace Augments.Projectiles
                     Dust d = Dust.NewDustDirect(Projectile.Center - new Vector2(2, 2), 4, 4, DustID.Electric);
                     d.noGravity = true;
                     d.velocity = aimDir * Main.rand.NextFloat(3f, 6f) + Main.rand.NextVector2Circular(1f, 1f);
-                    d.scale = 0.65f;
+                    d.scale = 0.6f;
                 }
             }
-        }
-
-        private Vector2 GetBezierPoint(Vector2 start, Vector2 end, float t, bool isLocked)
-        {
-            Vector2 mid = (start + end) * 0.5f;
-            Vector2 diff = end - start;
-            Vector2 normal = diff.SafeNormalize(Vector2.UnitY);
-            Vector2 perp = new Vector2(-normal.Y, normal.X);
-
-            float time = (float)Main.GlobalTimeWrappedHourly * 14f;
-            
-            float wave;
-            if (isLocked)
-            {
-                // Smooth organic oscillation
-                wave = (float)Math.Sin(time + Projectile.whoAmI * 2f) * 22f;
-            }
-            else
-            {
-                // Crackling jitter arc searching for allies
-                float jitter = (float)Math.Sin(time * 2.5f + t * 12f) * 14f;
-                wave = jitter;
-            }
-
-            Vector2 ctrl = mid + perp * wave;
-            float u = 1f - t;
-            return u * u * start + 2f * u * t * ctrl + t * t * end;
         }
 
         public override bool PreDraw(ref Color lightColor)
@@ -332,134 +306,199 @@ namespace Augments.Projectiles
                 Vector2 fallbackDir = Projectile.owner == Main.myPlayer
                     ? (Main.MouseWorld - muzzlePos).SafeNormalize(Vector2.UnitX * player.direction)
                     : Vector2.UnitX * player.direction;
-                targetPos = muzzlePos + fallbackDir * 220f;
+                targetPos = muzzlePos + fallbackDir * 200f;
             }
 
             Texture2D pixel = TextureAssets.MagicPixel.Value;
-            int segments = 32;
+            int segments = 40;
 
-            Vector2 prevPoint = muzzlePos;
-            Vector2 prevRibbon1 = muzzlePos;
-            Vector2 prevRibbon2 = muzzlePos;
+            Vector2 beamDiff = targetPos - muzzlePos;
+            float totalLen = Math.Max(1f, beamDiff.Length());
+            Vector2 beamDir = beamDiff / totalLen;
+            Vector2 normal = new Vector2(-beamDir.Y, beamDir.X);
 
-            float time = (float)Main.GlobalTimeWrappedHourly * 14f;
+            float time = (float)Main.GlobalTimeWrappedHourly * 16f;
 
-            // Draw Beam Segments
-            for (int i = 1; i <= segments; i++)
+            // Arrays to store segment data for 3D depth-sorted rendering
+            Vector2[] centerPoints = new Vector2[segments + 1];
+            Vector2[] ribbon1Points = new Vector2[segments + 1];
+            Vector2[] ribbon2Points = new Vector2[segments + 1];
+            float[] depth1 = new float[segments + 1];
+            float[] depth2 = new float[segments + 1];
+
+            // Speed and wave frequency: NEGATIVE t means wave travels from muzzle (t=0) TOWARD ally (t=1)
+            float waveSpeed = 16f;
+            float waveFreq = 22f;
+
+            for (int i = 0; i <= segments; i++)
             {
                 float t = i / (float)segments;
-                Vector2 currentPoint = GetBezierPoint(muzzlePos, targetPos, t, isLocked);
 
-                Vector2 segDiff = currentPoint - prevPoint;
-                float segLen = Math.Max(1f, segDiff.Length());
-                float segRot = (float)Math.Atan2(segDiff.Y, segDiff.X);
-                Vector2 origin = new Vector2(0f, 0.5f);
-
-                // Perpendicular vector for helix ribbons
-                Vector2 tangent = segDiff.SafeNormalize(Vector2.UnitX);
-                Vector2 normal = new Vector2(-tangent.Y, tangent.X);
-
-                // Helix Ribbon 1 (Neon Cyan)
-                float ribbonWave1 = (float)Math.Sin(time * 1.5f + t * 16f) * (isLocked ? 12f : 6f);
-                Vector2 ribbon1Pt = currentPoint + normal * ribbonWave1;
-
-                // Helix Ribbon 2 (Bright Emerald - opposite phase)
-                float ribbonWave2 = (float)Math.Sin(time * 1.5f + t * 16f + MathHelper.Pi) * (isLocked ? 12f : 6f);
-                Vector2 ribbon2Pt = currentPoint + normal * ribbonWave2;
-
-                // 1. Outer Wide Aura
-                Color outerColor = isLocked
-                    ? new Color(35, 230, 140, 60) * 0.75f
-                    : new Color(50, 160, 255, 45) * 0.55f;
-                Main.EntitySpriteDraw(pixel, prevPoint - Main.screenPosition, new Rectangle(0, 0, (int)segLen + 1, 16), outerColor, segRot, origin, 1f, SpriteEffects.None, 0);
-
-                // 2. Mid Energy Sheath
-                Color midColor = isLocked
-                    ? new Color(75, 255, 180, 150)
-                    : new Color(80, 200, 255, 110);
-                Main.EntitySpriteDraw(pixel, prevPoint - Main.screenPosition, new Rectangle(0, 0, (int)segLen + 1, 7), midColor, segRot, origin, 1f, SpriteEffects.None, 0);
-
-                // 3. Central Luminous Filament
-                Color coreColor = isLocked
-                    ? new Color(240, 255, 250, 240)
-                    : new Color(220, 245, 255, 200);
-                Main.EntitySpriteDraw(pixel, prevPoint - Main.screenPosition, new Rectangle(0, 0, (int)segLen + 1, 3), coreColor, segRot, origin, 1f, SpriteEffects.None, 0);
-
-                // 4. Draw Helix Ribbons
-                if (i > 1)
+                // 1. Central straight line axis
+                Vector2 cPt = Vector2.Lerp(muzzlePos, targetPos, t);
+                if (!isLocked)
                 {
-                    // Ribbon 1 Segment
-                    Vector2 rDiff1 = ribbon1Pt - prevRibbon1;
-                    float rLen1 = Math.Max(1f, rDiff1.Length());
-                    float rRot1 = (float)Math.Atan2(rDiff1.Y, rDiff1.X);
-                    Color rColor1 = isLocked ? new Color(0, 255, 220, 140) : new Color(60, 180, 255, 80);
-                    Main.EntitySpriteDraw(pixel, prevRibbon1 - Main.screenPosition, new Rectangle(0, 0, (int)rLen1 + 1, 3), rColor1, rRot1, origin, 1f, SpriteEffects.None, 0);
-
-                    // Ribbon 2 Segment
-                    Vector2 rDiff2 = ribbon2Pt - prevRibbon2;
-                    float rLen2 = Math.Max(1f, rDiff2.Length());
-                    float rRot2 = (float)Math.Atan2(rDiff2.Y, rDiff2.X);
-                    Color rColor2 = isLocked ? new Color(110, 255, 130, 140) : new Color(120, 220, 255, 80);
-                    Main.EntitySpriteDraw(pixel, prevRibbon2 - Main.screenPosition, new Rectangle(0, 0, (int)rLen2 + 1, 3), rColor2, rRot2, origin, 1f, SpriteEffects.None, 0);
+                    // Subtle search jitter when not locked
+                    cPt += normal * ((float)Math.Sin(time * 3f + t * 14f) * 4f);
                 }
+                centerPoints[i] = cPt;
 
-                prevPoint = currentPoint;
-                prevRibbon1 = ribbon1Pt;
-                prevRibbon2 = ribbon2Pt;
+                // 2. 3D Helix rotation angle (surges toward ally)
+                float angle1 = time * waveSpeed - t * waveFreq;
+                float angle2 = angle1 + MathHelper.Pi; // Ribbon 2 is 180 deg opposite
+
+                // Taper radius at both endpoints
+                float envelope = MathHelper.Clamp((float)Math.Sin(t * MathHelper.Pi) * 1.4f, 0.15f, 1f);
+                float radius = (isLocked ? 8f : 4f) * envelope;
+
+                // X in screen plane along normal, Z along line of sight (depth)
+                ribbon1Points[i] = cPt + normal * ((float)Math.Sin(angle1) * radius);
+                depth1[i] = (float)Math.Cos(angle1);
+
+                ribbon2Points[i] = cPt + normal * ((float)Math.Sin(angle2) * radius);
+                depth2[i] = (float)Math.Cos(angle2);
             }
 
-            // Draw Surging Energy Packets (Travelling from Muzzle to Ally)
+            Vector2 origin = new Vector2(0f, 0.5f);
+
+            // ==========================================
+            // PASS 1: Draw Ribbon Segments BEHIND Center Line (depth < 0)
+            // ==========================================
+            for (int i = 1; i <= segments; i++)
+            {
+                // Ribbon 1 (Neon Cyan) - Behind
+                if (depth1[i] < 0 || depth1[i - 1] < 0)
+                {
+                    Vector2 rDiff = ribbon1Points[i] - ribbon1Points[i - 1];
+                    float rLen = Math.Max(1f, rDiff.Length());
+                    float rRot = (float)Math.Atan2(rDiff.Y, rDiff.X);
+                    Color col = isLocked ? new Color(0, 200, 180, 80) : new Color(40, 140, 220, 50);
+                    Main.EntitySpriteDraw(pixel, ribbon1Points[i - 1] - Main.screenPosition, new Rectangle(0, 0, (int)rLen + 1, 2), col, rRot, origin, 1f, SpriteEffects.None, 0);
+                }
+
+                // Ribbon 2 (Bright Emerald) - Behind
+                if (depth2[i] < 0 || depth2[i - 1] < 0)
+                {
+                    Vector2 rDiff = ribbon2Points[i] - ribbon2Points[i - 1];
+                    float rLen = Math.Max(1f, rDiff.Length());
+                    float rRot = (float)Math.Atan2(rDiff.Y, rDiff.X);
+                    Color col = isLocked ? new Color(80, 200, 110, 80) : new Color(80, 170, 220, 50);
+                    Main.EntitySpriteDraw(pixel, ribbon2Points[i - 1] - Main.screenPosition, new Rectangle(0, 0, (int)rLen + 1, 2), col, rRot, origin, 1f, SpriteEffects.None, 0);
+                }
+            }
+
+            // ==========================================
+            // PASS 2: Draw Sleek, Thin Central Beam in the Middle
+            // ==========================================
+            for (int i = 1; i <= segments; i++)
+            {
+                Vector2 segDiff = centerPoints[i] - centerPoints[i - 1];
+                float segLen = Math.Max(1f, segDiff.Length());
+                float segRot = (float)Math.Atan2(segDiff.Y, segDiff.X);
+
+                // 1. Subtle Outer Glow (Thin: 6px)
+                Color outerColor = isLocked
+                    ? new Color(30, 220, 130, 45) * 0.7f
+                    : new Color(40, 140, 255, 30) * 0.5f;
+                Main.EntitySpriteDraw(pixel, centerPoints[i - 1] - Main.screenPosition, new Rectangle(0, 0, (int)segLen + 1, 6), outerColor, segRot, origin, 1f, SpriteEffects.None, 0);
+
+                // 2. Focused Bright Core (Thin: 2px)
+                Color coreColor = isLocked
+                    ? new Color(80, 255, 170, 160)
+                    : new Color(90, 190, 255, 120);
+                Main.EntitySpriteDraw(pixel, centerPoints[i - 1] - Main.screenPosition, new Rectangle(0, 0, (int)segLen + 1, 2), coreColor, segRot, origin, 1f, SpriteEffects.None, 0);
+
+                // 3. Central Luminous White Filament (1px)
+                Color filamentColor = isLocked
+                    ? new Color(240, 255, 250, 220)
+                    : new Color(220, 245, 255, 180);
+                Main.EntitySpriteDraw(pixel, centerPoints[i - 1] - Main.screenPosition, new Rectangle(0, 0, (int)segLen + 1, 1), filamentColor, segRot, origin, 1f, SpriteEffects.None, 0);
+            }
+
+            // ==========================================
+            // PASS 3: Draw Ribbon Segments IN FRONT OF Center Line (depth >= 0)
+            // ==========================================
+            for (int i = 1; i <= segments; i++)
+            {
+                // Ribbon 1 (Neon Cyan) - Front
+                if (depth1[i] >= 0 || depth1[i - 1] >= 0)
+                {
+                    Vector2 rDiff = ribbon1Points[i] - ribbon1Points[i - 1];
+                    float rLen = Math.Max(1f, rDiff.Length());
+                    float rRot = (float)Math.Atan2(rDiff.Y, rDiff.X);
+                    Color col = isLocked ? new Color(0, 255, 230, 180) : new Color(60, 200, 255, 110);
+                    Main.EntitySpriteDraw(pixel, ribbon1Points[i - 1] - Main.screenPosition, new Rectangle(0, 0, (int)rLen + 1, 2), col, rRot, origin, 1f, SpriteEffects.None, 0);
+                }
+
+                // Ribbon 2 (Bright Emerald) - Front
+                if (depth2[i] >= 0 || depth2[i - 1] >= 0)
+                {
+                    Vector2 rDiff = ribbon2Points[i] - ribbon2Points[i - 1];
+                    float rLen = Math.Max(1f, rDiff.Length());
+                    float rRot = (float)Math.Atan2(rDiff.Y, rDiff.X);
+                    Color col = isLocked ? new Color(110, 255, 140, 180) : new Color(100, 220, 255, 110);
+                    Main.EntitySpriteDraw(pixel, ribbon2Points[i - 1] - Main.screenPosition, new Rectangle(0, 0, (int)rLen + 1, 2), col, rRot, origin, 1f, SpriteEffects.None, 0);
+                }
+            }
+
+            // ==========================================
+            // PASS 4: Surging Energy Packets (Travelling toward ally)
+            // ==========================================
             if (isLocked)
             {
                 for (int p = 0; p < 3; p++)
                 {
-                    float pulseT = ((float)Main.GlobalTimeWrappedHourly * 1.5f + p * 0.333f) % 1f;
-                    Vector2 pulsePos = GetBezierPoint(muzzlePos, targetPos, pulseT, true);
-                    float pulseScale = 1f + 0.3f * (float)Math.Sin(pulseT * MathHelper.Pi);
+                    // Travelling from muzzle (0) to ally (1)
+                    float pulseT = ((float)Main.GlobalTimeWrappedHourly * 1.8f + p * 0.333f) % 1f;
+                    Vector2 pulsePos = Vector2.Lerp(muzzlePos, targetPos, pulseT);
+                    float pulseScale = 0.8f + 0.3f * (float)Math.Sin(pulseT * MathHelper.Pi);
 
-                    Color packetAura = new Color(0, 255, 200, 120);
-                    Color packetCore = new Color(250, 255, 255, 230);
+                    Color packetAura = new Color(0, 255, 200, 140);
+                    Color packetCore = new Color(250, 255, 255, 240);
 
-                    // Rotating diamond packet
-                    float packetRot = (float)Main.GlobalTimeWrappedHourly * 8f;
-                    Main.EntitySpriteDraw(pixel, pulsePos - Main.screenPosition, new Rectangle(0, 0, 10, 10), packetAura, packetRot, new Vector2(5, 5), pulseScale, SpriteEffects.None, 0);
-                    Main.EntitySpriteDraw(pixel, pulsePos - Main.screenPosition, new Rectangle(0, 0, 5, 5), packetCore, packetRot, new Vector2(2.5f, 2.5f), pulseScale, SpriteEffects.None, 0);
+                    float packetRot = (float)Main.GlobalTimeWrappedHourly * 6f;
+                    Main.EntitySpriteDraw(pixel, pulsePos - Main.screenPosition, new Rectangle(0, 0, 7, 7), packetAura, packetRot, new Vector2(3.5f, 3.5f), pulseScale, SpriteEffects.None, 0);
+                    Main.EntitySpriteDraw(pixel, pulsePos - Main.screenPosition, new Rectangle(0, 0, 3, 3), packetCore, packetRot, new Vector2(1.5f, 1.5f), pulseScale, SpriteEffects.None, 0);
                 }
             }
 
-            // Draw Muzzle Energy Flare
-            float muzzlePulse = 1f + 0.2f * (float)Math.Sin(Main.GlobalTimeWrappedHourly * 16f);
-            float muzzleRot = (float)Main.GlobalTimeWrappedHourly * 3f;
-            Color muzzleColor = isLocked ? new Color(60, 255, 170, 200) : new Color(80, 200, 255, 160);
-            Main.EntitySpriteDraw(pixel, muzzlePos - Main.screenPosition, new Rectangle(0, 0, 14, 14), muzzleColor * 0.7f, muzzleRot, new Vector2(7, 7), muzzlePulse, SpriteEffects.None, 0);
-            Main.EntitySpriteDraw(pixel, muzzlePos - Main.screenPosition, new Rectangle(0, 0, 7, 7), Color.White, muzzleRot + MathHelper.PiOver4, new Vector2(3.5f, 3.5f), muzzlePulse, SpriteEffects.None, 0);
+            // ==========================================
+            // PASS 5: Muzzle Energy Flare
+            // ==========================================
+            float muzzlePulse = 1f + 0.15f * (float)Math.Sin(Main.GlobalTimeWrappedHourly * 16f);
+            float muzzleRot = (float)Main.GlobalTimeWrappedHourly * 2.5f;
+            Color muzzleColor = isLocked ? new Color(60, 255, 170, 180) : new Color(80, 200, 255, 140);
+            Main.EntitySpriteDraw(pixel, muzzlePos - Main.screenPosition, new Rectangle(0, 0, 10, 10), muzzleColor * 0.7f, muzzleRot, new Vector2(5, 5), muzzlePulse, SpriteEffects.None, 0);
+            Main.EntitySpriteDraw(pixel, muzzlePos - Main.screenPosition, new Rectangle(0, 0, 5, 5), Color.White, muzzleRot + MathHelper.PiOver4, new Vector2(2.5f, 2.5f), muzzlePulse, SpriteEffects.None, 0);
 
-            // Draw Holographic Medical Target Reticle
+            // ==========================================
+            // PASS 6: Holographic Medical Target Reticle
+            // ==========================================
             if (isLocked)
             {
-                float reticlePulse = 1f + 0.15f * (float)Math.Sin(Main.GlobalTimeWrappedHourly * 10f);
+                float reticlePulse = 1f + 0.12f * (float)Math.Sin(Main.GlobalTimeWrappedHourly * 10f);
                 float reticleRot = (float)Main.GlobalTimeWrappedHourly * 1.5f;
-                Color techGreen = new Color(70, 255, 160, 220) * reticlePulse;
+                Color techGreen = new Color(70, 255, 160, 200) * reticlePulse;
                 Color coreWhite = Color.White * reticlePulse;
 
-                // 1. Rotating diamond frame
-                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 24, 2), techGreen * 0.8f, reticleRot, new Vector2(12, 1), 1f, SpriteEffects.None, 0);
-                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 2, 24), techGreen * 0.8f, reticleRot, new Vector2(1, 12), 1f, SpriteEffects.None, 0);
+                // Rotating diamond brackets
+                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 20, 2), techGreen * 0.75f, reticleRot, new Vector2(10, 1), 1f, SpriteEffects.None, 0);
+                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 2, 20), techGreen * 0.75f, reticleRot, new Vector2(1, 10), 1f, SpriteEffects.None, 0);
 
-                // 2. Solid Central Medical Cross
+                // Solid Central Medical Cross
                 // Horizontal bar
-                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 14, 4), techGreen, 0f, new Vector2(7, 2), 1f, SpriteEffects.None, 0);
-                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 10, 2), coreWhite, 0f, new Vector2(5, 1), 1f, SpriteEffects.None, 0);
+                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 12, 4), techGreen, 0f, new Vector2(6, 2), 1f, SpriteEffects.None, 0);
+                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 8, 2), coreWhite, 0f, new Vector2(4, 1), 1f, SpriteEffects.None, 0);
                 // Vertical bar
-                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 4, 14), techGreen, 0f, new Vector2(2, 7), 1f, SpriteEffects.None, 0);
-                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 2, 10), coreWhite, 0f, new Vector2(1, 5), 1f, SpriteEffects.None, 0);
+                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 4, 12), techGreen, 0f, new Vector2(2, 6), 1f, SpriteEffects.None, 0);
+                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 2, 8), coreWhite, 0f, new Vector2(1, 4), 1f, SpriteEffects.None, 0);
 
-                // 3. Expanding Radar Ping Ring
+                // Expanding Radar Ping Ring
                 float pingProgress = ((float)Main.GlobalTimeWrappedHourly * 2f) % 1f;
-                float pingScale = 0.6f + pingProgress * 1.2f;
-                Color pingColor = techGreen * (1f - pingProgress) * 0.6f;
-                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 20, 2), pingColor, reticleRot + MathHelper.PiOver4, new Vector2(10, 1), pingScale, SpriteEffects.None, 0);
-                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 2, 20), pingColor, reticleRot + MathHelper.PiOver4, new Vector2(1, 10), pingScale, SpriteEffects.None, 0);
+                float pingScale = 0.5f + pingProgress * 1.1f;
+                Color pingColor = techGreen * (1f - pingProgress) * 0.5f;
+                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 18, 2), pingColor, reticleRot + MathHelper.PiOver4, new Vector2(9, 1), pingScale, SpriteEffects.None, 0);
+                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 2, 18), pingColor, reticleRot + MathHelper.PiOver4, new Vector2(1, 9), pingScale, SpriteEffects.None, 0);
             }
 
             return false;
