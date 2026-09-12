@@ -54,6 +54,24 @@ namespace Augments
             spriteBatch.Draw(texture, Item.position - Main.screenPosition + origin, frame, lightColor, rotation, origin, autoScale, SpriteEffects.None, 0f);
             return false;
         }
+
+        public override void ModifyTooltips(System.Collections.Generic.List<TooltipLine> tooltips)
+        {
+            for (int i = tooltips.Count - 1; i >= 0; i--)
+            {
+                TooltipLine line = tooltips[i];
+                if (line.Name == "ModName" && (line.Text.Contains("Augments") || line.Text.Contains("[Augments]")))
+                {
+                    tooltips.RemoveAt(i);
+                    continue;
+                }
+
+                if (line.Text.Contains("[Augments]"))
+                {
+                    line.Text = line.Text.Replace("[Augments]", "").TrimEnd();
+                }
+            }
+        }
     }
 
     // Recolors the Soul of Light's sprite to a saturated gold by shifting

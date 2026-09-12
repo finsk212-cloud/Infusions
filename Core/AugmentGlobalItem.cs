@@ -34,5 +34,23 @@ namespace Augments
             foreach (var augment in Main.LocalPlayer.GetModPlayer<AugmentPlayer>().Owned)
                 augment.PostReforge(Main.LocalPlayer, item);
         }
+
+        public override void ModifyTooltips(Item item, System.Collections.Generic.List<TooltipLine> tooltips)
+        {
+            for (int i = tooltips.Count - 1; i >= 0; i--)
+            {
+                TooltipLine line = tooltips[i];
+                if (line.Name == "ModName" && (line.Text.Contains("Augments") || line.Text.Contains("[Augments]")))
+                {
+                    tooltips.RemoveAt(i);
+                    continue;
+                }
+
+                if (line.Text.Contains("[Augments]"))
+                {
+                    line.Text = line.Text.Replace("[Augments]", "").TrimEnd();
+                }
+            }
+        }
     }
 }
