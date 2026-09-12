@@ -43,16 +43,14 @@ namespace Augments
 		private Augment pendingKeystone;
 		private bool pendingSkipConfirm;
 
-		private const float PanelWidth = 860f;
+		private const float PanelWidth = 880f;
 		private const float CardWidth = 270f;
-		private const float CardSpacing = 14f;
-		private const float CardsTop = 68f;
-		private const float BottomMargin = 24f;
+		private const float CardSpacing = 16f;
+		private const float CardsTop = 82f;
+		private const float BottomMargin = 20f;
 
-		// Dedicated strip below the cards for the reroll button - kept as its
-		// own gap + button height rather than folded into BottomMargin, so the
-		// button always has clear, non-overlapping space under the card row.
-		private const float RerollGap = 20f;
+		// Dedicated strip below the cards for the reroll button
+		private const float RerollGap = 18f;
 		private const float RerollButtonHeight = 34f;
 
 		private const float ConfirmBoxWidth = 520f;
@@ -62,37 +60,40 @@ namespace Augments
 
 		public override void OnInitialize()
 		{
-			backPanel = new UIPanel();
+			backPanel = new ChoiceBackPanel();
 			backPanel.Width.Set(PanelWidth, 0f);
-			// Driven by AugmentChoiceCard.MinCardHeight (the cards' actual fixed
-			// height) rather than a separate hardcoded number, plus room for the
-			// reroll strip below the cards.
+			// Driven by AugmentChoiceCard.MinCardHeight
 			backPanel.Height.Set(CardsTop + AugmentChoiceCard.MinCardHeight + RerollGap + RerollButtonHeight + BottomMargin, 0f);
 			backPanel.HAlign = 0.5f;
 			backPanel.VAlign = 0.5f;
-			backPanel.BackgroundColor = new Color(33, 43, 79) * 0.9f;
+			backPanel.BackgroundColor = new Color(16, 22, 44);
+			backPanel.BorderColor = new Color(38, 52, 98);
 
-			UIText titleText = new UIText("Choose an augment", 1.2f)
+			UIText titleText = new UIText("CHOOSE A PLUG-IN CHIP", 1.22f)
 			{
 				HAlign = 0.5f,
-				TextColor = new Color(255, 170, 40)
+				TextColor = new Color(255, 225, 150)
 			};
-			titleText.Top.Set(15f, 0f);
+			titleText.Top.Set(14f, 0f);
 			backPanel.Append(titleText);
 
-			capNoticeText = new UIText("", 0.8f)
+			UIText subtitle = new UIText("Select a plug-in chip to install into your neural frame", 0.76f)
+			{
+				HAlign = 0.5f,
+				TextColor = new Color(150, 170, 205)
+			};
+			subtitle.Top.Set(38f, 0f);
+			backPanel.Append(subtitle);
+
+			capNoticeText = new UIText("", 0.78f)
 			{
 				HAlign = 0.5f,
 				TextColor = AugmentTextColors.Cooldown
 			};
-			capNoticeText.Top.Set(42f, 0f);
+			capNoticeText.Top.Set(56f, 0f);
 			backPanel.Append(capNoticeText);
 
-			// Reroll and Skip sit side by side on the same row, centered as a
-			// pair with a small gap between them. Left is set in pixel terms
-			// relative to the pair's own total width (not the 0.5f anchor
-			// alone), since anchoring both buttons off 50% without accounting
-			// for their widths made them overlap.
+			// Reroll and Skip sit side by side on the same row, centered as a pair
 			float rerollRowTop = CardsTop + AugmentChoiceCard.MinCardHeight + RerollGap;
 			const float buttonGap = 16f;
 			const float rerollWidth = 200f;
@@ -107,7 +108,7 @@ namespace Augments
 			rerollButton.Clicked += HandleRerollClicked;
 			backPanel.Append(rerollButton);
 
-			skipButton = new RerollButton(new Color(120, 30, 30), new Color(170, 45, 45));
+			skipButton = new RerollButton(new Color(110, 32, 32), new Color(160, 48, 48));
 			skipButton.Width.Set(skipWidth, 0f);
 			skipButton.Height.Set(RerollButtonHeight, 0f);
 			skipButton.Left.Set(-pairWidth / 2f + rerollWidth + buttonGap, 0.5f);
@@ -116,11 +117,11 @@ namespace Augments
 			skipButton.Clicked += HandleSkipClicked;
 			backPanel.Append(skipButton);
 
-			minimizeButton = new ModalButton("-", new Color(60, 60, 70), new Color(90, 90, 105));
+			minimizeButton = new ModalButton("-", new Color(45, 52, 75), new Color(75, 88, 125));
 			minimizeButton.Width.Set(24f, 0f);
 			minimizeButton.Height.Set(24f, 0f);
 			minimizeButton.Left.Set(-30f, 1f);
-			minimizeButton.Top.Set(6f, 0f);
+			minimizeButton.Top.Set(10f, 0f);
 			minimizeButton.Clicked += HandleMinimizeClicked;
 			backPanel.Append(minimizeButton);
 
@@ -249,7 +250,7 @@ namespace Augments
 
 			for (int i = 0; i < count; i++)
 			{
-				var card = new AugmentChoiceCard(choices[i], CardWidth);
+				var card = new AugmentChoiceCard(choices[i], CardWidth, i);
 				card.Left.Set(startX + i * (CardWidth + CardSpacing), 0f);
 				card.Top.Set(CardsTop, 0f);
 				card.OnAugmentChosen += HandleAugmentChosen;
@@ -606,6 +607,24 @@ namespace Augments
 			{
 				base.LeftClick(evt);
 				Clicked?.Invoke();
+			}
+		}
+
+		private class ChoiceBackPanel : UIPanel
+		{
+			protected override void DrawSelf(SpriteBatch spriteBatch)
+			{
+				base.DrawSelf(spriteBatch);
+
+				CalculatedStyle dims = GetDimensions();
+
+				// Header horizontal divider
+				int divY = (int)dims.Y + 70;
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle((int)dims.X + 24, divY, (int)dims.Width - 48, 1), new Color(45, 62, 105) * 0.7f);
+
+				// Center diamond node
+				int midX = (int)dims.X + (int)(dims.Width * 0.5f);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(midX - 1, divY - 1, 3, 3), new Color(80, 160, 240) * 0.8f);
 			}
 		}
 	}
