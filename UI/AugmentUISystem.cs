@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Terraria;
+using Terraria.ID;
 using Terraria.ModLoader;
 using Terraria.UI;
 
@@ -192,6 +193,23 @@ namespace Augments
 
 		public void ShowShop()
 		{
+			if (shopState == null)
+				return;
+
+			int essenceType = ModContent.ItemType<AugmentEssenceItem>();
+			for (int i = 0; i < Main.maxItems; i++)
+			{
+				Item it = Main.item[i];
+				if (it.active && it.type == essenceType && Vector2.Distance(it.Center, Main.LocalPlayer.Center) < 600f)
+				{
+					Main.LocalPlayer.QuickSpawnItem(Main.LocalPlayer.GetSource_FromThis(), essenceType, it.stack);
+					it.active = false;
+					it.type = ItemID.None;
+					if (Main.netMode == NetmodeID.Server)
+						NetMessage.SendData(MessageID.SyncItem, -1, -1, null, i);
+				}
+			}
+
 			shopState.Refresh();
 			shopInterface?.SetState(shopState);
 		}

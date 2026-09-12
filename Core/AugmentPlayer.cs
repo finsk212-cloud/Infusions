@@ -232,9 +232,7 @@ namespace Augments
 			if (amount <= 0 || Main.netMode == NetmodeID.MultiplayerClient)
 				return;
 
-			int itemIndex = Item.NewItem(Player.GetSource_FromThis(), Player.Hitbox, ModContent.ItemType<AugmentEssenceItem>(), amount);
-			if (Main.netMode == NetmodeID.Server)
-				NetMessage.SendData(MessageID.SyncItem, -1, -1, null, itemIndex);
+			Player.QuickSpawnItem(Player.GetSource_FromThis(), ModContent.ItemType<AugmentEssenceItem>(), amount);
 		}
 
 		public static int GetRemoveRefund(AugmentRarity rarity)
