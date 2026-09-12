@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 using Terraria;
 using Terraria.Audio;
 using Terraria.GameContent;
 using Terraria.GameContent.UI.Elements;
+using Terraria.GameInput;
 using Terraria.ID;
 using Terraria.ModLoader;
 using Terraria.UI;
@@ -45,6 +47,9 @@ namespace Augments
 		private UIScrollbar gridScrollbar;
 		private AugmentDetailPanel detailPanel;
 		private SupportClassTagElement supportTag;
+
+		private CodexSearchBar searchBar;
+		private string searchQuery = "";
 
 		private UIElement devBarContainer;
 		private DevBadgeElement devBadge;
@@ -86,6 +91,18 @@ namespace Augments
 			{
 				Main.LocalPlayer.mouseInterface = true;
 			}
+
+			if (searchBar != null && searchBar.IsFocused && Main.mouseLeft && !searchBar.ContainsPoint(Main.MouseScreen))
+			{
+				searchBar.IsFocused = false;
+			}
+		}
+
+		public override void OnDeactivate()
+		{
+			base.OnDeactivate();
+			if (searchBar != null)
+				searchBar.IsFocused = false;
 		}
 
 		public override void OnInitialize()
@@ -133,6 +150,15 @@ namespace Augments
 			closeButton.Left.Set(-8f, 0f);
 			closeButton.Clicked += () => ModContent.GetInstance<AugmentUISystem>().HideList();
 			backPanel.Append(closeButton);
+
+			// Search Bar in top-left corner
+			searchBar = new CodexSearchBar();
+			searchBar.Left.Set(14f, 0f);
+			searchBar.Top.Set(8f, 0f);
+			searchBar.Width.Set(210f, 0f);
+			searchBar.Height.Set(24f, 0f);
+			searchBar.OnSearchChanged += OnSearchInputChanged;
+			backPanel.Append(searchBar);
 
 			// Tab Buttons Bar across top
 			CreateTabButtons();
@@ -565,6 +591,8 @@ namespace Augments
 
 		public void ResetAllFilters()
 		{
+			searchBar?.Clear();
+			searchQuery = "";
 			currentClassFilter = null;
 			currentRarityFilter = null;
 			currentStatusFilter = AugmentStatusFilter.All;
@@ -681,10 +709,28 @@ namespace Augments
 			PopulateGrid();
 		}
 
+		private void OnSearchInputChanged(string text)
+		{
+			searchQuery = text;
+			if (gridScrollbar != null)
+				gridScrollbar.ViewPosition = 0f;
+			PopulateGrid();
+		}
+
+		private static string CleanSearchText(string input)
+		{
+			if (string.IsNullOrEmpty(input))
+				return string.Empty;
+			return Regex.Replace(input, @"\[c/[^:]*:([^\]]*)\]", "$1");
+		}
+
 		public void Refresh()
 		{
 			if (gridList == null)
 				return;
+
+			if (searchBar != null)
+				searchBar.IsFocused = false;
 
 			UpdateDevModeVisuals();
 			UpdateFilterControlStates();
@@ -714,6 +760,9 @@ namespace Augments
 			var ap = Main.LocalPlayer.GetModPlayer<AugmentPlayer>();
 			var all = AugmentDatabase.All;
 
+			string query = (searchQuery ?? "").Trim();
+			bool hasQuery = !string.IsNullOrEmpty(query);
+
 			var filtered = new List<Augment>();
 			foreach (var aug in all)
 			{
@@ -734,12 +783,30 @@ namespace Augments
 				if (currentClassFilter.HasValue && aug.Class != currentClassFilter.Value)
 					continue;
 
+				// Search query filter (matches DisplayName or clean Description)
+				if (hasQuery)
+				{
+					string cleanDesc = CleanSearchText(aug.Description);
+					bool nameMatch = aug.DisplayName.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0;
+					bool descMatch = cleanDesc.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0;
+					if (!nameMatch && !descMatch)
+						continue;
+				}
+
 				filtered.Add(aug);
 			}
 
-			// Sort
+			// Sort (prioritize DisplayName matches when searching)
 			filtered.Sort((a, b) =>
 			{
+				if (hasQuery)
+				{
+					bool aName = a.DisplayName.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0;
+					bool bName = b.DisplayName.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0;
+					if (aName != bName)
+						return aName ? -1 : 1;
+				}
+
 				return currentSortMode switch
 				{
 					AugmentSortMode.NameAZ => string.Compare(a.DisplayName, b.DisplayName, StringComparison.OrdinalIgnoreCase),
@@ -759,7 +826,10 @@ namespace Augments
 
 			if (filtered.Count == 0)
 			{
-				var emptyText = new UIText("No plug-in chips match the current filters.", 0.9f)
+				string msg = hasQuery
+					? $"No plug-in chips found matching \"{query}\"."
+					: "No plug-in chips match the current filters.";
+				var emptyText = new UIText(msg, 0.9f)
 				{
 					HAlign = 0.5f
 				};
@@ -803,7 +873,7 @@ namespace Augments
 
 			gridList.AddRange(rows);
 
-			if (gridScrollbar != null)
+			if (gridScrollbar != null && !hasQuery)
 				gridScrollbar.ViewPosition = prevScroll;
 		}
 
@@ -1424,6 +1494,203 @@ namespace Augments
 			{
 				base.MouseOut(evt);
 				BackgroundColor = IdleColor;
+			}
+		}
+
+		// Search input bar with live text input, placeholder, clear button, and focus styling
+		private class CodexSearchBar : UIPanel
+		{
+			public string Text { get; private set; } = "";
+			public bool IsFocused { get; set; }
+			public event Action<string> OnSearchChanged;
+
+			private bool isHovered;
+
+			public CodexSearchBar()
+			{
+				SetPadding(0f);
+				BackgroundColor = new Color(16, 22, 44) * 0.95f;
+				BorderColor = new Color(45, 60, 105);
+			}
+
+			public void Clear()
+			{
+				if (!string.IsNullOrEmpty(Text))
+				{
+					Text = "";
+					OnSearchChanged?.Invoke(Text);
+				}
+			}
+
+			public override void Update(GameTime gameTime)
+			{
+				base.Update(gameTime);
+
+				if (IsFocused)
+				{
+					PlayerInput.WritingText = true;
+					Main.instance.HandleIME();
+
+					string newText = Main.GetInputText(Text);
+					newText = newText.Replace("\r", "").Replace("\n", "");
+					if (newText != Text)
+					{
+						Text = newText;
+						OnSearchChanged?.Invoke(Text);
+					}
+
+					if (Main.keyState.IsKeyDown(Keys.Escape) || Main.keyState.IsKeyDown(Keys.Enter))
+					{
+						IsFocused = false;
+					}
+				}
+			}
+
+			public override void LeftClick(UIMouseEvent evt)
+			{
+				base.LeftClick(evt);
+
+				var dims = GetDimensions();
+				if (!string.IsNullOrEmpty(Text) && evt.MousePosition.X >= dims.X + dims.Width - 22f)
+				{
+					Clear();
+					SoundEngine.PlaySound(SoundID.MenuTick);
+					return;
+				}
+
+				if (!IsFocused)
+				{
+					IsFocused = true;
+					SoundEngine.PlaySound(SoundID.MenuTick);
+				}
+			}
+
+			public override void RightClick(UIMouseEvent evt)
+			{
+				base.RightClick(evt);
+				if (!string.IsNullOrEmpty(Text))
+				{
+					Clear();
+					SoundEngine.PlaySound(SoundID.MenuTick);
+				}
+			}
+
+			public override void MouseOver(UIMouseEvent evt)
+			{
+				base.MouseOver(evt);
+				isHovered = true;
+			}
+
+			public override void MouseOut(UIMouseEvent evt)
+			{
+				base.MouseOut(evt);
+				isHovered = false;
+			}
+
+			protected override void DrawSelf(SpriteBatch spriteBatch)
+			{
+				if (IsFocused)
+				{
+					BackgroundColor = new Color(18, 26, 56) * 0.98f;
+					BorderColor = new Color(110, 185, 255);
+				}
+				else if (isHovered)
+				{
+					BackgroundColor = new Color(22, 30, 60) * 0.95f;
+					BorderColor = new Color(75, 115, 185);
+				}
+				else
+				{
+					BackgroundColor = new Color(16, 22, 44) * 0.95f;
+					BorderColor = new Color(45, 60, 105);
+				}
+
+				base.DrawSelf(spriteBatch);
+
+				var dims = GetDimensions();
+				Vector2 scale = new Vector2(0.72f);
+				var font = FontAssets.MouseText.Value;
+				float textY = dims.Y + (dims.Height - ChatManager.GetStringSize(font, "A", scale).Y) / 2f + 1f;
+				float textLeft = dims.X + 8f;
+				float clearBtnWidth = !string.IsNullOrEmpty(Text) ? 22f : 0f;
+				float maxTextWidth = dims.Width - 16f - clearBtnWidth;
+
+				if (string.IsNullOrEmpty(Text))
+				{
+					if (IsFocused)
+					{
+						bool blink = ((int)(Main.timeForVisualEffects / 24.0) % 2 == 0);
+						if (blink)
+						{
+							ChatManager.DrawColorCodedStringWithShadow(
+								spriteBatch,
+								font,
+								"|",
+								new Vector2(textLeft, textY),
+								new Color(110, 185, 255),
+								0f,
+								Vector2.Zero,
+								scale
+							);
+						}
+					}
+					else
+					{
+						ChatManager.DrawColorCodedStringWithShadow(
+							spriteBatch,
+							font,
+							"Search chips...",
+							new Vector2(textLeft, textY),
+							new Color(125, 142, 168) * 0.75f,
+							0f,
+							Vector2.Zero,
+							scale
+						);
+					}
+				}
+				else
+				{
+					string display = Text;
+					if (IsFocused)
+					{
+						bool blink = ((int)(Main.timeForVisualEffects / 24.0) % 2 == 0);
+						display += blink ? "|" : " ";
+					}
+
+					while (display.Length > 0 && ChatManager.GetStringSize(font, display, scale).X > maxTextWidth)
+					{
+						display = display.Substring(1);
+					}
+
+					ChatManager.DrawColorCodedStringWithShadow(
+						spriteBatch,
+						font,
+						display,
+						new Vector2(textLeft, textY),
+						Color.White,
+						0f,
+						Vector2.Zero,
+						scale
+					);
+
+					bool clearHover = isHovered && Main.MouseScreen.X >= dims.X + dims.Width - 22f;
+					Color clearColor = clearHover ? new Color(255, 110, 110) : new Color(160, 175, 205) * 0.8f;
+					ChatManager.DrawColorCodedStringWithShadow(
+						spriteBatch,
+						font,
+						"✕",
+						new Vector2(dims.X + dims.Width - 17f, textY),
+						clearColor,
+						0f,
+						Vector2.Zero,
+						scale
+					);
+				}
+
+				if (isHovered && !string.IsNullOrEmpty(Text) && Main.MouseScreen.X >= dims.X + dims.Width - 22f)
+				{
+					Main.instance.MouseText("Clear search");
+				}
 			}
 		}
 

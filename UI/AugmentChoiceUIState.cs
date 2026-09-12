@@ -23,6 +23,7 @@ namespace Augments
 		private ModalButton minimizeButton;
 		private RestoreIcon restoreIcon;
 		private bool isMinimized;
+		public bool IsMinimized => isMinimized;
 
 		// Rarity tier this popup's cards were rolled at - a reroll must stay
 		// on this same tier, not re-roll a fresh (possibly different) one.
