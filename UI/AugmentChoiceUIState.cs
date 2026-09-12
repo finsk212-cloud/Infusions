@@ -368,7 +368,7 @@ namespace Augments
 		{
 			var ap = Main.LocalPlayer.GetModPlayer<AugmentPlayer>();
 			capNoticeText.SetText(ap.Owned.Count >= AugmentPlayer.MaxOwnedAugments
-				? "Augment slots full - selection will be sold to Mistress 2B."
+				? "Plug-in Chip slots full - selection will be transferred to Mistress 2B."
 				: "");
 		}
 
@@ -407,7 +407,7 @@ namespace Augments
 			if (newChoices.Count == 0)
 			{
 				rerollUsed = false;
-				Main.NewText("No other augments are available at this rarity.", 255, 100, 100);
+				Main.NewText("No other plug-in chips are available at this rarity.", 255, 100, 100);
 				RefreshRerollButton();
 				return;
 			}

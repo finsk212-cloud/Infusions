@@ -38,7 +38,7 @@ namespace Augments
 				return;
 			}
 
-			const string message = "No augments left to offer.";
+			const string message = "No plug-in chips left to offer.";
 			if (Main.netMode == NetmodeID.Server)
 				ChatHelper.SendChatMessageToClient(NetworkText.FromLiteral(message), new Color(255, 100, 100), player.whoAmI);
 			else

@@ -87,7 +87,7 @@ namespace Augments
 			RebuildOwnedCacheFromOwnedIdsOnly();
 			augment.OnAcquire(Player);
 
-			NotifyPlayer($"Augment acquired: {augment.DisplayName}", new Color(255, 215, 0));
+			NotifyPlayer($"Plug-in Chip installed: {augment.DisplayName}", new Color(255, 215, 0));
 
 			if (sync && Main.netMode == NetmodeID.Server)
 				AugmentNet.SendSyncPlayer(Player);
@@ -103,7 +103,7 @@ namespace Augments
 			RebuildOwnedCacheFromOwnedIdsOnly();
 
 			if (augment != null)
-				NotifyPlayer($"Augment removed: {augment.DisplayName}", new Color(255, 140, 140));
+				NotifyPlayer($"Plug-in Chip uninstalled: {augment.DisplayName}", new Color(255, 140, 140));
 
 			if (sync && Main.netMode == NetmodeID.Server)
 				AugmentNet.SendSyncPlayer(Player);
@@ -141,11 +141,6 @@ namespace Augments
 			if (refund > 0)
 				SpawnEssenceRefund(refund);
 
-			string soldMessage = refund > 0
-				? $"{augment.DisplayName} sold to Mistress 2B - received {refund} Augment Essence."
-				: $"{augment.DisplayName} sold to Mistress 2B. Available to buy back later.";
-			NotifyPlayer(soldMessage, new Color(180, 220, 255));
-
 			if (sync && Main.netMode == NetmodeID.Server)
 				AugmentNet.SendSyncPlayer(Player);
 			return true;
@@ -173,8 +168,6 @@ namespace Augments
 			everOwnedIds.Add(id);
 			RebuildOwnedCacheFromOwnedIdsOnly();
 			augment.OnAcquire(Player);
-
-			NotifyPlayer($"{augment.DisplayName} bought back from Mistress 2B.", new Color(255, 215, 0));
 
 			if (Main.netMode == NetmodeID.Server)
 				SyncInventory();
@@ -211,11 +204,6 @@ namespace Augments
 				int refund = GetRewardRefund(augment.Rarity);
 				if (refund > 0)
 					SpawnEssenceRefund(refund);
-
-				string msg = refund > 0
-					? $"{augment.DisplayName} sold to Mistress 2B - received {refund} Augment Essence."
-					: $"{augment.DisplayName} sold to Mistress 2B. Available to buy back later.";
-				NotifyPlayer(msg, new Color(180, 220, 255));
 
 				if (sync && Main.netMode == NetmodeID.Server)
 					AugmentNet.SendSyncPlayer(Player);
@@ -1031,7 +1019,7 @@ namespace Augments
 			{
 				ResetAllCooldowns();
 				SoundEngine.PlaySound(SoundID.MaxMana, Player.Center);
-				Main.NewText("✦ [DEV] All augment cooldowns have been reset to 0! ✦", Color.Cyan);
+				Main.NewText("✦ [DEV] All plug-in chip cooldowns have been reset to 0! ✦", Color.Cyan);
 			}
 		}
 

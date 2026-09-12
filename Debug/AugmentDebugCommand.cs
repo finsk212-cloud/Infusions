@@ -10,7 +10,7 @@ namespace Augments
         public override string Command => "augment";
         public override CommandType Type => CommandType.Chat;
         public override string Usage => "/augment add|remove|sell|buyback <id or number> | /augment addall | /augment clear | /augment list";
-        public override string Description => "Debug: add, remove, sell, buy back, clear, or list augments.";
+        public override string Description => "Debug: add, remove, sell, buy back, clear, or list plug-in chips.";
 
         public override void Action(CommandCaller caller, string input, string[] args)
         {
@@ -33,7 +33,7 @@ namespace Augments
                 if (args.Length >= 2 && int.TryParse(args[1], out int requestedPage))
                     page = System.Math.Clamp(requestedPage, 1, maxPage);
 
-                caller.Reply($"Augments page {page}/{maxPage}", Color.Yellow);
+                caller.Reply($"Plug-in Chips page {page}/{maxPage}", Color.Yellow);
 
                 int startIndex = (page - 1) * AugmentsPerPage;
                 int endIndex = System.Math.Min(startIndex + AugmentsPerPage, AugmentDatabase.All.Count);

@@ -277,7 +277,7 @@ namespace Augments
 					AugmentNet.ApplyDebugCommand(Main.LocalPlayer, DebugAugmentCommandType.Clear);
 
 				SoundEngine.PlaySound(SoundID.Shatter);
-				Main.NewText("✦ [DEV] All equipped augments cleared! ✦", Color.Yellow);
+				Main.NewText("✦ [DEV] All equipped plug-in chips cleared! ✦", Color.Yellow);
 				PopulateGrid();
 				if (selectedAugment != null)
 					detailPanel.SetAugment(selectedAugment, false);
@@ -294,7 +294,7 @@ namespace Augments
 			{
 				Main.LocalPlayer.GetModPlayer<AugmentPlayer>().ResetAllCooldowns();
 				SoundEngine.PlaySound(SoundID.MaxMana, Main.LocalPlayer.Center);
-				Main.NewText("✦ [DEV] All augment cooldowns have been reset to 0! ✦", Color.Cyan);
+				Main.NewText("✦ [DEV] All plug-in chip cooldowns have been reset to 0! ✦", Color.Cyan);
 			};
 			devBarContainer.Append(resetCdsBtn);
 
@@ -759,7 +759,7 @@ namespace Augments
 
 			if (filtered.Count == 0)
 			{
-				var emptyText = new UIText("No augments match the current filters.", 0.9f)
+				var emptyText = new UIText("No plug-in chips match the current filters.", 0.9f)
 				{
 					HAlign = 0.5f
 				};
@@ -1271,7 +1271,7 @@ namespace Augments
 				if (kb != null)
 				{
 					y += 8f;
-					string kbText = kb.GetAssignedKeys().Count > 0 ? $"Keybind: {string.Join(", ", kb.GetAssignedKeys())}" : "No key bound to this augment";
+					string kbText = kb.GetAssignedKeys().Count > 0 ? $"Keybind: {string.Join(", ", kb.GetAssignedKeys())}" : "No key bound to this chip";
 					Color kbColor = kb.GetAssignedKeys().Count > 0 ? Color.SkyBlue : new Color(255, 120, 100);
 					ChatManager.DrawColorCodedStringWithShadow(
 						spriteBatch, font, kbText, new Vector2(x, y), kbColor, 0f, Vector2.Zero, new Vector2(0.75f)

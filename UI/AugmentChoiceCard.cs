@@ -265,10 +265,10 @@ namespace Augments
 			var lines = new (string Text, Color Color)[]
 			{
 				("Support Stance",                        SupportTagColor),
-				("2 augments: -30% damage, +20 defense",  Color.White),
-				("3 augments: -23% damage, +30 defense",  Color.White),
-				("4 augments: -16% damage, +40 defense",  Color.White),
-				("5 augments: -5% damage, +60 defense",   Color.White),
+				("2 chips: -30% damage, +20 defense",     Color.White),
+				("3 chips: -23% damage, +30 defense",     Color.White),
+				("4 chips: -16% damage, +40 defense",     Color.White),
+				("5 chips: -5% damage, +60 defense",      Color.White),
 			};
 
 			var scale = Vector2.One;

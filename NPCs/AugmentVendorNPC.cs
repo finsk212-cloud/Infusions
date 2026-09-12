@@ -95,7 +95,7 @@ namespace Augments
 
         public override void SetChatButtons(ref string button, ref string button2)
         {
-            button = "Wares";
+            button = "Plug-in Chips";
         }
 
         public override void OnChatButtonClicked(bool firstButton, ref string shopName)

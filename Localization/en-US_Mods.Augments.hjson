@@ -5,7 +5,7 @@ Keybinds: {
 	DebugToggleShop.DisplayName: Open Mistress 2B Shop
 	Cleanse.DisplayName: Cleanse
 	UndoReforge.DisplayName: Undo Reforge
-	ResetCooldowns.DisplayName: Reset Augment Cooldowns (Dev)
+	ResetCooldowns.DisplayName: Reset Plug-in Chip Cooldowns (Dev)
 }
 
 NPCs: {
@@ -47,7 +47,7 @@ Items: {
 Buffs: {
 	SupportClassBuff: {
 		DisplayName: Support Class
-		Description: Your aura augments are active.
+		Description: Your aura chips are active.
 	}
 
 	WarCryBuff: {

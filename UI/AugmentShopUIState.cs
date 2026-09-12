@@ -32,7 +32,7 @@ namespace Augments
 			backPanel.VAlign = 0.5f;
 			backPanel.BackgroundColor = new Color(33, 43, 79) * 0.9f;
 
-			UIText title = new UIText("Vendor Wares")
+			UIText title = new UIText("✦  Plug-in Chips Storage  ✦")
 			{
 				HAlign = 0.5f
 			};
@@ -185,7 +185,7 @@ namespace Augments
 		private void RefreshEssenceText()
 		{
 			int count = Main.LocalPlayer.CountItem(ModContent.ItemType<AugmentEssenceItem>());
-			essenceText.SetText($"Augment Essence: {count}");
+			essenceText.SetText($"Plug-in Essence: {count}");
 		}
 
 		private void BuyBack(Augment augment)
@@ -195,14 +195,14 @@ namespace Augments
 
 			if (augmentPlayer.Owned.Count >= AugmentPlayer.MaxOwnedAugments)
 			{
-				Main.NewText("Augment cap reached.", 255, 80, 80);
+				Main.NewText("Plug-in Chip slots full.", 255, 80, 80);
 				return;
 			}
 
 			int cost = AugmentPlayer.GetBuyBackCost(augment.Rarity);
 			if (player.CountItem(ModContent.ItemType<AugmentEssenceItem>(), cost) < cost)
 			{
-				Main.NewText("Not enough Augment Essence.", 255, 80, 80);
+				Main.NewText("Not enough Plug-in Essence.", 255, 80, 80);
 				return;
 			}
 
