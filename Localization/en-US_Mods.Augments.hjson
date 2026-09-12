@@ -1,8 +1,8 @@
 Keybinds: {
 	OpenAugmentList.DisplayName: Open Plug-in Chips
 	DebugTriggerPopup.DisplayName: Debug Trigger Popup
-	DebugSpawnVendor.DisplayName: Debug Spawn Vendor
-	DebugToggleShop.DisplayName: Debug Toggle Shop
+	DebugSpawnVendor.DisplayName: Spawn Mistress 2B (Vendor)
+	DebugToggleShop.DisplayName: Open Mistress 2B Shop
 	Cleanse.DisplayName: Cleanse
 	UndoReforge.DisplayName: Undo Reforge
 	ResetCooldowns.DisplayName: Reset Augment Cooldowns (Dev)

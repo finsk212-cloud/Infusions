@@ -1019,7 +1019,6 @@ namespace Augments
 			if (Augments.DebugSpawnVendorKeybind.JustPressed)
 			{
 				AugmentNet.RequestVendorSpawn(Player);
-				Main.NewText("Debug: vendor spawn requested");
 			}
 
 			// Debug: open the vendor shop panel directly, ahead of it being

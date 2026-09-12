@@ -260,7 +260,7 @@ namespace Augments
 			devBarContainer = new UIElement();
 			devBarContainer.Left.Set(14f, 0f);
 			devBarContainer.Top.Set(556f, 0f);
-			devBarContainer.Width.Set(515f, 0f);
+			devBarContainer.Width.Set(640f, 0f);
 			devBarContainer.Height.Set(28f, 0f);
 
 			var clearAllBtn = new CodexFilterButton("🗑 Clear All", 0.72f);
@@ -399,6 +399,24 @@ namespace Augments
 				SoundEngine.PlaySound(SoundID.MenuOpen);
 			};
 			devBarContainer.Append(testRollBtn);
+
+			var spawnVendorBtn = new CodexFilterButton("👩 2B Vendor", 0.72f);
+			spawnVendorBtn.Left.Set(519f, 0f);
+			spawnVendorBtn.Top.Set(0f, 0f);
+			spawnVendorBtn.Width.Set(108f, 0f);
+			spawnVendorBtn.Height.Set(26f, 0f);
+			spawnVendorBtn.CustomActiveBorder = new Color(255, 160, 210);
+			spawnVendorBtn.Clicked += () =>
+			{
+				AugmentNet.RequestVendorSpawn(Main.LocalPlayer);
+			};
+			spawnVendorBtn.RightClicked += () =>
+			{
+				ModContent.GetInstance<AugmentUISystem>().HideList();
+				ModContent.GetInstance<AugmentUISystem>().ShowShop();
+				SoundEngine.PlaySound(SoundID.MenuOpen);
+			};
+			devBarContainer.Append(spawnVendorBtn);
 		}
 
 		private void OnTitleClicked()

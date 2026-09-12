@@ -438,21 +438,58 @@ namespace Augments
 
 		private static void SpawnVendor(Player player)
 		{
+			if (player == null || !player.active)
+				return;
+
 			int vendorType = ModContent.NPCType<AugmentVendorNPC>();
 			for (int i = 0; i < Main.maxNPCs; i++)
 			{
-				if (Main.npc[i].active && Main.npc[i].type == vendorType)
+				NPC existingNpc = Main.npc[i];
+				if (existingNpc.active && existingNpc.type == vendorType)
+				{
+					// Teleport existing vendor directly to the player!
+					existingNpc.position.X = player.Center.X - existingNpc.width / 2f;
+					existingNpc.position.Y = player.Bottom.Y - existingNpc.height;
+					existingNpc.velocity = Vector2.Zero;
+					existingNpc.direction = player.direction;
+					existingNpc.netUpdate = true;
+
+					if (Main.netMode == NetmodeID.Server)
+					{
+						NetMessage.SendData(MessageID.SyncNPC, -1, -1, null, i);
+					}
+
+					for (int d = 0; d < 25; d++)
+					{
+						Dust.NewDust(existingNpc.position, existingNpc.width, existingNpc.height, DustID.Electric, 0f, 0f, 100, Color.Cyan, 1.2f);
+					}
+					Terraria.Audio.SoundEngine.PlaySound(SoundID.Item6, existingNpc.Center);
+					Main.NewText("✦ Mistress 2B teleported to your position! ✦", new Color(100, 220, 255));
 					return;
+				}
 			}
 
+			int spawnX = (int)player.Center.X;
+			int spawnY = (int)(player.Bottom.Y - 40);
 			int npcIndex = NPC.NewNPC(
 				player.GetSource_FromThis(),
-				(int)player.Center.X,
-				(int)player.Center.Y,
+				spawnX,
+				spawnY,
 				vendorType);
 
-			if (Main.netMode == NetmodeID.Server && npcIndex >= 0 && npcIndex < Main.maxNPCs)
-				NetMessage.SendData(MessageID.SyncNPC, -1, -1, null, npcIndex);
+			if (npcIndex >= 0 && npcIndex < Main.maxNPCs)
+			{
+				Main.npc[npcIndex].netUpdate = true;
+				if (Main.netMode == NetmodeID.Server)
+					NetMessage.SendData(MessageID.SyncNPC, -1, -1, null, npcIndex);
+			}
+
+			for (int d = 0; d < 25; d++)
+			{
+				Dust.NewDust(player.position, player.width, player.height, DustID.Electric, 0f, 0f, 100, Color.Cyan, 1.2f);
+			}
+			Terraria.Audio.SoundEngine.PlaySound(SoundID.Item6, player.Center);
+			Main.NewText("✦ Mistress 2B summoned! ✦", new Color(100, 220, 255));
 		}
 
 		public enum NPCEffectType : byte
