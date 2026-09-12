@@ -1,5 +1,5 @@
 Keybinds: {
-	OpenAugmentList.DisplayName: Open Infusion List
+	OpenAugmentList.DisplayName: Open Plug-in Chips
 	DebugTriggerPopup.DisplayName: Debug Trigger Popup
 	DebugSpawnVendor.DisplayName: Debug Spawn Vendor
 	DebugToggleShop.DisplayName: Debug Toggle Shop
@@ -29,8 +29,8 @@ NPCs: {
 
 Items: {
 	AugmentEssenceItem: {
-		DisplayName: Infusion Essence
-		Tooltip: Used to buy or re-acquire Infusions from the vendor.
+		DisplayName: Plug-in Essence
+		Tooltip: Used to buy or re-acquire Plug-in Chips from Mistress 2B.
 	}
 
 	MediGunItem: {

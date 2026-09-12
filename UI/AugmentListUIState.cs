@@ -106,7 +106,7 @@ namespace Augments
 			titleContainer.HAlign = 0.5f;
 			titleContainer.Top.Set(8f, 0f);
 
-			UIText title = new UIText("✦  Infusion List  ✦", 1.12f)
+			UIText title = new UIText("✦  Plug-in Chips  ✦", 1.12f)
 			{
 				HAlign = 0.44f,
 				VAlign = 0.5f,
