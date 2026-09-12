@@ -91,11 +91,6 @@ namespace Augments
 			{
 				Main.LocalPlayer.mouseInterface = true;
 			}
-
-			if (searchBar != null && searchBar.IsFocused && Main.mouseLeft && !searchBar.ContainsPoint(Main.MouseScreen))
-			{
-				searchBar.IsFocused = false;
-			}
 		}
 
 		public override void OnDeactivate()
@@ -1505,6 +1500,8 @@ namespace Augments
 			public event Action<string> OnSearchChanged;
 
 			private bool isHovered;
+			private int _textBlinkerCount;
+			private int _textBlinkerState;
 
 			public CodexSearchBar()
 			{
@@ -1529,20 +1526,13 @@ namespace Augments
 				if (IsFocused)
 				{
 					PlayerInput.WritingText = true;
-					Main.instance.HandleIME();
+					Main.CurrentInputTextTakerOverride = this;
+				}
 
-					string newText = Main.GetInputText(Text);
-					newText = newText.Replace("\r", "").Replace("\n", "");
-					if (newText != Text)
-					{
-						Text = newText;
-						OnSearchChanged?.Invoke(Text);
-					}
-
-					if (Main.keyState.IsKeyDown(Keys.Escape) || Main.keyState.IsKeyDown(Keys.Enter))
-					{
-						IsFocused = false;
-					}
+				Vector2 mousePoint = new Vector2(Main.mouseX, Main.mouseY);
+				if (IsFocused && !ContainsPoint(mousePoint) && Main.mouseLeft)
+				{
+					IsFocused = false;
 				}
 			}
 
@@ -1551,7 +1541,7 @@ namespace Augments
 				base.LeftClick(evt);
 
 				var dims = GetDimensions();
-				if (!string.IsNullOrEmpty(Text) && evt.MousePosition.X >= dims.X + dims.Width - 22f)
+				if (!string.IsNullOrEmpty(Text) && evt.MousePosition.X >= dims.X + dims.Width - 24f)
 				{
 					Clear();
 					SoundEngine.PlaySound(SoundID.MenuTick);
@@ -1560,6 +1550,7 @@ namespace Augments
 
 				if (!IsFocused)
 				{
+					Main.clrInput();
 					IsFocused = true;
 					SoundEngine.PlaySound(SoundID.MenuTick);
 				}
@@ -1591,6 +1582,36 @@ namespace Augments
 			{
 				if (IsFocused)
 				{
+					PlayerInput.WritingText = true;
+					Main.CurrentInputTextTakerOverride = this;
+					Main.instance.HandleIME();
+
+					string inputText = Main.GetInputText(Text);
+					inputText = inputText.Replace("\r", "").Replace("\n", "");
+
+					if (Main.inputTextEscape)
+					{
+						Main.inputTextEscape = false;
+						IsFocused = false;
+					}
+					else if (Main.inputTextEnter)
+					{
+						Main.inputTextEnter = false;
+						IsFocused = false;
+					}
+
+					if (!inputText.Equals(Text))
+					{
+						Text = inputText;
+						OnSearchChanged?.Invoke(Text);
+					}
+
+					if (++_textBlinkerCount >= 20)
+					{
+						_textBlinkerState = (_textBlinkerState + 1) % 2;
+						_textBlinkerCount = 0;
+					}
+
 					BackgroundColor = new Color(18, 26, 56) * 0.98f;
 					BorderColor = new Color(110, 185, 255);
 				}
@@ -1610,23 +1631,21 @@ namespace Augments
 				var dims = GetDimensions();
 				Vector2 scale = new Vector2(0.72f);
 				var font = FontAssets.MouseText.Value;
-				float textY = dims.Y + (dims.Height - ChatManager.GetStringSize(font, "A", scale).Y) / 2f + 1f;
-				float textLeft = dims.X + 8f;
-				float clearBtnWidth = !string.IsNullOrEmpty(Text) ? 22f : 0f;
-				float maxTextWidth = dims.Width - 16f - clearBtnWidth;
 
 				if (string.IsNullOrEmpty(Text))
 				{
 					if (IsFocused)
 					{
-						bool blink = ((int)(Main.timeForVisualEffects / 24.0) % 2 == 0);
-						if (blink)
+						if (_textBlinkerState == 1)
 						{
+							Vector2 cursorSize = ChatManager.GetStringSize(font, "|", scale);
+							float textX = dims.X + (dims.Width - cursorSize.X) / 2f;
+							float textY = dims.Y + (dims.Height - cursorSize.Y) / 2f;
 							ChatManager.DrawColorCodedStringWithShadow(
 								spriteBatch,
 								font,
 								"|",
-								new Vector2(textLeft, textY),
+								new Vector2(textX, textY),
 								new Color(110, 185, 255),
 								0f,
 								Vector2.Zero,
@@ -1636,12 +1655,16 @@ namespace Augments
 					}
 					else
 					{
+						string placeholder = "Search chips...";
+						Vector2 textSize = ChatManager.GetStringSize(font, placeholder, scale);
+						float textX = dims.X + (dims.Width - textSize.X) / 2f;
+						float textY = dims.Y + (dims.Height - textSize.Y) / 2f;
 						ChatManager.DrawColorCodedStringWithShadow(
 							spriteBatch,
 							font,
-							"Search chips...",
-							new Vector2(textLeft, textY),
-							new Color(125, 142, 168) * 0.75f,
+							placeholder,
+							new Vector2(textX, textY),
+							new Color(130, 148, 175) * 0.75f,
 							0f,
 							Vector2.Zero,
 							scale
@@ -1651,35 +1674,47 @@ namespace Augments
 				else
 				{
 					string display = Text;
-					if (IsFocused)
+					if (IsFocused && _textBlinkerState == 1)
 					{
-						bool blink = ((int)(Main.timeForVisualEffects / 24.0) % 2 == 0);
-						display += blink ? "|" : " ";
+						display += "|";
 					}
 
+					float clearBtnReserve = 24f;
+					float maxTextWidth = dims.Width - 16f - clearBtnReserve;
 					while (display.Length > 0 && ChatManager.GetStringSize(font, display, scale).X > maxTextWidth)
 					{
 						display = display.Substring(1);
 					}
 
+					Vector2 textSize = ChatManager.GetStringSize(font, display, scale);
+					float textX = dims.X + (dims.Width - clearBtnReserve - textSize.X) / 2f + 4f;
+					if (textX < dims.X + 8f)
+						textX = dims.X + 8f;
+					float textY = dims.Y + (dims.Height - textSize.Y) / 2f;
+
 					ChatManager.DrawColorCodedStringWithShadow(
 						spriteBatch,
 						font,
 						display,
-						new Vector2(textLeft, textY),
+						new Vector2(textX, textY),
 						Color.White,
 						0f,
 						Vector2.Zero,
 						scale
 					);
 
+					// Draw Clear [✕] button
 					bool clearHover = isHovered && Main.MouseScreen.X >= dims.X + dims.Width - 22f;
 					Color clearColor = clearHover ? new Color(255, 110, 110) : new Color(160, 175, 205) * 0.8f;
+					Vector2 xSize = ChatManager.GetStringSize(font, "✕", scale);
+					float xX = dims.X + dims.Width - 18f;
+					float xY = dims.Y + (dims.Height - xSize.Y) / 2f;
+
 					ChatManager.DrawColorCodedStringWithShadow(
 						spriteBatch,
 						font,
 						"✕",
-						new Vector2(dims.X + dims.Width - 17f, textY),
+						new Vector2(xX, xY),
 						clearColor,
 						0f,
 						Vector2.Zero,
