@@ -1632,6 +1632,11 @@ namespace Augments
 				Vector2 scale = new Vector2(0.72f);
 				var font = FontAssets.MouseText.Value;
 
+				// In Terraria's MouseText font, ChatManager.GetStringSize returns the full line-spacing
+				// (including multi-line leading of ~28px). Adding +5f aligns the optical glyph body
+				// to the exact vertical center of the 24px-tall search bar.
+				float textYOffset = 5f;
+
 				if (string.IsNullOrEmpty(Text))
 				{
 					if (IsFocused)
@@ -1640,7 +1645,7 @@ namespace Augments
 						{
 							Vector2 cursorSize = ChatManager.GetStringSize(font, "|", scale);
 							float textX = dims.X + (dims.Width - cursorSize.X) / 2f;
-							float textY = dims.Y + (dims.Height - cursorSize.Y) / 2f;
+							float textY = dims.Y + (dims.Height - cursorSize.Y) / 2f + textYOffset;
 							ChatManager.DrawColorCodedStringWithShadow(
 								spriteBatch,
 								font,
@@ -1658,7 +1663,7 @@ namespace Augments
 						string placeholder = "Search chips...";
 						Vector2 textSize = ChatManager.GetStringSize(font, placeholder, scale);
 						float textX = dims.X + (dims.Width - textSize.X) / 2f;
-						float textY = dims.Y + (dims.Height - textSize.Y) / 2f;
+						float textY = dims.Y + (dims.Height - textSize.Y) / 2f + textYOffset;
 						ChatManager.DrawColorCodedStringWithShadow(
 							spriteBatch,
 							font,
@@ -1690,7 +1695,7 @@ namespace Augments
 					float textX = dims.X + (dims.Width - clearBtnReserve - textSize.X) / 2f + 4f;
 					if (textX < dims.X + 8f)
 						textX = dims.X + 8f;
-					float textY = dims.Y + (dims.Height - textSize.Y) / 2f;
+					float textY = dims.Y + (dims.Height - textSize.Y) / 2f + textYOffset;
 
 					ChatManager.DrawColorCodedStringWithShadow(
 						spriteBatch,
@@ -1708,7 +1713,7 @@ namespace Augments
 					Color clearColor = clearHover ? new Color(255, 110, 110) : new Color(160, 175, 205) * 0.8f;
 					Vector2 xSize = ChatManager.GetStringSize(font, "✕", scale);
 					float xX = dims.X + dims.Width - 18f;
-					float xY = dims.Y + (dims.Height - xSize.Y) / 2f;
+					float xY = dims.Y + (dims.Height - xSize.Y) / 2f + textYOffset;
 
 					ChatManager.DrawColorCodedStringWithShadow(
 						spriteBatch,
