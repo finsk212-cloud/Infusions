@@ -1,6 +1,8 @@
 using Terraria;
 using Terraria.ModLoader;
 
+using Terraria.ID;
+
 namespace Augments
 {
     public class AugmentGlobalItem : GlobalItem
@@ -57,6 +59,72 @@ namespace Augments
                     line.Text = line.Text.Replace("[Augments]", "").TrimEnd();
                 }
             }
+
+            if (Main.LocalPlayer == null)
+                return;
+
+            var ap = Main.LocalPlayer.GetModPlayer<AugmentPlayer>();
+            if (ap == null)
+                return;
+
+            // 1. Tooltips for any Bait item in inventory when Bait Master is active
+            if (item.bait > 0 && ap.HasAugment("bait_master"))
+            {
+                int bonus = BaitMasterAugment.GetBaitBonus(item.bait);
+                tooltips.Add(new TooltipLine(Mod, "BaitMasterBonus",
+                    $"[c/38B6FF:✦ Bait Master: +30% Fishing Power (+{bonus}%)]"));
+                tooltips.Add(new TooltipLine(Mod, "BaitMasterEffective",
+                    $"[c/88FFAA:  Effective Bait Power: {item.bait + bonus}%]"));
+            }
+
+            // 2. Tooltips for Fisherman's Pocket Guide, its upgrades, and Fishing Rods
+            bool isFishingGuide = IsFishingGuideItem(item.type);
+            bool isFishingRod = item.fishingPole > 0;
+            if (isFishingGuide || isFishingRod)
+            {
+                bool hasMA = ap.HasAugment("master_angler");
+                bool hasBM = ap.HasAugment("bait_master");
+
+                if (hasMA || hasBM)
+                {
+                    tooltips.Add(new TooltipLine(Mod, "PlugInFishingHeader",
+                        "[c/FFD700:── Plug-in Chip Fishing Bonuses ──]"));
+
+                    if (hasMA)
+                    {
+                        tooltips.Add(new TooltipLine(Mod, "MasterAnglerBonus",
+                            "[c/38B6FF:✦ Master Angler: +10 Fishing Power]"));
+                    }
+
+                    if (hasBM)
+                    {
+                        Item activeBait = BaitMasterAugment.FindActiveBait(Main.LocalPlayer);
+                        if (activeBait != null && activeBait.bait > 0)
+                        {
+                            int baitBonus = BaitMasterAugment.GetBaitBonus(activeBait.bait);
+                            tooltips.Add(new TooltipLine(Mod, "BaitMasterBonus",
+                                $"[c/38B6FF:✦ Bait Master: +{baitBonus} Fishing Power ({activeBait.Name}: {activeBait.bait}% + 30%)]"));
+                        }
+                        else
+                        {
+                            tooltips.Add(new TooltipLine(Mod, "BaitMasterBonus",
+                                "[c/38B6FF:✦ Bait Master: +30% Fishing Power (Requires bait in inventory)]"));
+                        }
+                    }
+                }
+            }
+        }
+
+        private static bool IsFishingGuideItem(int type)
+        {
+            return type == ItemID.FishermansGuide
+                || type == ItemID.FishFinder
+                || type == ItemID.PDA
+                || type == ItemID.CellPhone
+                || type == ItemID.Shellphone
+                || type == ItemID.ShellphoneSpawn
+                || type == ItemID.ShellphoneOcean
+                || type == ItemID.ShellphoneHell;
         }
     }
 }
