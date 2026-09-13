@@ -8,13 +8,14 @@ namespace Augments
         public override string Id => "lucky_strike";
         public override string DisplayName => "Lucky Strike";
         public override string Description =>
-            $"Any {AugmentText.Crit("crit")} has a 15% chance to deal a second strike for the same " +
-            $"{AugmentText.BonusDamage("damage")}, on top of the crit itself. Scales with Fortune.";
+            $"Grants {AugmentText.Crit("+5% Fortune")}. Any {AugmentText.Crit("crit")} has a 15% chance " +
+            $"to deal a second strike for the same {AugmentText.BonusDamage("damage")} (scales with Fortune).";
 
         public override AugmentRarity Rarity => AugmentRarity.Rare;
         public override AugmentClass Class => AugmentClass.Universal;
 
         public override bool IsLuckyThemed => true;
+        public override float FortuneBonus => 0.05f;
 
         private const float ProcChance = 0.15f;
 

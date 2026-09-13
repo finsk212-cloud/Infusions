@@ -528,7 +528,12 @@ namespace Augments
 				Player.immuneTime = lifelineInvulnTicks;
 				lifelineInvulnTicks--;
 			}
+		}
 
+		public override void ModifyLuck(ref float luck)
+		{
+			if (TotalFortune > 0f)
+				luck += TotalFortune * 0.5f;
 		}
 
 		private void UpdateSupportAuthorityState()

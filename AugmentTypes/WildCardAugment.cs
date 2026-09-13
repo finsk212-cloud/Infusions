@@ -7,15 +7,16 @@ namespace Augments
         public override string Id => "wild_card";
         public override string DisplayName => "Wild Card";
         public override string Description =>
-            "Crits randomly trigger ONE of four effects, 25% chance each: " +
+            $"Grants {AugmentText.Crit("+5% Fortune")}. Crits randomly trigger ONE of four effects, 25% chance each: " +
             $"{AugmentText.Healing("heal 5 HP")}; {AugmentText.MovementSpeed("+50% movement speed")} for " +
             $"{AugmentText.Duration("1.5s")}; {AugmentText.Duration("~1 second")} of invincibility; or an " +
-            $"immediate bonus strike for {AugmentText.BonusDamage("+20% bonus damage")} on that hit.";
+            $"immediate bonus strike for {AugmentText.BonusDamage("+20% bonus damage")} on that hit (scales with Fortune).";
 
         public override AugmentRarity Rarity => AugmentRarity.Rare;
         public override AugmentClass Class => AugmentClass.Universal;
 
         public override bool IsLuckyThemed => true;
+        public override float FortuneBonus => 0.05f;
 
         private const int HealAmount = 5;
         private const int SpeedDurationTicks = 90;
@@ -51,23 +52,24 @@ namespace Augments
         private void RollOutcome(Player player, NPC target, NPC.HitInfo hit)
         {
             var ap = player.GetModPlayer<AugmentPlayer>();
+            float fortuneMult = 1f + ap.TotalFortune;
             int roll = Main.rand.Next(4);
 
             switch (roll)
             {
                 case 0:
-                    int healing = ScaleHitEffect(HealAmount);
+                    int healing = ScaleHitEffect((int)System.MathF.Round(HealAmount * fortuneMult));
                     player.statLife = System.Math.Min(player.statLife + healing, player.statLifeMax2);
                     player.HealEffect(healing);
                     break;
                 case 1:
-                    ap.WildCardSpeedTicks = ScaleHitEffect(SpeedDurationTicks);
+                    ap.WildCardSpeedTicks = ScaleHitEffect((int)System.MathF.Round(SpeedDurationTicks * fortuneMult));
                     break;
                 case 2:
-                    ap.WildCardInvulnTicks = ScaleHitEffect(InvulnerabilityTicks);
+                    ap.WildCardInvulnTicks = ScaleHitEffect((int)System.MathF.Round(InvulnerabilityTicks * fortuneMult));
                     break;
                 case 3:
-                    target.SimpleStrikeNPC(ScaleHitEffect((int)(hit.Damage * BonusStrikeDamagePercent)), player.direction);
+                    target.SimpleStrikeNPC(ScaleHitEffect((int)(hit.Damage * BonusStrikeDamagePercent * fortuneMult)), player.direction);
                     break;
             }
         }

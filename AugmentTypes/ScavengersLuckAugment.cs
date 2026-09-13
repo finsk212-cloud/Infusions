@@ -9,13 +9,14 @@ namespace Augments
         public override string Id => "scavengers_luck";
         public override string DisplayName => "Scavenger's Luck";
         public override string Description =>
-            $"Defeated enemies have a 20% chance to grant {AugmentText.Crit("+15% crit chance")} for " +
-            $"{AugmentText.Duration("5s")}. Scales with Fortune.";
+            $"Grants {AugmentText.Crit("+5% Fortune")}. Defeated enemies have a 20% chance to grant {AugmentText.Crit("+15% crit chance")} for " +
+            $"{AugmentText.Duration("5s")} (scales with Fortune).";
 
         public override AugmentRarity Rarity => AugmentRarity.Rare;
         public override AugmentClass Class => AugmentClass.Universal;
 
         public override bool IsLuckyThemed => true;
+        public override float FortuneBonus => 0.05f;
 
         private const float ProcChance = 0.2f;
         private const int BuffDurationTicks = 300;

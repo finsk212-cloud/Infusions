@@ -442,8 +442,8 @@ namespace Augments
 		{
 			Vector2 scale = new Vector2(0.70f);
 			Vector2 textSize = ChatManager.GetStringSize(font, text, scale);
-			int pillW = (int)textSize.X + 22;
-			int pillH = 22;
+			int pillW = (int)textSize.X + 24;
+			int pillH = 24;
 			int pillX = cardRect.X + (cardRect.Width - pillW) / 2;
 			Rectangle pillRect = new Rectangle(pillX, y, pillW, pillH);
 
@@ -469,8 +469,9 @@ namespace Augments
 			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(pillRect.Right - 5, pillRect.Y, 5, 2), accentColor * 0.85f);
 			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(pillRect.Right - 5, pillRect.Bottom - 2, 5, 2), accentColor * 0.85f);
 
-			// Text centered with shadow
-			Vector2 textPos = new Vector2(pillRect.X + (pillRect.Width - textSize.X) * 0.5f, pillRect.Y + (pillRect.Height - textSize.Y) * 0.5f);
+			// Text centered with shadow (+4f optical offset for MouseText font line-height/leading)
+			float textY = pillRect.Y + (pillRect.Height - textSize.Y) * 0.5f + 4f;
+			Vector2 textPos = new Vector2(pillRect.X + (pillRect.Width - textSize.X) * 0.5f, textY);
 			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, text, textPos, accentColor, 0f, Vector2.Zero, scale);
 
 			return pillRect;
@@ -592,10 +593,15 @@ namespace Augments
 
 			var lines = new List<(string Text, Color Color)>
 			{
-				("✦ FORTUNE SET SYNERGY ✦", FortuneTagColor),
-				("Owning any Fortune chip gives a +40% chance", new Color(200, 220, 245)),
-				("to be offered other Fortune chips on boss kills.", new Color(200, 220, 245)),
+				("✦ FORTUNE FAMILY SYNERGY ✦", FortuneTagColor),
+				("Each Fortune chip adds to your Fortune stat.", new Color(200, 220, 245)),
 				($"Current Fortune Bonus: +{(int)MathF.Round(totalFortune * 100f)}%", totalFortune > 0 ? AugmentTextColors.Crit : new Color(150, 165, 190)),
+				("─────────────────────────────", new Color(60, 80, 120) * 0.7f),
+				("Fortune Stat Effects:", Color.White),
+				("• Boosts proc chance of all luck & crit triggers", new Color(180, 210, 245)),
+				("• Increases extra coin drops from Lucky Find", new Color(180, 210, 245)),
+				("• +40% boss reward bias to roll more Fortune chips", new Color(180, 210, 245)),
+				("• Increases character's world Luck stat", new Color(180, 210, 245)),
 				("─────────────────────────────", new Color(60, 80, 120) * 0.7f),
 				("Family Members:", Color.White)
 			};
@@ -605,10 +611,12 @@ namespace Augments
 				if (other.IsLuckyThemed)
 				{
 					bool owned = ap?.HasAugment(other.Id) == true;
+					int bonusPct = (int)MathF.Round(other.FortuneBonus * 100f);
+					string bonusStr = bonusPct > 0 ? $" (+{bonusPct}% Fortune)" : "";
 					if (owned)
-						lines.Add(($"  ✓ {other.DisplayName} (Active)", AugmentTextColors.Healing));
+						lines.Add(($"  ✓ {other.DisplayName}{bonusStr} (Active)", AugmentTextColors.Healing));
 					else
-						lines.Add(($"  • {other.DisplayName}", new Color(175, 190, 215)));
+						lines.Add(($"  • {other.DisplayName}{bonusStr}", new Color(175, 190, 215)));
 				}
 			}
 

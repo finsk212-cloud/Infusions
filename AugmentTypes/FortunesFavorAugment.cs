@@ -8,7 +8,7 @@ namespace Augments
         public override string Id => "fortunes_favor";
         public override string DisplayName => "Fortune's Favor";
         public override string Description =>
-            "Grants +10% Fortune, boosting the odds of all luck-based augments. " +
+            $"Grants {AugmentText.Crit("+10% Fortune")}, boosting the odds of all luck-based augments and world luck. " +
             $"Also slowly {AugmentText.Healing("regenerates 1 HP")} every {AugmentText.Duration("4 seconds")} on its own.";
 
         public override AugmentRarity Rarity => AugmentRarity.Common;

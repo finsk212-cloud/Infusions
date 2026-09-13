@@ -10,13 +10,14 @@ namespace Augments
         public override string Id => "lucky_find";
         public override string DisplayName => "Lucky Find";
         public override string Description =>
-            $"Defeated enemies have a {AugmentText.Trigger("25% chance")} to drop extra coins.\n" +
-            AugmentText.Note($"(Scales with Fortune. Total gained: {FormatCoins(Main.LocalPlayer?.GetModPlayer<AugmentPlayer>()?.LuckyFindCopperGained ?? 0)})");
+            $"Grants {AugmentText.Crit("+5% Fortune")}. Defeated enemies have a {AugmentText.Trigger("25% chance")} to drop extra coins (scales with Fortune).\n" +
+            AugmentText.Note($"(Total gained: {FormatCoins(Main.LocalPlayer?.GetModPlayer<AugmentPlayer>()?.LuckyFindCopperGained ?? 0)})");
 
         public override AugmentRarity Rarity => AugmentRarity.Common;
         public override AugmentClass Class => AugmentClass.Universal;
 
         public override bool IsLuckyThemed => true;
+        public override float FortuneBonus => 0.05f;
 
         private const float DropChance = 0.25f;
         private const int MinCoins = 1;
