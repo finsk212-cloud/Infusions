@@ -243,10 +243,10 @@ namespace Augments
 			}
 			else if (Augment.Rarity == AugmentRarity.Rare)
 			{
-				// Soft Cyan Edge Glow
-				int auraDist = isHovered ? 4 : 2;
+				// Soft pulsing Cyan Edge Glow
+				int auraDist = (int)(2f + pulse * 2.5f) + (isHovered ? 2 : 0);
 				Rectangle auraRect = new Rectangle(rect.X - auraDist, rect.Y - auraDist, rect.Width + auraDist * 2, rect.Height + auraDist * 2);
-				Color auraCol = new Color(60, 170, 255) * (isHovered ? 0.22f : 0.10f);
+				Color auraCol = new Color(60, 180, 255) * ((0.08f + pulse * 0.10f) * (isHovered ? 1.4f : 1f));
 				spriteBatch.Draw(TextureAssets.MagicPixel.Value, auraRect, auraCol);
 			}
 		}
@@ -295,6 +295,8 @@ namespace Augments
 				color = Color.Lerp(new Color(175, 95, 245), new Color(230, 185, 255), pulse * 0.45f);
 			else if (Augment.Rarity == AugmentRarity.Legendary)
 				color = Color.Lerp(new Color(255, 170, 35), new Color(255, 230, 100), pulse * 0.45f);
+			else if (Augment.Rarity == AugmentRarity.Rare)
+				color = Color.Lerp(new Color(75, 180, 250), new Color(140, 225, 255), pulse * 0.35f);
 
 			if (isHovered)
 				color = Color.Lerp(color, Color.White, 0.35f);
@@ -313,7 +315,14 @@ namespace Augments
 			DrawRectBorder(spriteBatch, innerHairline, hairlineColor, 1);
 
 			// Ornaments
-			if (Augment.Rarity == AugmentRarity.Epic)
+			if (Augment.Rarity == AugmentRarity.Rare)
+			{
+				// 2 Delicate Cyan Corner Accents (top-right & bottom-left, 3x3)
+				Color cornerCyan = new Color(130, 220, 255) * (0.65f + pulse * 0.35f);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right - 3, rect.Y, 3, 3), cornerCyan);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X, rect.Bottom - 3, 3, 3), cornerCyan);
+			}
+			else if (Augment.Rarity == AugmentRarity.Epic)
 			{
 				// 4 Glowing Amethyst Corner Studs (3x3 pixels)
 				Color gemColor = new Color(230, 190, 255) * (0.8f + pulse * 0.2f);
@@ -386,6 +395,25 @@ namespace Augments
 						int sx = rect.X + (int)(rect.Width * sp.relX);
 						int sy = rect.Y + (int)(rect.Height * sp.relY);
 						DrawAmethystSparkle(spriteBatch, sx, sy, intensity);
+					}
+				}
+			}
+			else if (Augment.Rarity == AugmentRarity.Rare)
+			{
+				(float relX, float relY, float speed, float phase)[] rareSparks =
+				{
+					(0.20f, 0.12f, 1.6f, 0.6f),
+					(0.82f, 0.52f, 1.4f, 2.2f),
+				};
+
+				foreach (var sp in rareSparks)
+				{
+					float intensity = (float)Math.Sin(time * sp.speed + sp.phase);
+					if (intensity > 0.35f)
+					{
+						int sx = rect.X + (int)(rect.Width * sp.relX);
+						int sy = rect.Y + (int)(rect.Height * sp.relY);
+						AugmentSlotElement.DrawCyanMicroSparkle(spriteBatch, sx, sy, (intensity - 0.35f) / 0.65f);
 					}
 				}
 			}

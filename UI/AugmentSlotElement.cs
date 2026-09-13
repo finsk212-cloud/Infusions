@@ -73,11 +73,19 @@ namespace Augments
 			var rect = new Rectangle((int)dims.X, (int)dims.Y, (int)dims.Width, (int)dims.Height);
 
 			float time = (float)Main.GlobalTimeWrappedHourly;
+			float rarePulse = (float)Math.Sin(time * 2.5f + (rect.X + rect.Y) * 0.02f) * 0.5f + 0.5f;
 			float epicPulse = (float)Math.Sin(time * 3f + (rect.X + rect.Y) * 0.02f) * 0.5f + 0.5f;
 			float legPulse = (float)Math.Sin(time * 4f + (rect.X + rect.Y) * 0.02f) * 0.5f + 0.5f;
 
-			// 0. Outer Aura Glow for Epic & Legendary (drawn behind the slot box)
-			if (Augment.Rarity == AugmentRarity.Epic)
+			// 0. Outer Aura Glow for Rare, Epic & Legendary (drawn behind the slot box)
+			if (Augment.Rarity == AugmentRarity.Rare)
+			{
+				int glowDist = 1 + (int)(rarePulse * 1.5f);
+				Color rareGlow = new Color(60, 175, 255) * (0.06f + rarePulse * 0.10f);
+				Rectangle auraRect = new Rectangle(rect.X - glowDist, rect.Y - glowDist, rect.Width + glowDist * 2, rect.Height + glowDist * 2);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, auraRect, rareGlow);
+			}
+			else if (Augment.Rarity == AugmentRarity.Epic)
 			{
 				int glowDist = 1 + (int)(epicPulse * 3f);
 				Color epicGlow = new Color(170, 90, 255) * (0.10f + epicPulse * 0.20f);
@@ -149,6 +157,12 @@ namespace Augments
 				borderColor = new Color(255, 220, 80);
 				borderWidth = 3;
 			}
+			else if (Augment.Rarity == AugmentRarity.Rare)
+			{
+				borderColor = Color.Lerp(new Color(75, 175, 250), new Color(145, 225, 255), rarePulse * 0.35f);
+				if (isHovered)
+					borderColor = Color.Lerp(borderColor, Color.White, 0.4f);
+			}
 			else if (Augment.Rarity == AugmentRarity.Epic)
 			{
 				borderColor = Color.Lerp(new Color(155, 115, 225), new Color(215, 180, 255), epicPulse * 0.45f);
@@ -173,7 +187,23 @@ namespace Augments
 			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right - borderWidth, rect.Y, borderWidth, rect.Height), borderColor);
 
 			// Corner Ornaments & Trims
-			if (Augment.Rarity == AugmentRarity.Epic)
+			if (Augment.Rarity == AugmentRarity.Rare)
+			{
+				// 2 Subtle Cyan Corner Accents (top-right and bottom-left, 2x2 px)
+				Color accentColor = new Color(130, 220, 255) * (0.55f + rarePulse * 0.35f);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right - 2, rect.Y, 2, 2), accentColor);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X, rect.Bottom - 2, 2, 2), accentColor);
+
+				// One occasional tiny micro-sparkle on the top-right corner
+				float spPhase = (time * 0.8f + (rect.X * 0.03f)) % 4.5f;
+				if (spPhase < 1.0f)
+				{
+					float prog = spPhase / 1.0f;
+					float intensity = (float)Math.Sin(prog * MathHelper.Pi);
+					DrawCyanMicroSparkle(spriteBatch, rect.Right - 1, rect.Y, intensity);
+				}
+			}
+			else if (Augment.Rarity == AugmentRarity.Epic)
 			{
 				// 4 Luminous Amethyst Corner Studs (3x3 pixels)
 				Color gemColor = new Color(225, 185, 255) * (0.8f + epicPulse * 0.2f);
@@ -465,6 +495,20 @@ namespace Augments
 			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx, cy - innerRay, 1, innerRay * 2 + 1), whiteRay);
 			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - innerRay, cy, innerRay * 2 + 1, 1), whiteRay);
 			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 1, cy - 1, 3, 3), Color.White * (intensity * 0.95f));
+		}
+
+		public static void DrawCyanMicroSparkle(SpriteBatch spriteBatch, int cx, int cy, float intensity)
+		{
+			if (intensity <= 0.05f) return;
+
+			int rayLen = 1 + (int)(intensity * 2.5f);
+			Color cyanRay = new Color(110, 215, 255) * (intensity * 0.85f);
+			Color whiteRay = Color.White * (intensity * 0.95f);
+
+			// Clean tiny cross rays (max 2-3px)
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx, cy - rayLen, 1, rayLen * 2 + 1), cyanRay);
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - rayLen, cy, rayLen * 2 + 1, 1), cyanRay);
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx, cy, 1, 1), whiteRay);
 		}
 
 		private static string GetInitials(string name)
