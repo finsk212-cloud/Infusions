@@ -398,25 +398,6 @@ namespace Augments
 					}
 				}
 			}
-			else if (Augment.Rarity == AugmentRarity.Rare)
-			{
-				(float relX, float relY, float speed, float phase)[] rareSparks =
-				{
-					(0.20f, 0.12f, 1.6f, 0.6f),
-					(0.82f, 0.52f, 1.4f, 2.2f),
-				};
-
-				foreach (var sp in rareSparks)
-				{
-					float intensity = (float)Math.Sin(time * sp.speed + sp.phase);
-					if (intensity > 0.35f)
-					{
-						int sx = rect.X + (int)(rect.Width * sp.relX);
-						int sy = rect.Y + (int)(rect.Height * sp.relY);
-						AugmentSlotElement.DrawCyanMicroSparkle(spriteBatch, sx, sy, (intensity - 0.35f) / 0.65f);
-					}
-				}
-			}
 		}
 
 		private static void DrawAmethystSparkle(SpriteBatch spriteBatch, int cx, int cy, float intensity)

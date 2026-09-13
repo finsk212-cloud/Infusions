@@ -193,15 +193,6 @@ namespace Augments
 				Color accentColor = new Color(130, 220, 255) * (0.55f + rarePulse * 0.35f);
 				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right - 2, rect.Y, 2, 2), accentColor);
 				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X, rect.Bottom - 2, 2, 2), accentColor);
-
-				// One occasional tiny micro-sparkle on the top-right corner
-				float spPhase = (time * 0.8f + (rect.X * 0.03f)) % 4.5f;
-				if (spPhase < 1.0f)
-				{
-					float prog = spPhase / 1.0f;
-					float intensity = (float)Math.Sin(prog * MathHelper.Pi);
-					DrawCyanMicroSparkle(spriteBatch, rect.Right - 1, rect.Y, intensity);
-				}
 			}
 			else if (Augment.Rarity == AugmentRarity.Epic)
 			{
@@ -495,20 +486,6 @@ namespace Augments
 			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx, cy - innerRay, 1, innerRay * 2 + 1), whiteRay);
 			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - innerRay, cy, innerRay * 2 + 1, 1), whiteRay);
 			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 1, cy - 1, 3, 3), Color.White * (intensity * 0.95f));
-		}
-
-		public static void DrawCyanMicroSparkle(SpriteBatch spriteBatch, int cx, int cy, float intensity)
-		{
-			if (intensity <= 0.05f) return;
-
-			int rayLen = 1 + (int)(intensity * 2.5f);
-			Color cyanRay = new Color(110, 215, 255) * (intensity * 0.85f);
-			Color whiteRay = Color.White * (intensity * 0.95f);
-
-			// Clean tiny cross rays (max 2-3px)
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx, cy - rayLen, 1, rayLen * 2 + 1), cyanRay);
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - rayLen, cy, rayLen * 2 + 1, 1), cyanRay);
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx, cy, 1, 1), whiteRay);
 		}
 
 		private static string GetInitials(string name)
