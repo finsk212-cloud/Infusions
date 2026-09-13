@@ -234,16 +234,29 @@ namespace Augments
 
 			if (Main.netMode != NetmodeID.Server || playerId != whoAmI || playerId < 0 || playerId >= Main.maxPlayers)
 				return;
-			if (!PendingRewardChoicesByPlayer.TryGetValue(playerId, out var pending) || pending.Rerolled || pending.Choices.Count == 0)
+			if (!PendingRewardChoicesByPlayer.TryGetValue(playerId, out var pending) || pending.Choices.Count == 0)
 				return;
 
 			Player player = Main.player[playerId];
 			if (!player.active)
 				return;
 
+			int essenceType = ModContent.ItemType<AugmentEssenceItem>();
+			if (pending.Rerolled)
+			{
+				if (player.CountItem(essenceType, 1) < 1)
+					return;
+			}
+
 			List<Augment> choices = player.GetModPlayer<AugmentPlayer>().RollChoices(3, pending.Rarity, pending.Choices);
 			if (choices.Count == 0)
 				return;
+
+			if (pending.Rerolled)
+			{
+				player.ConsumeItem(essenceType);
+				player.GetModPlayer<AugmentPlayer>().SyncInventory();
+			}
 
 			SendRewardChoices(playerId, choices, pending.Rarity, true);
 		}

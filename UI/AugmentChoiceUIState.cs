@@ -394,14 +394,22 @@ namespace Augments
 
 		private void HandleRerollClicked()
 		{
-			// Hard gate - this is re-checked here regardless of the button's
-			// own visual enabled state, since this bool is the entire point
-			// of the feature and must hold no matter how many times the
-			// button is clicked.
-			if (rerollUsed || rerollPending)
+			if (rerollPending)
 				return;
 
 			var player = Main.LocalPlayer;
+			int essenceType = ModContent.ItemType<AugmentEssenceItem>();
+
+			if (rerollUsed)
+			{
+				if (player.CountItem(essenceType, 1) < 1)
+				{
+					Main.NewText("Not enough Plug-in Essence to reroll.", 255, 80, 80);
+					SoundEngine.PlaySound(SoundID.MenuClose);
+					RefreshRerollButton();
+					return;
+				}
+			}
 
 			if (networkReward)
 			{
@@ -412,15 +420,21 @@ namespace Augments
 				return;
 			}
 
-			rerollUsed = true;
-
 			var newChoices = player.GetModPlayer<AugmentPlayer>().RollChoices(3, currentRarity, currentChoiceIds);
 			if (newChoices.Count == 0)
 			{
-				rerollUsed = false;
 				Main.NewText("No other plug-in chips are available at this rarity.", 255, 100, 100);
 				RefreshRerollButton();
 				return;
+			}
+
+			if (rerollUsed)
+			{
+				player.ConsumeItem(essenceType);
+			}
+			else
+			{
+				rerollUsed = true;
 			}
 
 			SoundEngine.PlaySound(SoundID.Item37);
@@ -436,13 +450,23 @@ namespace Augments
 				return;
 			}
 
-			if (rerollUsed)
+			if (!rerollUsed)
 			{
-				rerollButton.SetEnabled(false, "Reroll Used");
+				rerollButton.SetEnabled(true, "Reroll (Free)");
 				return;
 			}
 
-			rerollButton.SetEnabled(true, "Reroll (Free)");
+			int essenceType = ModContent.ItemType<AugmentEssenceItem>();
+			int essenceCount = Main.LocalPlayer.CountItem(essenceType);
+
+			if (essenceCount >= 1)
+			{
+				rerollButton.SetEnabled(true, "Reroll (1 Essence)");
+			}
+			else
+			{
+				rerollButton.SetEnabled(false, "Need 1 Essence");
+			}
 		}
 
 		// Small standalone clickable panel - same manual hover/click approach
