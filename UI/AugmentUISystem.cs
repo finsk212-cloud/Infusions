@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Terraria;
+using Terraria.Audio;
 using Terraria.ID;
 using Terraria.ModLoader;
 using Terraria.UI;
@@ -149,6 +150,8 @@ namespace Augments
 		{
 			choiceState.SetChoices(choices, rarity, networkReward, rerolled);
 			augmentInterface?.SetState(choiceState);
+			if (!rerolled)
+				SoundEngine.PlaySound(SoundID.Research);
 		}
 
 		public void HidePanel()

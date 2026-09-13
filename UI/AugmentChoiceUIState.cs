@@ -301,6 +301,7 @@ namespace Augments
 
 		private void HandleSkipClicked()
 		{
+			SoundEngine.PlaySound(SoundID.MenuTick);
 			pendingSkipConfirm = true;
 			pendingKeystone = null;
 
@@ -317,6 +318,7 @@ namespace Augments
 			{
 				pendingSkipConfirm = false;
 				RemoveChild(confirmOverlay);
+				SoundEngine.PlaySound(SoundID.MenuClose);
 				ModContent.GetInstance<AugmentUISystem>().HidePanel();
 				return;
 			}
@@ -332,6 +334,7 @@ namespace Augments
 		// touched, so a different card can still be picked instead.
 		private void HandleConfirmOverlayCanceled()
 		{
+			SoundEngine.PlaySound(SoundID.MenuClose);
 			pendingSkipConfirm = false;
 			HideKeystoneConfirm();
 		}
@@ -344,6 +347,7 @@ namespace Augments
 			if (confirmOverlay.Parent != null)
 				return;
 
+			SoundEngine.PlaySound(SoundID.MenuClose);
 			isMinimized = true;
 			RemoveChild(backPanel);
 			Append(restoreIcon);
@@ -351,6 +355,7 @@ namespace Augments
 
 		private void HandleRestoreClicked()
 		{
+			SoundEngine.PlaySound(SoundID.MenuOpen);
 			isMinimized = false;
 			RemoveChild(restoreIcon);
 			Append(backPanel);
@@ -365,6 +370,7 @@ namespace Augments
 
 			pendingKeystone = null;
 			RemoveChild(confirmOverlay);
+			SoundEngine.PlaySound(SoundID.ResearchComplete);
 			ModContent.GetInstance<AugmentUISystem>().HidePanel();
 		}
 
@@ -400,6 +406,7 @@ namespace Augments
 			if (networkReward)
 			{
 				rerollPending = true;
+				SoundEngine.PlaySound(SoundID.Item37);
 				AugmentNet.SendRerollRequest(player);
 				RefreshRerollButton();
 				return;
@@ -416,6 +423,7 @@ namespace Augments
 				return;
 			}
 
+			SoundEngine.PlaySound(SoundID.Item37);
 			RebuildCards(newChoices);
 			RefreshRerollButton();
 		}
