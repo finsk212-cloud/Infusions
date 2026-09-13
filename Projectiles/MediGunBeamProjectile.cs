@@ -19,6 +19,7 @@ namespace Augments.Projectiles
         private int targetPlayerWhoAmI = -1;
         private int targetNPCWhoAmI = -1;
         private int healPulseTimer;
+        private Vector2 laggedMidPoint = Vector2.Zero;
 
         public override string Texture => "Terraria/Images/MagicPixel";
 
@@ -317,6 +318,26 @@ namespace Augments.Projectiles
             Vector2 beamDir = beamDiff / totalLen;
             Vector2 normal = new Vector2(-beamDir.Y, beamDir.X);
 
+            // Dynamic Bézier curvature when moving
+            Vector2 idealMid = (muzzlePos + targetPos) * 0.5f;
+            if (laggedMidPoint == Vector2.Zero || Vector2.DistanceSquared(laggedMidPoint, idealMid) > 800f * 800f)
+            {
+                laggedMidPoint = idealMid;
+            }
+            else
+            {
+                laggedMidPoint = Vector2.Lerp(laggedMidPoint, idealMid, 0.14f);
+                Vector2 offset = laggedMidPoint - idealMid;
+                float maxBow = Math.Min(45f, totalLen * 0.2f);
+                if (offset.Length() > maxBow)
+                {
+                    laggedMidPoint = idealMid + Vector2.Normalize(offset) * maxBow;
+                }
+            }
+
+            // Quadratic Bézier control point such that the curve passes through laggedMidPoint at t = 0.5
+            Vector2 controlPoint = 2f * laggedMidPoint - idealMid;
+
             float time = (float)Main.GlobalTimeWrappedHourly;
 
             // Arrays to store segment data for 3D depth-sorted rendering
@@ -334,9 +355,10 @@ namespace Augments.Projectiles
             for (int i = 0; i <= segments; i++)
             {
                 float t = i / (float)segments;
+                float invT = 1f - t;
 
-                // 1. Central straight line axis
-                Vector2 cPt = Vector2.Lerp(muzzlePos, targetPos, t);
+                // 1. Curved Bézier axis
+                Vector2 cPt = invT * invT * muzzlePos + 2f * invT * t * controlPoint + t * t * targetPos;
                 if (!isLocked)
                 {
                     // Subtle search jitter when not locked
@@ -344,7 +366,13 @@ namespace Augments.Projectiles
                 }
                 centerPoints[i] = cPt;
 
-                // 2. 3D Helix rotation angle (reversed direction as requested)
+                // Local curve normal for perpendicular ribbon wrapping
+                Vector2 tangent = 2f * invT * (controlPoint - muzzlePos) + 2f * t * (targetPos - controlPoint);
+                Vector2 segNormal = tangent.LengthSquared() > 0.001f
+                    ? new Vector2(-tangent.Y, tangent.X).SafeNormalize(normal)
+                    : normal;
+
+                // 2. 3D Helix rotation angle (flowing outward toward ally)
                 float angle1 = time * waveSpeed - t * waveFreq;
                 float angle2 = angle1 + MathHelper.Pi; // Ribbon 2 is 180 deg opposite
 
@@ -352,11 +380,11 @@ namespace Augments.Projectiles
                 float envelope = MathHelper.Clamp((float)Math.Sin(t * MathHelper.Pi) * 1.4f, 0.15f, 1f);
                 float radius = (isLocked ? 8f : 4f) * envelope;
 
-                // X in screen plane along normal, Z along line of sight (depth)
-                ribbon1Points[i] = cPt + normal * ((float)Math.Sin(angle1) * radius);
+                // X in screen plane along curve normal, Z along line of sight (depth)
+                ribbon1Points[i] = cPt + segNormal * ((float)Math.Sin(angle1) * radius);
                 depth1[i] = (float)Math.Cos(angle1);
 
-                ribbon2Points[i] = cPt + normal * ((float)Math.Sin(angle2) * radius);
+                ribbon2Points[i] = cPt + segNormal * ((float)Math.Sin(angle2) * radius);
                 depth2[i] = (float)Math.Cos(angle2);
             }
 
@@ -451,7 +479,8 @@ namespace Augments.Projectiles
                 {
                     // Travelling from muzzle (0) to ally (1)
                     float pulseT = ((float)Main.GlobalTimeWrappedHourly * 1.8f + p * 0.333f) % 1f;
-                    Vector2 pulsePos = Vector2.Lerp(muzzlePos, targetPos, pulseT);
+                    float invP = 1f - pulseT;
+                    Vector2 pulsePos = invP * invP * muzzlePos + 2f * invP * pulseT * controlPoint + pulseT * pulseT * targetPos;
                     float pulseScale = 0.8f + 0.3f * (float)Math.Sin(pulseT * MathHelper.Pi);
 
                     Color packetAura = new Color(0, 255, 200, 140);
