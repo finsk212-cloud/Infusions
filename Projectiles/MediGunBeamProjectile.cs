@@ -326,9 +326,9 @@ namespace Augments.Projectiles
             float[] depth1 = new float[segments + 1];
             float[] depth2 = new float[segments + 1];
 
-            // Speed and wave frequency: NEGATIVE waveSpeed reverses wave travel direction
+            // Speed and wave frequency: POSITIVE waveSpeed travels outward from player toward ally (healing stream)
             // Smooth, calm wave speed (~1.6 rot/sec, ~2.2s per beam transit) with no strobing
-            float waveSpeed = -10f;
+            float waveSpeed = 10f;
             float waveFreq = 22f;
 
             for (int i = 0; i <= segments; i++)
