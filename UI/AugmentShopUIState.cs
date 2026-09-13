@@ -26,6 +26,16 @@ namespace Augments
 		private const float PanelHeight = 520f;
 		private const float ListsTop = 136f;
 
+		public override void Update(GameTime gameTime)
+		{
+			base.Update(gameTime);
+
+			if (backPanel != null && backPanel.ContainsPoint(Main.MouseScreen))
+			{
+				Main.LocalPlayer.mouseInterface = true;
+			}
+		}
+
 		public override void OnInitialize()
 		{
 			backPanel = new ShopBackPanel();

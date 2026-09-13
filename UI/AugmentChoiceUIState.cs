@@ -215,6 +215,15 @@ namespace Augments
 		{
 			base.Update(gameTime);
 			RefreshRerollButton();
+
+			if (!isMinimized)
+			{
+				Main.LocalPlayer.mouseInterface = true;
+			}
+			else if (restoreIcon != null && restoreIcon.ContainsPoint(Main.MouseScreen))
+			{
+				Main.LocalPlayer.mouseInterface = true;
+			}
 		}
 
 		// Call this right before showing the panel - replaces whatever cards

@@ -1402,6 +1402,29 @@ namespace Augments
 				NetMessage.SendData(MessageID.SyncEquipment, -1, -1, null, Player.whoAmI, slot, Player.inventory[slot].prefix);
 		}
 
+		public override void SetControls()
+		{
+			if (Main.netMode != NetmodeID.Server && Player.whoAmI == Main.myPlayer)
+			{
+				if (ModContent.GetInstance<AugmentUISystem>()?.IsChoiceOpenAndActive == true)
+				{
+					Player.controlUseItem = false;
+					Player.controlUseTile = false;
+				}
+			}
+		}
+
+		public override bool CanUseItem(Item item)
+		{
+			if (Main.netMode != NetmodeID.Server && Player.whoAmI == Main.myPlayer)
+			{
+				if (ModContent.GetInstance<AugmentUISystem>()?.IsChoiceOpenAndActive == true)
+					return false;
+			}
+
+			return base.CanUseItem(item);
+		}
+
 		// tModLoader calls CopyClientState each tick on the LOCAL player, copies
 		// current state into a throw-away clone, then immediately calls
 		// SendClientChanges with that clone as the "before" picture. If anything

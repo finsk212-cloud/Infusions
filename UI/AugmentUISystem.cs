@@ -160,6 +160,7 @@ namespace Augments
 		}
 
 		public bool IsOpen => augmentInterface?.CurrentState != null;
+		public bool IsChoiceOpenAndActive => augmentInterface?.CurrentState != null && choiceState != null && !choiceState.IsMinimized;
 
 		public void RefreshOpenPlayerPanels()
 		{
