@@ -10,7 +10,7 @@ namespace Augments
         public override string DisplayName => "Heart Drop";
         public override string Description =>
             $"While {AugmentText.HP("missing HP")}, enemy kills have {AugmentText.Healing("+10% heart drop chance")}.\n" +
-            AugmentText.Color("Vanilla Terraria chance: 8.33%. This augment is additive.", "808080");
+            AugmentText.Note("Vanilla Terraria chance: 8.33%. This augment is additive.");
 
         public override AugmentRarity Rarity => AugmentRarity.Common;
         public override AugmentClass Class => AugmentClass.Universal;

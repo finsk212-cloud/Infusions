@@ -10,7 +10,7 @@ namespace Augments
         public override string DisplayName => "Meteor Strike";
         public override string Description =>
             $"{AugmentText.Crit("Crits")} against bosses have a 15% chance to call down a bonus strike " +
-            $"dealing {AugmentText.Color("2.5%", "FFFF00")} of the boss's {AugmentText.HP("maximum HP")}.";
+            $"dealing {AugmentText.BonusDamage("2.5%")} of the boss's {AugmentText.HP("maximum HP")}.";
 
         public override AugmentRarity Rarity => AugmentRarity.Epic;
         public override AugmentClass Class => AugmentClass.Universal;

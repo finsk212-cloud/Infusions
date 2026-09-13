@@ -7,7 +7,7 @@ namespace Augments
         public override string Id => "spectral_guard";
         public override string DisplayName => "Spectral Guard";
         public override string Description =>
-            $"While you have 3 or more minions or sentries active at once, gain {AugmentText.SpecialDamage("+8 defense")}.";
+            $"While you have 3 or more minions or sentries active at once, gain {AugmentText.Defense("+8 defense")}.";
 
         public override AugmentRarity Rarity => AugmentRarity.Rare;
         public override AugmentClass Class => AugmentClass.Summon;

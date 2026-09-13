@@ -7,8 +7,8 @@ namespace Augments
         public override string Id => "avatar_of_the_wall";
         public override string DisplayName => "Avatar of the Wall";
         public override string Description =>
-            $"Grants {AugmentText.SpecialDamage("+20 defense")} and reduces incoming damage by 30%, but permanently " +
-            "reduces your own outgoing damage by 20%. Always-on, no trigger condition.";
+            $"Grants {AugmentText.Defense("+20 defense")} and reduces incoming damage by {AugmentText.Defense("30%")}, but permanently " +
+            $"reduces your own outgoing damage by {AugmentText.BonusDamage("20%")}. Always-on, no trigger condition.";
 
         public override AugmentRarity Rarity => AugmentRarity.Epic;
         public override AugmentClass Class => AugmentClass.Universal;

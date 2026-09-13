@@ -5,7 +5,7 @@ namespace Augments
 		public override string Id => "ironclad_aura";
 		public override string DisplayName => "Ironclad Aura";
 		public override string Description =>
-			$"Nearby teammates gain {AugmentText.SpecialDamage("+8 defense")} while you are within range.";
+			$"Nearby teammates gain {AugmentText.Defense("+8 defense")} while you are within range.";
 
 		public override AugmentRarity Rarity => AugmentRarity.Rare;
 		public override AugmentClass Class => AugmentClass.Support;

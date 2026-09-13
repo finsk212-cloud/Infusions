@@ -8,8 +8,8 @@ namespace Augments
         public override string Id => "adaptive_armor";
         public override string DisplayName => "Adaptive Armor";
         public override string Description =>
-            $"Defense grows by {AugmentText.SpecialDamage("+1")} every {AugmentText.Duration("2s")} you go without taking damage, " +
-            $"up to {AugmentText.SpecialDamage("+10")} after {AugmentText.Duration("20s")}. Resets to zero the instant you're hit.";
+            $"Defense grows by {AugmentText.Defense("+1")} every {AugmentText.Duration("2s")} you go without taking damage, " +
+            $"up to {AugmentText.Defense("+10")} after {AugmentText.Duration("20s")}. Resets to zero the instant you're hit.";
 
         public override AugmentRarity Rarity => AugmentRarity.Rare;
         public override AugmentClass Class => AugmentClass.Universal;
@@ -18,7 +18,7 @@ namespace Augments
         private const int MaxBonus = 10;
 
         public override int? StatusValue => LocalPlayerState.AdaptiveArmorDefenseBonus > 0 ? LocalPlayerState.AdaptiveArmorDefenseBonus : (int?)null;
-        public override Color StatusValueColor => AugmentTextColors.SpecialDamage;
+        public override Color StatusValueColor => AugmentTextColors.Defense;
 
         public override void OnUpdate(Player player)
         {

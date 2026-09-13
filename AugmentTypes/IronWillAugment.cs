@@ -7,7 +7,7 @@ namespace Augments
         public override string Id => "iron_will";
         public override string DisplayName => "Iron Will";
         public override string Description =>
-            $"After you're hit, gain {AugmentText.SpecialDamage("+8 defense")} for {AugmentText.Duration("3s")}. " +
+            $"After you're hit, gain {AugmentText.Defense("+8 defense")} for {AugmentText.Duration("3s")}. " +
             $"{AugmentText.Cooldown("30s cooldown")}.";
 
         public override AugmentRarity Rarity => AugmentRarity.Common;

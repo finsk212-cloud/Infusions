@@ -7,7 +7,7 @@ namespace Augments
         public override string Id => "avatar_of_balance";
         public override string DisplayName => "Avatar of Balance";
         public override string Description =>
-            $"Grants a smaller {AugmentText.BonusDamage("+10% bonus damage")} and {AugmentText.SpecialDamage("+10 defense")}, " +
+            $"Grants a smaller {AugmentText.BonusDamage("+10% bonus damage")} and {AugmentText.Defense("+10 defense")}, " +
             "always-on, with no permanent drawback.";
 
         public override AugmentRarity Rarity => AugmentRarity.Epic;

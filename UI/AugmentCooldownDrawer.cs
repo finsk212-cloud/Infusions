@@ -114,7 +114,7 @@ namespace Augments
             {
                 icons.Add(new StatusIcon(
                     "+8",
-                    AugmentTextColors.SpecialDamage,
+                    AugmentTextColors.Defense,
                     "Ironclad Aura: +8 defense from nearby ally",
                     null));
             }

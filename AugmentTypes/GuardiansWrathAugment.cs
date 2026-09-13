@@ -8,8 +8,8 @@ namespace Augments
         public override string Id => "guardians_wrath";
         public override string DisplayName => "Guardian's Wrath";
         public override string Description =>
-            $"While below {AugmentText.HP("30% HP")}, gain {AugmentText.SpecialDamage("+15 defense")} and reduce " +
-            $"incoming damage by 20%, but outgoing damage is reduced by 15% during that same window.";
+            $"While below {AugmentText.HP("30% HP")}, gain {AugmentText.Defense("+15 defense")} and reduce " +
+            $"incoming damage by {AugmentText.Defense("20%")}, but outgoing damage is reduced by {AugmentText.BonusDamage("15%")} during that same window.";
 
         public override AugmentRarity Rarity => AugmentRarity.Epic;
         public override AugmentClass Class => AugmentClass.Universal;

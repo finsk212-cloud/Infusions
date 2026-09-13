@@ -8,7 +8,7 @@ namespace Augments
         public override string Id => "vital_echo";
         public override string DisplayName => "Vital Echo";
         public override string Description =>
-            $"Being {AugmentText.Healing("healed")} by any source grants {AugmentText.SpecialDamage("+6 defense")} " +
+            $"Being {AugmentText.Healing("healed")} by any source grants {AugmentText.Defense("+6 defense")} " +
             $"for {AugmentText.Duration("3 seconds")}.";
 
         public override AugmentRarity Rarity => AugmentRarity.Common;

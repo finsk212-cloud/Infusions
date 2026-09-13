@@ -9,7 +9,7 @@ namespace Augments
         public override string Id => "bloodletter";
         public override string DisplayName => "Bloodletter";
         public override string Description =>
-            $"Melee {AugmentText.Crit("crits")} make enemies bleed, dealing 3 damage per second for {AugmentText.Duration("5s")}.";
+            $"Melee {AugmentText.Crit("crits")} make enemies {AugmentText.Bleed("bleed")}, dealing {AugmentText.BonusDamage("3 damage per second")} for {AugmentText.Duration("5s")}.";
 
         public override AugmentRarity Rarity => AugmentRarity.Common;
         public override AugmentClass Class => AugmentClass.Melee;

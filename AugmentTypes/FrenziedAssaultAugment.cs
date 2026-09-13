@@ -8,8 +8,8 @@ namespace Augments
 		public override string Id => "frenzied_assault";
 		public override string DisplayName => "Frenzied Assault";
 		public override string Description =>
-			$"Melee crits grant a stacking attack speed buff: {AugmentText.MovementSpeed("+7% per stack")}, up to " +
-			$"{AugmentText.MovementSpeed("+35% at 5 stacks")}. Stacks reset after {AugmentText.Duration("3 seconds")}";
+			$"Melee {AugmentText.Crit("crits")} grant a stacking attack speed buff: {AugmentText.AttackSpeed("+7% per stack")}, up to " +
+			$"{AugmentText.AttackSpeed("+35% at 5 stacks")}. Stacks reset after {AugmentText.Duration("3 seconds")}.";
 
 		public override AugmentRarity Rarity => AugmentRarity.Epic;
 		public override AugmentClass Class => AugmentClass.Melee;

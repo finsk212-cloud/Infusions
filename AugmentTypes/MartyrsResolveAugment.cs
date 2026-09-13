@@ -7,7 +7,7 @@ namespace Augments
         public override string Id => "martyrs_resolve";
         public override string DisplayName => "Martyr's Resolve";
         public override string Description =>
-            $"Nearby teammates take {AugmentText.SpecialDamage("15% reduced damage")}. You take {AugmentText.Ichor("15% increased damage")}.";
+            $"Nearby teammates take {AugmentText.Defense("15% reduced damage")}. You take {AugmentText.BonusDamage("15% increased damage")}.";
         public override AugmentRarity Rarity => AugmentRarity.Legendary;
         public override AugmentClass Class => AugmentClass.Support;
         public override bool HasAuraEffect => true;

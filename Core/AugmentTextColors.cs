@@ -4,34 +4,53 @@ namespace Augments
 {
     public static class AugmentTextColors
     {
-        public const string TriggerHex = "FFA64D";       // on hit, on kill, trigger text
-        public const string HealingHex = "66FF66";       // heal, healing, HP
-        public const string CritHex = "FF4D4D";          // crit, crits, critical, critical chance
-        public const string BonusDamageHex = "FF6666";   // bonus damage text
-        public const string IchorHex = "FFD966";         // Ichor
-        public const string ManaHex = "66B2FF";          // mana
-        public const string CooldownHex = "BFBFBF";      // cooldown
-        public const string DurationHex = "99DDFF";      // 2s, 3s, 5s, seconds
-        public const string SpecialDamageHex = "3399FF"; // special damage popups / 4th hit damage
-        public const string ImmobilizeHex = "CC99FF";    // debuff names that reduce enemy mobility (Slow, and any future similar effects)
-        public const string FrostburnHex = "66FFE0";      // the Frostburn debuff name specifically
-        public const string MovementSpeedHex = "CCFF66"; // movement speed percentage text
-        public const string SupportClassHex = "8CE6A0"; // Support class references in descriptions
-        public const string ActiveHex = "FFE566";       // "Active:" label on keybind-triggered augments
+        // Core Combat & Stats
+        public const string BonusDamageHex = "FF5C5C";   // Damage, bonus damage, increased damage (Crisp crimson red)
+        public const string CritHex = "FFC83B";          // Crit, crits, critical chance, critical strikes (Radiant gold/amber)
+        public const string HealingHex = "4ADE80";       // Heal, healing, HP, health regen (Emerald jade green)
+        public const string DefenseHex = "5EADFF";       // Defense, damage reduction, armor (Aegis shield blue)
+        public const string SpecialDamageHex = "38BDF8"; // Special proc / burst damage (Luminous cyan)
+        public const string ManaHex = "60A5FA";          // Mana, mana cost (Mystic blue)
+        public const string AttackSpeedHex = "FB923C";   // Attack speed (Swift amber-orange)
+        public const string MovementSpeedHex = "2DD4BF"; // Movement speed (Wind teal/turquoise)
 
-        public static readonly Color Trigger = new Color(255, 166, 77);
-        public static readonly Color Healing = new Color(102, 255, 102);
-        public static readonly Color Crit = new Color(255, 77, 77);
-        public static readonly Color BonusDamage = new Color(255, 102, 102);
-        public static readonly Color Ichor = new Color(255, 217, 102);
-        public static readonly Color Mana = new Color(102, 178, 255);
-        public static readonly Color Cooldown = new Color(191, 191, 191);
-        public static readonly Color Duration = new Color(153, 221, 255);
-        public static readonly Color SpecialDamage = new Color(51, 153, 255);
-        public static readonly Color Immobilize = new Color(204, 153, 255);
-        public static readonly Color Frostburn = new Color(102, 255, 224);
-        public static readonly Color MovementSpeed = new Color(204, 255, 102);
+        // Timing & Structure
+        public const string TriggerHex = "FFA733";       // on hit, on kill, charges, stacks (Trigger amber)
+        public const string DurationHex = "A5C8E8";      // 2s, 3s, 5s, seconds (Soft ice slate)
+        public const string CooldownHex = "94A3B8";      // cooldown, seconds cooldown (Subdued slate gray)
+        public const string ActiveHex = "FDE047";        // "Active:" label on keybind-triggered augments (Bright prompt yellow)
+        public const string SupportClassHex = "8CE6A0";  // Support class references in descriptions (Pastel sage green)
+
+        // Specific Statuses & Debuffs
+        public const string BleedHex = "F87171";         // Bleeding, hemorrhage DoT (Blood coral)
+        public const string FrostburnHex = "67E8F9";      // Frostburn debuff name (Frost aqua)
+        public const string IchorHex = "FBBF24";         // Ichor debuff name (Ichor gold)
+        public const string ImmobilizeHex = "C084FC";    // Slow, freeze, immobilize (Soft lavender)
+        public const string BloodMoonHex = "FF6B6B";     // Blood Moon event keyword (Clean coral crimson)
+        public const string SolarEclipseHex = "FACC15";  // Solar Eclipse event keyword (Solar gold)
+        public const string NoteHex = "94A3B8";          // Technical / footnote text (Muted slate)
+
+        public static readonly Color BonusDamage = new Color(255, 92, 92);
+        public static readonly Color Crit = new Color(255, 200, 59);
+        public static readonly Color Healing = new Color(74, 222, 128);
+        public static readonly Color Defense = new Color(94, 173, 255);
+        public static readonly Color SpecialDamage = new Color(56, 189, 248);
+        public static readonly Color Mana = new Color(96, 165, 250);
+        public static readonly Color AttackSpeed = new Color(251, 146, 60);
+        public static readonly Color MovementSpeed = new Color(45, 212, 191);
+
+        public static readonly Color Trigger = new Color(255, 167, 51);
+        public static readonly Color Duration = new Color(165, 200, 232);
+        public static readonly Color Cooldown = new Color(148, 163, 184);
+        public static readonly Color Active = new Color(253, 224, 71);
         public static readonly Color SupportClass = new Color(140, 230, 160);
-        public static readonly Color Active = new Color(255, 229, 102);
+
+        public static readonly Color Bleed = new Color(248, 113, 113);
+        public static readonly Color Frostburn = new Color(103, 232, 249);
+        public static readonly Color Ichor = new Color(251, 191, 36);
+        public static readonly Color Immobilize = new Color(192, 132, 252);
+        public static readonly Color BloodMoon = new Color(255, 107, 107);
+        public static readonly Color SolarEclipse = new Color(250, 204, 21);
+        public static readonly Color Note = new Color(148, 163, 184);
     }
 }

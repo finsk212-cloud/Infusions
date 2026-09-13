@@ -7,7 +7,7 @@ namespace Augments
         public override string Id => "final_stand";
         public override string DisplayName => "Final Stand";
         public override string Description =>
-            $"Dropping below {AugmentText.HP("20% HP")} grants {AugmentText.SpecialDamage("+40 defense")} and " +
+            $"Dropping below {AugmentText.HP("20% HP")} grants {AugmentText.Defense("+40 defense")} and " +
             $"full knockback immunity for {AugmentText.Duration("5 seconds")}. " +
             $"{AugmentText.Cooldown("60 second cooldown")}.";
 

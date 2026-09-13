@@ -9,8 +9,8 @@ namespace Augments
         public override string Id => "volatile_rounds";
         public override string DisplayName => "Volatile Rounds";
         public override string Description =>
-            "Ranged hits against an enemy with any DOT effect active (Bleeding, Frostburn, " +
-            "Poisoned, or similar) trigger a small explosion damaging nearby enemies.";
+            $"Ranged hits against an enemy with any {AugmentText.Bleed("DoT")} effect active ({AugmentText.Bleed("Bleeding")}, {AugmentText.Frostburn("Frostburn")}, " +
+            $"Poisoned, etc.) trigger an explosion dealing {AugmentText.BonusDamage("15% damage")} to nearby enemies.";
 
         public override AugmentRarity Rarity => AugmentRarity.Rare;
         public override AugmentClass Class => AugmentClass.Ranged;

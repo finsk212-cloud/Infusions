@@ -7,10 +7,10 @@ namespace Augments
         public override string Id => "dark_omen";
         public override string DisplayName => "Dark Omen";
         public override string Description =>
-            $"During a {AugmentText.Color("Blood Moon", "8B0000")}, all damage dealt is increased by " +
+            $"During a {AugmentText.BloodMoon("Blood Moon")}, all damage dealt is increased by " +
             $"{AugmentText.BonusDamage("+20%")} and {AugmentText.Healing("6% of damage dealt is returned as healing")}.\n" +
-            $"During a {AugmentText.Color("Solar Eclipse", "FFFF00")}, {AugmentText.MovementSpeed("movement speed")} is increased by 20% and " +
-            "incoming damage is reduced by 12%.";
+            $"During a {AugmentText.SolarEclipse("Solar Eclipse")}, {AugmentText.MovementSpeed("movement speed")} is increased by {AugmentText.MovementSpeed("20%")} and " +
+            $"incoming damage is reduced by {AugmentText.Defense("12%")}.";
 
         public override AugmentRarity Rarity => AugmentRarity.Epic;
         public override AugmentClass Class => AugmentClass.Universal;
