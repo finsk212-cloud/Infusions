@@ -14,27 +14,41 @@ namespace Augments
 		// present a whole Keystone family instead of 3 normal picks.
 		private const float KeystoneFamilyChance = 0.15f;
 
-		// Rolls a rarity for the bracket, then tries that tier, lower tiers,
-		// and finally higher tiers until an eligible choice pool is found.
-		public static void GrantReward(Player player, RarityBracket bracket)
+		// Rolls a rarity for the bracket, tries that tier, falls back to
+		// adjacent tiers, and checks for Keystone family sets on Epic/Legendary.
+		public static bool TryRollRewardChoices(AugmentPlayer augmentPlayer, RarityBracket bracket, HashSet<string> excludedIds, out List<Augment> choices, out AugmentRarity finalRarity)
 		{
 			AugmentRarity rolledRarity = BossRarityRoller.Roll(bracket);
 
-			AugmentPlayer augmentPlayer = player.GetModPlayer<AugmentPlayer>();
-
 			if (TryRollKeystoneFamily(augmentPlayer, rolledRarity, out List<Augment> keystoneChoices))
 			{
-				ShowRewardChoices(player, keystoneChoices, rolledRarity);
-				return;
+				choices = keystoneChoices;
+				finalRarity = rolledRarity;
+				return true;
 			}
 
 			foreach (AugmentRarity rarity in GetRarityFallbackOrder(rolledRarity))
 			{
-				List<Augment> choices = augmentPlayer.RollChoices(3, rarity);
-				if (choices.Count == 0)
-					continue;
+				choices = augmentPlayer.RollChoices(3, rarity, excludedIds);
+				if (choices.Count > 0)
+				{
+					finalRarity = rarity;
+					return true;
+				}
+			}
 
-				ShowRewardChoices(player, choices, rarity);
+			choices = new List<Augment>();
+			finalRarity = rolledRarity;
+			return false;
+		}
+
+		public static void GrantReward(Player player, RarityBracket bracket)
+		{
+			AugmentPlayer augmentPlayer = player.GetModPlayer<AugmentPlayer>();
+
+			if (TryRollRewardChoices(augmentPlayer, bracket, null, out List<Augment> choices, out AugmentRarity rarity))
+			{
+				ShowRewardChoices(player, choices, rarity, bracket);
 				return;
 			}
 
@@ -56,12 +70,12 @@ namespace Augments
 				yield return (AugmentRarity)rarity;
 		}
 
-		private static void ShowRewardChoices(Player player, List<Augment> choices, AugmentRarity rarity)
+		private static void ShowRewardChoices(Player player, List<Augment> choices, AugmentRarity rarity, RarityBracket bracket)
 		{
 			if (Main.netMode == NetmodeID.Server)
-				AugmentNet.SendRewardChoices(player.whoAmI, choices, rarity);
+				AugmentNet.SendRewardChoices(player.whoAmI, choices, rarity, bracket);
 			else
-				ModContent.GetInstance<AugmentUISystem>().ShowChoices(choices, rarity);
+				ModContent.GetInstance<AugmentUISystem>().ShowChoices(choices, rarity, bracket);
 		}
 
 		// Only Epic/Legendary rolls get a shot at this - on success, an

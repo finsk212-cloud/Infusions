@@ -226,12 +226,15 @@ namespace Augments
 			}
 		}
 
+		private RarityBracket currentBracket;
+
 		// Call this right before showing the panel - replaces whatever cards
 		// were there with a fresh set built from the given augments, and resets
 		// this popup's reroll allowance.
-		public void SetChoices(List<Augment> choices, AugmentRarity rarity, bool networkReward = false, bool rerolled = false)
+		public void SetChoices(List<Augment> choices, AugmentRarity rarity, RarityBracket bracket = RarityBracket.PreHardmode, bool networkReward = false, bool rerolled = false)
 		{
 			currentRarity = rarity;
+			currentBracket = bracket;
 			rerollUsed = rerolled;
 			rerollPending = false;
 			this.networkReward = networkReward;
@@ -273,9 +276,9 @@ namespace Augments
 				card.Top.Set(CardsTop, 0f);
 				card.OnAugmentChosen += HandleAugmentChosen;
 
-				backPanel.Append(card);
 				cards.Add(card);
 				currentChoiceIds.Add(choices[i].Id);
+				backPanel.Append(card);
 			}
 		}
 
@@ -435,10 +438,10 @@ namespace Augments
 				return;
 			}
 
-			var newChoices = player.GetModPlayer<AugmentPlayer>().RollChoices(3, currentRarity, currentChoiceIds);
-			if (newChoices.Count == 0)
+			var augmentPlayer = player.GetModPlayer<AugmentPlayer>();
+			if (!AugmentRewardLogic.TryRollRewardChoices(augmentPlayer, currentBracket, currentChoiceIds, out List<Augment> newChoices, out AugmentRarity newRarity))
 			{
-				Main.NewText("No other plug-in chips are available at this rarity.", 255, 100, 100);
+				Main.NewText("No other plug-in chips are available.", 255, 100, 100);
 				RefreshRerollButton();
 				return;
 			}
@@ -452,6 +455,7 @@ namespace Augments
 				rerollUsed = true;
 			}
 
+			currentRarity = newRarity;
 			SoundEngine.PlaySound(SoundID.Item37);
 			RebuildCards(newChoices);
 			RefreshRerollButton();

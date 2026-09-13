@@ -16,6 +16,7 @@ namespace Augments
 		{
 			public HashSet<string> Choices;
 			public AugmentRarity Rarity;
+			public RarityBracket Bracket;
 			public bool Rerolled;
 		}
 
@@ -66,7 +67,7 @@ namespace Augments
 			return false;
 		}
 
-		public static void SendRewardChoices(int toClient, List<Augment> choices, AugmentRarity rarity, bool rerolled = false)
+		public static void SendRewardChoices(int toClient, List<Augment> choices, AugmentRarity rarity, RarityBracket bracket, bool rerolled = false)
 		{
 			if (Main.netMode != NetmodeID.Server)
 				return;
@@ -78,11 +79,12 @@ namespace Augments
 					pendingIds.Add(augment.Id);
 			}
 
-			PendingRewardChoicesByPlayer[toClient] = new PendingReward { Choices = pendingIds, Rarity = rarity, Rerolled = rerolled };
+			PendingRewardChoicesByPlayer[toClient] = new PendingReward { Choices = pendingIds, Rarity = rarity, Bracket = bracket, Rerolled = rerolled };
 
 			ModPacket packet = ModContent.GetInstance<Augments>().GetPacket();
 			packet.Write((byte)AugmentPacketType.OpenRewardChoices);
 			packet.Write((byte)rarity);
+			packet.Write((byte)bracket);
 			packet.Write(rerolled);
 			packet.Write((byte)choices.Count);
 			foreach (var augment in choices)
@@ -213,6 +215,7 @@ namespace Augments
 				return;
 
 			AugmentRarity rarity = (AugmentRarity)reader.ReadByte();
+			RarityBracket bracket = (RarityBracket)reader.ReadByte();
 			bool rerolled = reader.ReadBoolean();
 			int count = reader.ReadByte();
 			var choices = new List<Augment>();
@@ -225,7 +228,7 @@ namespace Augments
 			}
 
 			if (choices.Count > 0)
-				ModContent.GetInstance<AugmentUISystem>().ShowChoices(choices, rarity, true, rerolled);
+				ModContent.GetInstance<AugmentUISystem>().ShowChoices(choices, rarity, bracket, true, rerolled);
 		}
 
 		private static void HandleRerollRequest(BinaryReader reader, int whoAmI)
@@ -248,17 +251,17 @@ namespace Augments
 					return;
 			}
 
-			List<Augment> choices = player.GetModPlayer<AugmentPlayer>().RollChoices(3, pending.Rarity, pending.Choices);
-			if (choices.Count == 0)
+			AugmentPlayer augmentPlayer = player.GetModPlayer<AugmentPlayer>();
+			if (!AugmentRewardLogic.TryRollRewardChoices(augmentPlayer, pending.Bracket, pending.Choices, out List<Augment> choices, out AugmentRarity finalRarity))
 				return;
 
 			if (pending.Rerolled)
 			{
 				player.ConsumeItem(essenceType);
-				player.GetModPlayer<AugmentPlayer>().SyncInventory();
+				augmentPlayer.SyncInventory();
 			}
 
-			SendRewardChoices(playerId, choices, pending.Rarity, true);
+			SendRewardChoices(playerId, choices, finalRarity, pending.Bracket, true);
 		}
 
 		private static void HandleLuckyFindDropRequest(BinaryReader reader, int whoAmI)
