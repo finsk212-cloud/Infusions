@@ -19,28 +19,25 @@ namespace Augments
         private const int MinBonusCoins = 1;
         private const int MaxBonusCoins = 3;
 
-        // Boosting fishingLevel here is the verified, idiomatic way actual
-        // fishing rods/bait already bias toward rarer catches - vanilla's
-        // own catch-rarity weighting (common/uncommon/rare/veryrare/
-        // legendary/crate flags on FishingAttempt) reads straight from this
-        // same field, so this is a genuine rarity-odds boost, not a forced
-        // outcome.
-        public override void ModifyFishingAttempt(Player player, ref FishingAttempt attempt)
+        // Adding to player.fishingSkill in UpdateEquips directly increases the player's
+        // base fishing power, which is read by Fisherman's Pocket Guide (Player.GetFishingConditions)
+        // and automatically applied to all fishing catch calculations.
+        public override void UpdateEquips(Player player)
         {
-            attempt.fishingLevel += FishingLevelBonus;
+            player.fishingSkill += FishingLevelBonus;
         }
 
-        // No GlobalItem/ItemLoader hook exists anywhere for "this crate is
-        // being opened, add bonus loot to its result" - confirmed by
-        // inspecting both classes directly, neither exposes one. Crates ARE
-        // consumed on use though (same as any potion), so GlobalItem.
-        // OnConsumeItem still fires for them - confirmed via
-        // ItemID.Sets.IsFishingCrate/IsFishingCrateHardmode. Since there's
-        // no hook into the crate's own loot pool, this grants an
-        // independent bonus instead (the same spawn mechanism Lucky Find
-        // already uses for its bonus coins) rather than trying to inject
-        // into the crate's actual contents.
+        public override void RightClickItem(Player player, Item item)
+        {
+            CheckCrateBonus(player, item);
+        }
+
         public override void OnConsumeItem(Player player, Item item)
+        {
+            CheckCrateBonus(player, item);
+        }
+
+        private void CheckCrateBonus(Player player, Item item)
         {
             bool isCrate = ItemID.Sets.IsFishingCrate[item.type] || ItemID.Sets.IsFishingCrateHardmode[item.type];
             if (!isCrate)

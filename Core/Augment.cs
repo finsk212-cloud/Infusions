@@ -328,6 +328,9 @@ namespace Augments
 		// Fires when the player consumes an item.
 		public virtual void OnConsumeItem(Player player, Item item) { }
 
+		// Fires when the player right-clicks an item (such as opening crates/grab bags).
+		public virtual void RightClickItem(Player player, Item item) { }
+
 		// Fires when an enemy kill is credited to the player.
 		public virtual void OnKillNPC(Player player, NPC npc) { }
 

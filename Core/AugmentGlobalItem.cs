@@ -11,6 +11,12 @@ namespace Augments
                 augment.OnConsumeItem(player, item);
         }
 
+        public override void RightClick(Item item, Player player)
+        {
+            foreach (var augment in player.GetModPlayer<AugmentPlayer>().Owned)
+                augment.RightClickItem(player, item);
+        }
+
         // Reforging always acts on Main.LocalPlayer - there is no other
         // player whose item could be Main.reforgeItem, so that's the correct
         // player to forward here (matching the same assumption the vanilla
