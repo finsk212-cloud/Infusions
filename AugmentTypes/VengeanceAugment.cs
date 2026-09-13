@@ -8,8 +8,8 @@ namespace Augments
         public override string Id => "vengeance";
         public override string DisplayName => "Vengeance";
         public override string Description =>
-            $"When an enemy hits you with a direct attack (not their projectiles), it instantly takes " +
-            $"{AugmentText.BonusDamage("8 damage")} back, reduced by its defense like a normal hit.";
+            $"When struck by a direct enemy attack, retaliate for {AugmentText.BonusDamage("8 damage")}.\n" +
+            AugmentText.Note("(Does not trigger from enemy projectiles.)");
 
         public override AugmentRarity Rarity => AugmentRarity.Rare;
         public override AugmentClass Class => AugmentClass.Universal;

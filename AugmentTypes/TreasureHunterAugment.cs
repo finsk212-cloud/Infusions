@@ -5,8 +5,8 @@ namespace Augments
         public override string Id => "treasure_hunter";
         public override string DisplayName => "Treasure Hunter";
         public override string Description =>
-            "Increases pickup range for coins, hearts, and mana stars. " +
-            "Stacks additively with other pickup-range sources like potions and accessories.";
+            $"Increases {AugmentText.Trigger("pickup range")} for coins, hearts, and mana stars.\n" +
+            AugmentText.Note("(Stacks additively with potions and accessories.)");
 
         public override AugmentRarity Rarity => AugmentRarity.Common;
         public override AugmentClass Class => AugmentClass.Universal;

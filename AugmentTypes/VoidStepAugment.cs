@@ -7,9 +7,9 @@ namespace Augments
         public override string Id => "void_step";
         public override string DisplayName => "Void Step";
         public override string Description =>
-            $"Each kill grants +2% dodge chance, stacking up to +20% at 10 stacks, decaying back to 0 if " +
-            $"{AugmentText.Duration("4 seconds")} pass without a kill. Stacks independently alongside any " +
-            "other dodge-chance augment.";
+            $"Enemy kills grant {AugmentText.Defense("+2% dodge chance")}, stacking up to {AugmentText.Defense("+20%")}. " +
+            $"Resets if {AugmentText.Duration("4s")} pass without a kill.\n" +
+            AugmentText.Note("(Stacks independently alongside other dodge sources.)");
 
         public override AugmentRarity Rarity => AugmentRarity.Epic;
         public override AugmentClass Class => AugmentClass.Universal;
@@ -19,15 +19,9 @@ namespace Augments
         private const int ResetWindowTicks = 240;
         private const int InvulnerabilityTicks = 80;
 
-        // Shows "+X%" in the cooldown/status row while stacks are active,
-        // same StatusValue mechanism ScavengersLuckAugment uses for its crit
-        // buff - no dedicated "dodge" color category exists yet, so this
-        // stays the default white rather than adding one unasked.
-        // Round rather than truncate - float imprecision on DodgeChancePerStack
-        // (0.02f isn't exact in binary) otherwise lands at 10 stacks as
-        // 19.999998 instead of 20, and (int) truncation would display "19%".
         public override int? StatusValue => LocalPlayerState.VoidStepKillStacks > 0 ? (int)System.Math.Round(LocalPlayerState.VoidStepKillStacks * DodgeChancePerStack * 100f) : (int?)null;
         public override string StatusValueSuffix => "%";
+        public override Microsoft.Xna.Framework.Color StatusValueColor => AugmentTextColors.Defense;
 
         // Hooking kill credit (see AugmentGlobalNPC.OnKill, keyed off
         // npc.lastInteraction) instead of a hit-based check - this catches

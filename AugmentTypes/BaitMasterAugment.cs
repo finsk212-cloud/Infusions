@@ -7,7 +7,7 @@ namespace Augments
         public override string Id => "bait_master";
         public override string DisplayName => "Bait Master";
         public override string Description =>
-            "Fishing bait grants 30% more fishing power than normal.";
+            $"Fishing bait grants {AugmentText.BonusDamage("+30% more fishing power")} than normal.";
 
         public override AugmentRarity Rarity => AugmentRarity.Rare;
         public override AugmentClass Class => AugmentClass.Universal;

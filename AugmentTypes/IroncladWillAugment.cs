@@ -1,4 +1,4 @@
-﻿using Terraria;
+using Terraria;
 using Terraria.ModLoader;
 
 namespace Augments
@@ -8,8 +8,8 @@ namespace Augments
         public override string Id => "ironclad_will";
         public override string DisplayName => "Ironclad Will";
         public override string Description =>
-            "Melee hits have a 20% chance to completely bypass the enemy's defense for that hit, " +
-            "dealing full damage regardless of how armored they are.";
+            $"Melee hits have a {AugmentText.Trigger("20% chance")} to {AugmentText.BonusDamage("ignore 100% of enemy defense")}.\n" +
+            AugmentText.Note("(Deals full unmitigated damage for that hit.)");
 
         public override AugmentRarity Rarity => AugmentRarity.Legendary;
         public override AugmentClass Class => AugmentClass.Melee;

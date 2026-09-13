@@ -9,8 +9,9 @@ namespace Augments
         public override string Id => "plague_bearer";
         public override string DisplayName => "Plague Bearer";
         public override string Description =>
-            $"Killing an enemy with any active debuff causes that debuff to jump to the nearest other enemy, " +
-            $"{AugmentText.Duration("refreshed at full duration")}. Works for melee, ranged, magic, and summon kills alike.";
+            $"Killing an enemy with active debuffs transfers them to the nearest enemy, " +
+            $"{AugmentText.Duration("refreshed at full duration")}.\n" +
+            AugmentText.Note("(Triggers on kills from any damage class.)");
 
         public override AugmentRarity Rarity => AugmentRarity.Rare;
         public override AugmentClass Class => AugmentClass.Universal;

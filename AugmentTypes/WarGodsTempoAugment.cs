@@ -9,7 +9,7 @@ namespace Augments
         public override string Id => "war_gods_tempo";
         public override string DisplayName => "War God's Tempo";
         public override string Description =>
-            "Melee hits build Tempo. At 8 Tempo, your next melee hit releases a huge shockwave.";
+            $"Melee hits build Tempo stacks. At {AugmentText.Trigger("8 stacks")}, your next melee hit releases a shockwave dealing {AugmentText.BonusDamage("90 damage")}.";
 
         public override AugmentRarity Rarity => AugmentRarity.Legendary;
         public override AugmentClass Class => AugmentClass.Melee;

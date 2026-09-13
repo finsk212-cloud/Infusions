@@ -8,7 +8,7 @@ namespace Augments
         public override string Id => "rapid_fire";
         public override string DisplayName => "Rapid Fire";
         public override string Description =>
-            $"Ranged weapons gain {AugmentText.MovementSpeed("10% increased attack speed")}.";
+            $"Ranged weapons gain {AugmentText.AttackSpeed("+10% attack speed")}.";
         public override AugmentRarity Rarity => AugmentRarity.Common;
         public override AugmentClass Class => AugmentClass.Ranged;
 

@@ -10,7 +10,8 @@ namespace Augments
 		public override string Id => "trophy_hunter";
 		public override string DisplayName => "Trophy Hunter";
 		public override string Description =>
-			$"The first melee kill against each unique enemy type permanently grants {AugmentText.BonusDamage("+0.25% melee damage")}. No cap.";
+			$"The first melee kill against each unique enemy type permanently grants {AugmentText.BonusDamage("+0.25% melee damage")}.\n" +
+			AugmentText.Note("(Permanent bonus with no stack cap.)");
 
 		public override AugmentRarity Rarity => AugmentRarity.Epic;
 		public override AugmentClass Class => AugmentClass.Melee;
@@ -26,6 +27,7 @@ namespace Augments
 			}
 		}
 		public override string StatusValueSuffix => "%";
+		public override Microsoft.Xna.Framework.Color StatusValueColor => AugmentTextColors.BonusDamage;
 
 		public override void UpdateEquips(Player player)
 		{

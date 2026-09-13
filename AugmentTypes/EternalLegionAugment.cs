@@ -7,7 +7,7 @@ namespace Augments
         public override string Id => "eternal_legion";
         public override string DisplayName => "Eternal Legion";
         public override string Description =>
-            "Permanently grants +1 max minion slot and +1 max sentry slot.";
+            $"Permanently grants {AugmentText.BonusDamage("+1 max minion slot")} and {AugmentText.Defense("+1 max sentry slot")}.";
 
         public override AugmentRarity Rarity => AugmentRarity.Legendary;
         public override AugmentClass Class => AugmentClass.Summon;

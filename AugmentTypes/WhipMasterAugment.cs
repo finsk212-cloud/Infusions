@@ -8,7 +8,7 @@ namespace Augments
 		public override string Id => "whip_master";
 		public override string DisplayName => "Whip Master";
 		public override string Description =>
-			"Whips gain 15% increased attack speed and 20% increased range.";
+			$"Whips gain {AugmentText.AttackSpeed("+15% attack speed")} and {AugmentText.BonusDamage("+20% range")}.";
 
 		public override AugmentRarity Rarity => AugmentRarity.Common;
 		public override AugmentClass Class => AugmentClass.Summon;

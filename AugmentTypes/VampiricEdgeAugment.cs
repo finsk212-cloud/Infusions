@@ -1,4 +1,4 @@
-﻿using Terraria;
+using Terraria;
 using Terraria.ModLoader;
 
 namespace Augments
@@ -8,7 +8,8 @@ namespace Augments
         public override string Id => "vampiric_edge";
         public override string DisplayName => "Vampiric Edge";
         public override string Description =>
-            $"Melee kills {AugmentText.Healing("heal 3 HP")}. Healing only triggers if your hit gets the kill.";
+            $"Melee kills {AugmentText.Healing("restore 3 HP")}.\n" +
+            AugmentText.Note("(Requires your direct hit to score the kill.)");
 
         public override AugmentRarity Rarity => AugmentRarity.Common;
         public override AugmentClass Class => AugmentClass.Melee;

@@ -8,8 +8,8 @@ namespace Augments
         public override string Id => "ravenous_swarm";
         public override string DisplayName => "Ravenous Swarm";
         public override string Description =>
-            "Minion kills have a 5% chance to permanently increase max minion slots by 1 for the rest of the " +
-            "current play session, capped at +3 total slots.";
+            $"Minion kills have a {AugmentText.Trigger("5% chance")} to grant {AugmentText.BonusDamage("+1 max minion slot")}.\n" +
+            AugmentText.Note("(Capped at +3 total slots per session.)");
 
         public override AugmentRarity Rarity => AugmentRarity.Epic;
         public override AugmentClass Class => AugmentClass.Summon;
@@ -17,11 +17,8 @@ namespace Augments
         private const float ProcChance = 0.05f;
         private const int MaxSlotsGranted = 3;
 
-        // Shows "+X" in the cooldown/status row while at least one bonus
-        // slot has been granted this session - no dedicated "minion slots"
-        // color category exists yet, so this stays the default white rather
-        // than adding one unasked.
         public override int? StatusValue => LocalPlayerState.RavenousSwarmSlotsGranted > 0 ? LocalPlayerState.RavenousSwarmSlotsGranted : (int?)null;
+        public override Microsoft.Xna.Framework.Color StatusValueColor => AugmentTextColors.Trigger;
 
         // Direct hits just tag the target - the actual roll happens on kill
         // credit (OnKillNPC below), since that's the only path that also

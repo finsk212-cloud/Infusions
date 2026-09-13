@@ -7,7 +7,7 @@ namespace Augments
         public override string Id => "quickfire";
         public override string DisplayName => "Quickfire";
         public override string Description =>
-            "Ranged weapons have a 25% chance to not consume ammo on a shot.";
+            $"Ranged weapons have a {AugmentText.Trigger("25% chance")} to not consume ammo.";
 
         public override AugmentRarity Rarity => AugmentRarity.Common;
         public override AugmentClass Class => AugmentClass.Ranged;

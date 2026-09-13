@@ -8,8 +8,8 @@ namespace Augments
         public override string Id => "steady_hands";
         public override string DisplayName => "Steady Hands";
         public override string Description =>
-            $"Standing still continuously builds ranged {AugmentText.Crit("crit chance")}, up to +20%, " +
-            "ramping over a few seconds. Resets instantly when you move.";
+            $"Standing still continuously builds ranged {AugmentText.Crit("crit chance")}, up to {AugmentText.Crit("+20%")}.\n" +
+            AugmentText.Note("(Ramps over a few seconds; resets instantly upon moving.)");
 
         public override AugmentRarity Rarity => AugmentRarity.Common;
         public override AugmentClass Class => AugmentClass.Ranged;

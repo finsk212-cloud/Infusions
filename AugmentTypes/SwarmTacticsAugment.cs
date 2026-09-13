@@ -1,4 +1,4 @@
-﻿using Terraria;
+using Terraria;
 using Terraria.ModLoader;
 
 namespace Augments
@@ -8,7 +8,8 @@ namespace Augments
         public override string Id => "swarm_tactics";
         public override string DisplayName => "Swarm Tactics";
         public override string Description =>
-            $"Minion kills {AugmentText.Healing("heal 5 HP")}. Healing only triggers if your minion gets the kill.";
+            $"Minion kills {AugmentText.Healing("restore 5 HP")}.\n" +
+            AugmentText.Note("(Requires your minion to score the kill.)");
 
         public override AugmentRarity Rarity => AugmentRarity.Common;
         public override AugmentClass Class => AugmentClass.Summon;

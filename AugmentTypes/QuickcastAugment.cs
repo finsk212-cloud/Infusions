@@ -8,7 +8,7 @@ namespace Augments
 		public override string Id => "quickcast";
 		public override string DisplayName => "Quickcast";
 		public override string Description =>
-			"Magic weapons gain 20% increased attack speed.";
+			$"Magic weapons gain {AugmentText.AttackSpeed("+20% attack speed")}.";
 
 		public override AugmentRarity Rarity => AugmentRarity.Common;
 		public override AugmentClass Class => AugmentClass.Magic;

@@ -7,7 +7,7 @@ namespace Augments
         public override string Id => "debug_full_crit";
         public override string DisplayName => "[DEBUG] Full Crit";
         public override string Description =>
-            "Testing only. Guarantees 100% crit chance on all weapons.";
+            $"Testing only. Guarantees {AugmentText.Crit("100% crit chance")} on all weapons.";
 
         public override AugmentRarity Rarity => AugmentRarity.Common;
         public override AugmentClass Class => AugmentClass.Universal;

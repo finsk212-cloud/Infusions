@@ -9,7 +9,7 @@ namespace Augments
         public override string Id => "master_angler";
         public override string DisplayName => "Master Angler";
         public override string Description =>
-            "Fishing has an increased chance to catch rare items. Opening crates has a chance for bonus loot.";
+            $"Grants {AugmentText.BonusDamage("+10 fishing power")} and opening crates has a {AugmentText.Trigger("20% chance")} for bonus loot.";
 
         public override AugmentRarity Rarity => AugmentRarity.Rare;
         public override AugmentClass Class => AugmentClass.Universal;

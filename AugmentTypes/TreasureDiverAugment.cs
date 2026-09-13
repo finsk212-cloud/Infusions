@@ -8,7 +8,7 @@ namespace Augments
         public override string Id => "treasure_diver";
         public override string DisplayName => "Treasure Diver";
         public override string Description =>
-            "While swimming, breath capacity is increased. Kills while submerged have a 30% chance to drop bonus coins.";
+            $"While submerged, {AugmentText.Defense("breath capacity is increased")} and kills have a {AugmentText.Trigger("30% chance")} to drop bonus coins.";
 
         public override AugmentRarity Rarity => AugmentRarity.Rare;
         public override AugmentClass Class => AugmentClass.Universal;

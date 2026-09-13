@@ -9,7 +9,7 @@ namespace Augments
         public override string Id => "queens_swarm";
         public override string DisplayName => "Queen's Swarm";
         public override string Description =>
-            "Minion hits build swarm stacks on enemies. At 5 stacks, void bugs burst out and attack nearby enemies.";
+            $"Minion hits build swarm stacks on enemies. At {AugmentText.Trigger("5 stacks")}, release {AugmentText.BonusDamage("6 void bugs")} (18 damage each) to swarm nearby enemies.";
 
         public override AugmentRarity Rarity => AugmentRarity.Legendary;
         public override AugmentClass Class => AugmentClass.Summon;
