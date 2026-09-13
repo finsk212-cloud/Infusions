@@ -41,54 +41,29 @@ namespace Augments
         {
             int essenceType = ModContent.ItemType<AugmentEssenceItem>();
 
-            // --- Pre-Hardmode Rare Monsters (100% Drop) ---
-            // Tim — rare skeleton wizard in caverns.
+            // --- Pre-Hardmode Rare Encounters ---
+            // Tim — rare skeleton wizard in caverns (100% drop).
             if (npc.type == NPCID.Tim)
                 npcLoot.Add(ItemDropRule.Common(essenceType, 1, 1, 1));
 
-            // Nymph — transformed cavern encounter (belongs on Nymph, not LostGirl).
+            // Nymph — transformed cavern encounter (100% drop, belongs on Nymph, not LostGirl).
             if (npc.type == NPCID.Nymph)
                 npcLoot.Add(ItemDropRule.Common(essenceType, 1, 1, 1));
 
-            // Pinky — rare high-defense mini-slime.
+            // Pinky — rare miniature slime encounter (100% drop).
             if (npc.type == NPCID.Pinky)
                 npcLoot.Add(ItemDropRule.Common(essenceType, 1, 1, 1));
 
-            // Doctor Bones — rare underground jungle zombie.
-            if (npc.type == NPCID.DoctorBones)
-                npcLoot.Add(ItemDropRule.Common(essenceType, 1, 1, 1));
-
-            // Golden Slime — rare underground gold slime.
-            if (npc.type == NPCID.GoldenSlime)
-                npcLoot.Add(ItemDropRule.Common(essenceType, 1, 1, 1));
-
-            // --- Pre-Hardmode Events & Cavern Encounters (Chance Drops) ---
-            // The Groom & The Bride — rare Blood Moon zombies (50% drop).
-            if (npc.type == NPCID.TheGroom || npc.type == NPCID.TheBride)
+            // Undead Miner — cavern skeleton miner (50% drop, 1 in 2).
+            if (npc.type == NPCID.UndeadMiner)
                 npcLoot.Add(ItemDropRule.Common(essenceType, 2, 1, 1));
 
-            // Undead Miner — rare cavern enemy (33% drop).
-            if (npc.type == NPCID.UndeadMiner)
-                npcLoot.Add(ItemDropRule.Common(essenceType, 3, 1, 1));
-
-            // Blood Moon Fishing Enemies — Wandering Eye Fish & Zombie Merman (25% drop).
-            if (npc.type == NPCID.EyeballFlyingFish || npc.type == NPCID.ZombieMerman)
-                npcLoot.Add(ItemDropRule.Common(essenceType, 4, 1, 1));
-
-            // --- Hardmode Rare Spawns & Mini-Bosses ---
-            // Rune Wizard — rare cavern wizard; drops 2 Essence (100% drop).
+            // --- Hardmode Rare Encounters ---
+            // Rune Wizard — rare cavern wizard (100% drop, 1 Essence).
             if (npc.type == NPCID.RuneWizard)
-                npcLoot.Add(ItemDropRule.Common(essenceType, 1, 2, 2));
-
-            // Dreadnautilus — Blood Moon fishing mini-boss; drops 2 Essence (100% drop).
-            if (npc.type == NPCID.BloodNautilus)
-                npcLoot.Add(ItemDropRule.Common(essenceType, 1, 2, 2));
-
-            // Moth — rare underground jungle spawn (100% drop).
-            if (npc.type == NPCID.Moth)
                 npcLoot.Add(ItemDropRule.Common(essenceType, 1, 1, 1));
 
-            // All mimic variants — 50% drop.
+            // All mimic variants — early Hardmode risk-reward (33% drop, 1 in 3).
             // BigMimic* are the hardmode biome-key mimics (separate NPCIDs from base Mimic).
             if (npc.type == NPCID.Mimic          ||
                 npc.type == NPCID.IceMimic        ||
@@ -98,20 +73,12 @@ namespace Augments
                 npc.type == NPCID.BigMimicHallow     ||
                 npc.type == NPCID.BigMimicJungle)
             {
-                npcLoot.Add(ItemDropRule.Common(essenceType, 2, 1, 1));
+                npcLoot.Add(ItemDropRule.Common(essenceType, 3, 1, 1));
             }
 
-            // Dungeon Spirit — hardmode post-Plantera dungeon enemy; 50% drop.
+            // Dungeon Spirit — late-game post-Plantera dungeon (25% drop, 1 in 4).
             if (npc.type == NPCID.DungeonSpirit)
-                npcLoot.Add(ItemDropRule.Common(essenceType, 2, 1, 1));
-
-            // Ice Golem (Blizzard) & Sand Elemental (Sandstorm) — mini-bosses (50% drop).
-            if (npc.type == NPCID.IceGolem || npc.type == NPCID.SandElemental)
-                npcLoot.Add(ItemDropRule.Common(essenceType, 2, 1, 1));
-
-            // Goblin Summoner (Goblin Army) & Pirate Captain (Pirate Invasion) — (50% drop).
-            if (npc.type == NPCID.GoblinSummoner || npc.type == NPCID.PirateCaptain || npc.type == NPCID.PirateShip)
-                npcLoot.Add(ItemDropRule.Common(essenceType, 2, 1, 1));
+                npcLoot.Add(ItemDropRule.Common(essenceType, 4, 1, 1));
         }
 
         public override void OnKill(NPC npc)
