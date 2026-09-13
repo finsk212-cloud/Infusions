@@ -326,8 +326,8 @@ namespace Augments.Projectiles
             float[] depth1 = new float[segments + 1];
             float[] depth2 = new float[segments + 1];
 
-            // Speed and wave frequency: NEGATIVE t means wave travels from muzzle (t=0) TOWARD ally (t=1)
-            float waveSpeed = 9.5f;
+            // Speed and wave frequency: NEGATIVE waveSpeed reverses wave travel direction
+            float waveSpeed = -6f;
             float waveFreq = 22f;
 
             for (int i = 0; i <= segments; i++)
