@@ -25,6 +25,12 @@ namespace Augments
 		private bool isMinimized;
 		public bool IsMinimized => isMinimized;
 
+		private static readonly SoundStyle ChipInstallSound = new SoundStyle("Augments/Sounds/ChipInstall")
+		{
+			Volume = 0.90f,
+			PitchVariance = 0.05f
+		};
+
 		// Rarity tier this popup's cards were rolled at - a reroll must stay
 		// on this same tier, not re-roll a fresh (possibly different) one.
 		private AugmentRarity currentRarity;
@@ -370,7 +376,7 @@ namespace Augments
 
 			pendingKeystone = null;
 			RemoveChild(confirmOverlay);
-			SoundEngine.PlaySound(SoundID.ResearchComplete);
+			SoundEngine.PlaySound(ChipInstallSound);
 			ModContent.GetInstance<AugmentUISystem>().HidePanel();
 		}
 
