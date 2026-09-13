@@ -317,7 +317,7 @@ namespace Augments.Projectiles
             Vector2 beamDir = beamDiff / totalLen;
             Vector2 normal = new Vector2(-beamDir.Y, beamDir.X);
 
-            float time = (float)Main.GlobalTimeWrappedHourly * 16f;
+            float time = (float)Main.GlobalTimeWrappedHourly;
 
             // Arrays to store segment data for 3D depth-sorted rendering
             Vector2[] centerPoints = new Vector2[segments + 1];
@@ -327,7 +327,8 @@ namespace Augments.Projectiles
             float[] depth2 = new float[segments + 1];
 
             // Speed and wave frequency: NEGATIVE waveSpeed reverses wave travel direction
-            float waveSpeed = -6f;
+            // Smooth, calm wave speed (~1.6 rot/sec, ~2.2s per beam transit) with no strobing
+            float waveSpeed = -10f;
             float waveFreq = 22f;
 
             for (int i = 0; i <= segments; i++)
@@ -339,11 +340,11 @@ namespace Augments.Projectiles
                 if (!isLocked)
                 {
                     // Subtle search jitter when not locked
-                    cPt += normal * ((float)Math.Sin(time * 3f + t * 14f) * 4f);
+                    cPt += normal * ((float)Math.Sin(time * 5f + t * 14f) * 4f);
                 }
                 centerPoints[i] = cPt;
 
-                // 2. 3D Helix rotation angle (surges toward ally)
+                // 2. 3D Helix rotation angle (reversed direction as requested)
                 float angle1 = time * waveSpeed - t * waveFreq;
                 float angle2 = angle1 + MathHelper.Pi; // Ribbon 2 is 180 deg opposite
 
