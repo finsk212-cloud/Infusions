@@ -205,8 +205,17 @@ namespace Augments
 				if (refund > 0)
 					SpawnEssenceRefund(refund);
 
-				if (sync && Main.netMode == NetmodeID.Server)
-					AugmentNet.SendSyncPlayer(Player);
+				string msg = $"✦ [Slots Full] {augment.DisplayName} transferred to Mistress 2B's archive! Received {refund} Plug-in Essence. ✦";
+				if (Main.netMode == NetmodeID.Server)
+				{
+					ChatHelper.SendChatMessageToClient(NetworkText.FromLiteral(msg), new Color(255, 140, 90), Player.whoAmI);
+					if (sync)
+						AugmentNet.SendSyncPlayer(Player);
+				}
+				else if (Main.netMode == NetmodeID.SinglePlayer)
+				{
+					Main.NewText(msg, 255, 140, 90);
+				}
 
 				return true;
 			}
@@ -214,16 +223,20 @@ namespace Augments
 			return GrantAugmentByIdServerAuthoritative(augment.Id, sync);
 		}
 
-		private static int GetRewardRefund(AugmentRarity rarity)
+		public static int GetRewardRefund(AugmentRarity rarity)
 		{
 			switch (rarity)
 			{
-				case AugmentRarity.Epic:
+				case AugmentRarity.Common:
 					return 1;
-				case AugmentRarity.Legendary:
+				case AugmentRarity.Rare:
 					return 2;
+				case AugmentRarity.Epic:
+					return 3;
+				case AugmentRarity.Legendary:
+					return 4;
 				default:
-					return 0;
+					return 1;
 			}
 		}
 

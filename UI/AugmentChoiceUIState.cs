@@ -83,7 +83,7 @@ namespace Augments
 				HAlign = 0.5f,
 				TextColor = new Color(255, 225, 150)
 			};
-			titleText.Top.Set(18f, 0f);
+			titleText.Top.Set(15f, 0f);
 			backPanel.Append(titleText);
 
 			UIText subtitle = new UIText("Select a plug-in chip to install into your neural frame", 0.76f)
@@ -91,13 +91,13 @@ namespace Augments
 				HAlign = 0.5f,
 				TextColor = new Color(150, 170, 205)
 			};
-			subtitle.Top.Set(48f, 0f);
+			subtitle.Top.Set(42f, 0f);
 			backPanel.Append(subtitle);
 
-			capNoticeText = new UIText("", 0.78f)
+			capNoticeText = new UIText("", 0.76f)
 			{
 				HAlign = 0.5f,
-				TextColor = AugmentTextColors.Cooldown
+				TextColor = new Color(255, 95, 95)
 			};
 			capNoticeText.Top.Set(68f, 0f);
 			backPanel.Append(capNoticeText);
@@ -396,7 +396,7 @@ namespace Augments
 		{
 			var ap = Main.LocalPlayer.GetModPlayer<AugmentPlayer>();
 			capNoticeText.SetText(ap.Owned.Count >= AugmentPlayer.MaxOwnedAugments
-				? "Plug-in Chip slots full - selection will be transferred to Mistress 2B."
+				? "⚠ NOTICE: Neural Frame full (5/5) — Selection will be archived at Mistress 2B & dismantled for Essence."
 				: "");
 		}
 

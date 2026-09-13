@@ -480,11 +480,27 @@ namespace Augments
 		private void DrawInstallActionBar(SpriteBatch spriteBatch, DynamicSpriteFont font, Rectangle rect, Color borderColor)
 		{
 			float textY = rect.Bottom - 26f;
-			string installText = isHovered ? "▶  CLICK TO INSTALL  ◀" : "Click to select";
+			var ap = Main.LocalPlayer?.GetModPlayer<AugmentPlayer>();
+			bool slotsFull = ap != null && ap.Owned.Count >= AugmentPlayer.MaxOwnedAugments;
+			int essenceRefund = AugmentPlayer.GetRewardRefund(Augment.Rarity);
+
+			string installText;
+			Color installColor;
+
+			if (slotsFull)
+			{
+				installText = isHovered ? $"▶  TRANSFER (+{essenceRefund} ESSENCE)  ◀" : $"Transfer to 2B (+{essenceRefund} Essence)";
+				installColor = isHovered ? new Color(255, 175, 120) : new Color(225, 120, 110) * 0.9f;
+			}
+			else
+			{
+				installText = isHovered ? "▶  CLICK TO INSTALL  ◀" : "Click to select";
+				installColor = isHovered ? Color.White : new Color(130, 150, 185) * 0.85f;
+			}
+
 			Vector2 installScale = new Vector2(isHovered ? 0.74f : 0.68f);
 			Vector2 installSize = ChatManager.GetStringSize(font, installText, installScale);
 			Vector2 installPos = new Vector2(rect.X + (rect.Width - installSize.X) * 0.5f, textY);
-			Color installColor = isHovered ? Color.White : new Color(130, 150, 185) * 0.85f;
 			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, installText, installPos, installColor, 0f, Vector2.Zero, installScale);
 		}
 
