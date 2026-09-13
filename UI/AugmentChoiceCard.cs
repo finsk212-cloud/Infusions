@@ -30,13 +30,13 @@ namespace Augments
 		private static readonly Vector2 NameScale = new Vector2(0.92f);
 		private static readonly Vector2 DescScale = new Vector2(0.78f);
 
-		private const string KeystoneTagText = "KEYSTONE • PERMANENT CHOICE";
-		private const string SupportTagText = "SUPPORT CLASS";
-		private const string FortuneTagText = "FORTUNE FAMILY";
+		private const string KeystoneTagText = "◆ KEYSTONE • EXCLUSIVE ◆";
+		private const string SupportTagText = "✚ SUPPORT CLASS ✚";
+		private const string FortuneTagText = "✦ FORTUNE FAMILY ✦";
 
-		private static readonly Color KeystoneTagColor = new Color(240, 80, 80);
-		private static readonly Color SupportTagColor = new Color(90, 230, 140);
-		private static readonly Color FortuneTagColor = new Color(255, 205, 65);
+		private static readonly Color KeystoneTagColor = new Color(248, 113, 113);
+		private static readonly Color SupportTagColor = new Color(74, 222, 128);
+		private static readonly Color FortuneTagColor = new Color(255, 200, 59);
 
 		// Animation timings & parameters
 		private static readonly float[] PulseSpeeds = { 1.0f, 1.8f, 2.6f, 3.4f };
@@ -426,31 +426,52 @@ namespace Augments
 
 			if (isKeystone)
 			{
-				DrawPillBadge(spriteBatch, font, rect, rect.Bottom - 58, KeystoneTagText, KeystoneTagColor, new Color(50, 18, 18) * 0.9f);
+				DrawPillBadge(spriteBatch, font, rect, rect.Bottom - 60, KeystoneTagText, KeystoneTagColor, Color.Transparent);
 			}
 			else if (isSupport)
 			{
-				specialTagRect = DrawPillBadge(spriteBatch, font, rect, rect.Bottom - 58, SupportTagText, SupportTagColor, new Color(16, 46, 26) * 0.9f);
+				specialTagRect = DrawPillBadge(spriteBatch, font, rect, rect.Bottom - 60, SupportTagText, SupportTagColor, Color.Transparent);
 			}
 			else if (isFortuneThemed)
 			{
-				specialTagRect = DrawPillBadge(spriteBatch, font, rect, rect.Bottom - 58, FortuneTagText, FortuneTagColor, new Color(50, 40, 15) * 0.9f);
+				specialTagRect = DrawPillBadge(spriteBatch, font, rect, rect.Bottom - 60, FortuneTagText, FortuneTagColor, Color.Transparent);
 			}
 		}
 
-		private Rectangle DrawPillBadge(SpriteBatch spriteBatch, DynamicSpriteFont font, Rectangle cardRect, int y, string text, Color textColor, Color bgColor)
+		private Rectangle DrawPillBadge(SpriteBatch spriteBatch, DynamicSpriteFont font, Rectangle cardRect, int y, string text, Color accentColor, Color _)
 		{
-			Vector2 textSize = ChatManager.GetStringSize(font, text, new Vector2(0.66f));
-			int pillW = (int)textSize.X + 16;
-			int pillH = 20;
+			Vector2 scale = new Vector2(0.70f);
+			Vector2 textSize = ChatManager.GetStringSize(font, text, scale);
+			int pillW = (int)textSize.X + 22;
+			int pillH = 22;
 			int pillX = cardRect.X + (cardRect.Width - pillW) / 2;
 			Rectangle pillRect = new Rectangle(pillX, y, pillW, pillH);
 
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, pillRect, bgColor);
-			DrawRectBorder(spriteBatch, pillRect, textColor * 0.7f, 1);
+			// Clean dark sci-fi navy background
+			Color bgNavy = new Color(12, 18, 34) * 0.95f;
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, pillRect, bgNavy);
 
+			// Subtle colored underglow fill
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, pillRect, accentColor * 0.12f);
+
+			// Top & Bottom subtle rail lines
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(pillRect.X + 4, pillRect.Y, pillRect.Width - 8, 1), accentColor * 0.55f);
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(pillRect.X + 4, pillRect.Bottom - 1, pillRect.Width - 8, 1), accentColor * 0.55f);
+
+			// High-tech corner bracket notches (left & right edge caps)
+			// Left bracket: full height vertical line + top/bottom corner hooks
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(pillRect.X, pillRect.Y, 2, pillRect.Height), accentColor * 0.85f);
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(pillRect.X, pillRect.Y, 5, 2), accentColor * 0.85f);
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(pillRect.X, pillRect.Bottom - 2, 5, 2), accentColor * 0.85f);
+
+			// Right bracket: full height vertical line + top/bottom corner hooks
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(pillRect.Right - 2, pillRect.Y, 2, pillRect.Height), accentColor * 0.85f);
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(pillRect.Right - 5, pillRect.Y, 5, 2), accentColor * 0.85f);
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(pillRect.Right - 5, pillRect.Bottom - 2, 5, 2), accentColor * 0.85f);
+
+			// Text centered with shadow
 			Vector2 textPos = new Vector2(pillRect.X + (pillRect.Width - textSize.X) * 0.5f, pillRect.Y + (pillRect.Height - textSize.Y) * 0.5f);
-			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, text, textPos, textColor, 0f, Vector2.Zero, new Vector2(0.66f));
+			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, text, textPos, accentColor, 0f, Vector2.Zero, scale);
 
 			return pillRect;
 		}
@@ -515,19 +536,19 @@ namespace Augments
 
 		internal static void DrawSupportTooltip(SpriteBatch spriteBatch, DynamicSpriteFont font)
 		{
-			const float padding = 10f;
-			const float lineSpacing = 2f;
+			const float padding = 12f;
+			const float lineSpacing = 3f;
 
 			var lines = new (string Text, Color Color)[]
 			{
-				("Support Stance",                        SupportTagColor),
-				("2 chips: -30% damage, +20 defense",     Color.White),
-				("3 chips: -23% damage, +30 defense",     Color.White),
-				("4 chips: -16% damage, +40 defense",     Color.White),
-				("5 chips: -5% damage, +60 defense",      Color.White),
+				("✚ SUPPORT STANCE ✚",                   SupportTagColor),
+				("2 chips: -30% damage, +20 defense",     new Color(220, 230, 245)),
+				("3 chips: -23% damage, +30 defense",     new Color(220, 230, 245)),
+				("4 chips: -16% damage, +40 defense",     new Color(220, 230, 245)),
+				("5 chips: -5% damage, +60 defense",      new Color(220, 230, 245)),
 			};
 
-			var scale = Vector2.One;
+			var scale = new Vector2(0.80f);
 			float maxWidth = 0f;
 			float totalHeight = 0f;
 			foreach (var (text, _) in lines)
@@ -542,13 +563,13 @@ namespace Augments
 			float boxHeight = totalHeight + padding * 2f;
 
 			Vector2 boxPos = new Vector2(
-				Main.MouseScreen.X - 24f - boxWidth,
-				Main.MouseScreen.Y + 24f
+				Math.Clamp(Main.MouseScreen.X - 24f - boxWidth, 10f, Main.screenWidth - boxWidth - 10f),
+				Math.Clamp(Main.MouseScreen.Y - boxHeight / 2f, 10f, Main.screenHeight - boxHeight - 10f)
 			);
 
 			var boxRect = new Rectangle((int)boxPos.X, (int)boxPos.Y, (int)boxWidth, (int)boxHeight);
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, boxRect, new Color(16, 22, 44) * 0.96f);
-			DrawRectBorder(spriteBatch, boxRect, SupportTagColor * 0.7f, 2);
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, boxRect, new Color(12, 18, 34) * 0.96f);
+			DrawRectBorder(spriteBatch, boxRect, SupportTagColor * 0.8f, 2);
 
 			float y = boxRect.Y + padding;
 			float x = boxRect.X + padding;
@@ -562,17 +583,36 @@ namespace Augments
 
 		internal static void DrawFortuneTooltip(SpriteBatch spriteBatch, DynamicSpriteFont font)
 		{
-			const float padding = 10f;
-			const float lineSpacing = 2f;
+			const float padding = 12f;
+			const float lineSpacing = 3f;
 
-			var lines = new List<(string Text, Color Color)> { ("Fortune Family", FortuneTagColor) };
+			var player = Main.LocalPlayer;
+			var ap = player?.GetModPlayer<AugmentPlayer>();
+			float totalFortune = ap?.TotalFortune ?? 0f;
+
+			var lines = new List<(string Text, Color Color)>
+			{
+				("✦ FORTUNE SET SYNERGY ✦", FortuneTagColor),
+				("Owning any Fortune chip gives a +40% chance", new Color(200, 220, 245)),
+				("to be offered other Fortune chips on boss kills.", new Color(200, 220, 245)),
+				($"Current Fortune Bonus: +{(int)MathF.Round(totalFortune * 100f)}%", totalFortune > 0 ? AugmentTextColors.Crit : new Color(150, 165, 190)),
+				("─────────────────────────────", new Color(60, 80, 120) * 0.7f),
+				("Family Members:", Color.White)
+			};
+
 			foreach (var other in AugmentDatabase.All)
 			{
 				if (other.IsLuckyThemed)
-					lines.Add((other.DisplayName, Color.White));
+				{
+					bool owned = ap?.HasAugment(other.Id) == true;
+					if (owned)
+						lines.Add(($"  ✓ {other.DisplayName} (Active)", AugmentTextColors.Healing));
+					else
+						lines.Add(($"  • {other.DisplayName}", new Color(175, 190, 215)));
+				}
 			}
 
-			var scale = Vector2.One;
+			var scale = new Vector2(0.80f);
 			float maxWidth = 0f;
 			float totalHeight = 0f;
 			foreach (var (text, _) in lines)
@@ -587,13 +627,13 @@ namespace Augments
 			float boxHeight = totalHeight + padding * 2f;
 
 			Vector2 boxPos = new Vector2(
-				Main.MouseScreen.X - 24f - boxWidth,
-				Main.MouseScreen.Y + 24f
+				Math.Clamp(Main.MouseScreen.X - 24f - boxWidth, 10f, Main.screenWidth - boxWidth - 10f),
+				Math.Clamp(Main.MouseScreen.Y - boxHeight / 2f, 10f, Main.screenHeight - boxHeight - 10f)
 			);
 
 			var boxRect = new Rectangle((int)boxPos.X, (int)boxPos.Y, (int)boxWidth, (int)boxHeight);
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, boxRect, new Color(16, 22, 44) * 0.96f);
-			DrawRectBorder(spriteBatch, boxRect, FortuneTagColor * 0.7f, 2);
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, boxRect, new Color(12, 18, 34) * 0.96f);
+			DrawRectBorder(spriteBatch, boxRect, FortuneTagColor * 0.8f, 2);
 
 			float y = boxRect.Y + padding;
 			float x = boxRect.X + padding;
