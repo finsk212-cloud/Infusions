@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Terraria;
@@ -91,7 +91,6 @@ namespace Augments.Projectiles
                 {
                     float bestScore = float.MaxValue;
 
-                    // Check players first
                     for (int i = 0; i < Main.maxPlayers; i++)
                     {
                         Player candidate = Main.player[i];
@@ -112,7 +111,6 @@ namespace Augments.Projectiles
                         }
                     }
 
-                    // If no player in range, check town NPCs or target dummies
                     if (targetPlayerWhoAmI < 0)
                     {
                         for (int i = 0; i < Main.maxNPCs; i++)
@@ -135,7 +133,6 @@ namespace Augments.Projectiles
                     }
                 }
 
-                // Sync encoded target across network (players: 0..255, NPCs: 1000+, none: -1)
                 int encoded = targetPlayerWhoAmI >= 0 ? targetPlayerWhoAmI : (targetNPCWhoAmI >= 0 ? 1000 + targetNPCWhoAmI : -1);
                 if ((int)Projectile.ai[0] != encoded)
                 {
@@ -143,7 +140,7 @@ namespace Augments.Projectiles
                     Projectile.netUpdate = true;
                 }
 
-                // 3. Massive Endgame Healing pulses (owner only)
+                // 3. Endgame Sustained Healing Pulses
                 bool isLocked = targetPlayerWhoAmI >= 0 || targetNPCWhoAmI >= 0;
                 if (isLocked)
                 {
@@ -169,7 +166,7 @@ namespace Augments.Projectiles
                                     packet.Write(HealAmount);
                                     packet.Send();
                                 }
-                                SoundEngine.PlaySound(SoundID.Item29 with { Volume = 0.08f, Pitch = 1.25f }, target.Center);
+                                SoundEngine.PlaySound(SoundID.Item29 with { Volume = 0.08f, Pitch = 1.35f }, target.Center);
                             }
                         }
                         else if (targetNPCWhoAmI >= 0)
@@ -183,7 +180,7 @@ namespace Augments.Projectiles
                                 {
                                     NetMessage.SendData(MessageID.SyncNPC, -1, -1, null, npc.whoAmI);
                                 }
-                                SoundEngine.PlaySound(SoundID.Item29 with { Volume = 0.08f, Pitch = 1.25f }, npc.Center);
+                                SoundEngine.PlaySound(SoundID.Item29 with { Volume = 0.08f, Pitch = 1.35f }, npc.Center);
                             }
                         }
                     }
@@ -195,7 +192,6 @@ namespace Augments.Projectiles
             }
             else
             {
-                // Remote clients read target from synced ai[0]
                 int encoded = (int)Projectile.ai[0];
                 if (encoded >= 1000 && encoded - 1000 < Main.maxNPCs)
                 {
@@ -239,49 +235,48 @@ namespace Augments.Projectiles
             player.itemAnimation = 2;
             player.heldProj = Projectile.whoAmI;
 
-            Projectile.Center = muzzlePos + aimDir * 38f;
+            Projectile.Center = muzzlePos + aimDir * 40f;
 
-            // 5. Dynamic Lighting & Dust along the beam (Celestial Nebula & Stardust theme)
-            float beamLightIntensity = targetActive ? 0.65f : 0.32f;
-            Lighting.AddLight(Projectile.Center, 0.85f * beamLightIntensity, 0.45f * beamLightIntensity, 0.95f * beamLightIntensity);
+            // 5. Dynamic Cosmic Lighting & Dust
+            float beamLightIntensity = targetActive ? 0.75f : 0.35f;
+            Lighting.AddLight(Projectile.Center, 0.9f * beamLightIntensity, 0.7f * beamLightIntensity, 1.0f * beamLightIntensity);
 
             if (targetActive)
             {
-                Lighting.AddLight(aimTarget, 0.75f, 0.5f, 1.0f);
+                Lighting.AddLight(aimTarget, 0.95f, 0.75f, 1.0f);
 
-                // Stream particles forward from gun towards ally (Nebula & Stardust)
+                // Cosmic Solar Flare & Vortex particles streaming towards ally
                 if (Main.rand.NextBool(2))
                 {
                     float t = Main.rand.NextFloat();
                     Vector2 beamPt = Vector2.Lerp(Projectile.Center, aimTarget, t);
-                    int dustType = Main.rand.NextBool() ? DustID.Enchanted_Pink : DustID.Vortex;
+                    int dustType = Main.rand.NextBool() ? DustID.SolarFlare : DustID.Vortex;
                     Dust d = Dust.NewDustDirect(beamPt - new Vector2(2, 2), 4, 4, dustType);
                     d.noGravity = true;
-                    d.velocity = (aimTarget - beamPt).SafeNormalize(Vector2.Zero) * Main.rand.NextFloat(4.5f, 8f);
-                    d.scale = Main.rand.NextFloat(0.8f, 1.25f);
+                    d.velocity = (aimTarget - beamPt).SafeNormalize(Vector2.Zero) * Main.rand.NextFloat(5f, 9f);
+                    d.scale = Main.rand.NextFloat(0.85f, 1.35f);
                 }
 
-                // Cosmic sparkles drifting upward from target
+                // Orbiting celestial starlight motes rising around target
                 if (Main.rand.NextBool(2))
                 {
-                    Vector2 auraOffset = new Vector2(Main.rand.NextFloat(-20f, 20f), Main.rand.NextFloat(-14f, 24f));
-                    int dustType = Main.rand.NextBool() ? DustID.SolarFlare : DustID.GemDiamond;
+                    Vector2 auraOffset = new Vector2(Main.rand.NextFloat(-24f, 24f), Main.rand.NextFloat(-16f, 26f));
+                    int dustType = Main.rand.NextBool() ? DustID.Enchanted_Pink : DustID.GemDiamond;
                     Dust d = Dust.NewDustDirect(aimTarget + auraOffset, 4, 4, dustType);
                     d.noGravity = true;
-                    d.velocity = new Vector2(Main.rand.NextFloat(-0.7f, 0.7f), -Main.rand.NextFloat(1.8f, 3.4f));
-                    d.scale = Main.rand.NextFloat(0.8f, 1.3f);
+                    d.velocity = new Vector2(Main.rand.NextFloat(-0.8f, 0.8f), -Main.rand.NextFloat(2f, 3.8f));
+                    d.scale = Main.rand.NextFloat(0.9f, 1.4f);
                 }
             }
             else
             {
-                // Searching sparks from gun muzzle
                 if (Main.rand.NextBool(2))
                 {
-                    int dustType = Main.rand.NextBool() ? DustID.Enchanted_Pink : DustID.Electric;
+                    int dustType = Main.rand.NextBool() ? DustID.SolarFlare : DustID.Vortex;
                     Dust d = Dust.NewDustDirect(Projectile.Center - new Vector2(2, 2), 4, 4, dustType);
                     d.noGravity = true;
-                    d.velocity = aimDir * Main.rand.NextFloat(4.5f, 9f) + Main.rand.NextVector2Circular(1.6f, 1.6f);
-                    d.scale = 0.75f;
+                    d.velocity = aimDir * Main.rand.NextFloat(5f, 10f) + Main.rand.NextVector2Circular(1.8f, 1.8f);
+                    d.scale = 0.8f;
                 }
             }
         }
@@ -308,20 +303,20 @@ namespace Augments.Projectiles
                 Vector2 fallbackDir = Projectile.owner == Main.myPlayer
                     ? (Main.MouseWorld - muzzlePos).SafeNormalize(Vector2.UnitX * player.direction)
                     : Vector2.UnitX * player.direction;
-                targetPos = muzzlePos + fallbackDir * 300f;
+                targetPos = muzzlePos + fallbackDir * 320f;
             }
 
             Texture2D pixel = TextureAssets.MagicPixel.Value;
-            int segments = 52;
+            int segments = 56;
 
             Vector2 beamDiff = targetPos - muzzlePos;
             float totalLen = Math.Max(1f, beamDiff.Length());
             Vector2 beamDir = beamDiff / totalLen;
             Vector2 normal = new Vector2(-beamDir.Y, beamDir.X);
 
-            // Dynamic Bézier curvature when moving
+            // Dynamic Bézier curvature
             Vector2 idealMid = (muzzlePos + targetPos) * 0.5f;
-            if (laggedMidPoint == Vector2.Zero || Vector2.DistanceSquared(laggedMidPoint, idealMid) > 1100f * 1100f)
+            if (laggedMidPoint == Vector2.Zero || Vector2.DistanceSquared(laggedMidPoint, idealMid) > 1200f * 1200f)
             {
                 laggedMidPoint = idealMid;
             }
@@ -329,7 +324,7 @@ namespace Augments.Projectiles
             {
                 laggedMidPoint = Vector2.Lerp(laggedMidPoint, idealMid, 0.14f);
                 Vector2 offset = laggedMidPoint - idealMid;
-                float maxBow = Math.Min(60f, totalLen * 0.22f);
+                float maxBow = Math.Min(65f, totalLen * 0.22f);
                 if (offset.Length() > maxBow)
                 {
                     laggedMidPoint = idealMid + Vector2.Normalize(offset) * maxBow;
@@ -337,17 +332,34 @@ namespace Augments.Projectiles
             }
 
             Vector2 controlPoint = 2f * laggedMidPoint - idealMid;
-
             float time = (float)Main.GlobalTimeWrappedHourly;
 
+            // 4-Strand Quad-Helix Arrays: 0 = Solar, 1 = Vortex, 2 = Nebula, 3 = Stardust
             Vector2[] centerPoints = new Vector2[segments + 1];
-            Vector2[] ribbon1Points = new Vector2[segments + 1];
-            Vector2[] ribbon2Points = new Vector2[segments + 1];
-            float[] depth1 = new float[segments + 1];
-            float[] depth2 = new float[segments + 1];
+            Vector2[][] strandPoints = new Vector2[4][];
+            float[][] strandDepth = new float[4][];
+            for (int s = 0; s < 4; s++)
+            {
+                strandPoints[s] = new Vector2[segments + 1];
+                strandDepth[s] = new float[segments + 1];
+            }
 
-            float waveSpeed = 13f;
-            float waveFreq = 28f;
+            Color[] strandColorsLocked = new Color[] {
+                new Color(255, 175, 45, 230),  // Solar Gold
+                new Color(0, 255, 190, 230),   // Vortex Neon Teal
+                new Color(220, 65, 255, 230),  // Nebula Violet
+                new Color(45, 180, 255, 230)   // Stardust Azure
+            };
+
+            Color[] strandColorsIdle = new Color[] {
+                new Color(230, 140, 40, 120),
+                new Color(0, 210, 160, 120),
+                new Color(180, 50, 220, 120),
+                new Color(40, 150, 220, 120)
+            };
+
+            float waveSpeed = 14f;
+            float waveFreq = 30f;
 
             for (int i = 0; i <= segments; i++)
             {
@@ -357,7 +369,7 @@ namespace Augments.Projectiles
                 Vector2 cPt = invT * invT * muzzlePos + 2f * invT * t * controlPoint + t * t * targetPos;
                 if (!isLocked)
                 {
-                    cPt += normal * ((float)Math.Sin(time * 6.5f + t * 18f) * 4.5f);
+                    cPt += normal * ((float)Math.Sin(time * 7f + t * 20f) * 5f);
                 }
                 centerPoints[i] = cPt;
 
@@ -366,49 +378,40 @@ namespace Augments.Projectiles
                     ? new Vector2(-tangent.Y, tangent.X).SafeNormalize(normal)
                     : normal;
 
-                float angle1 = time * waveSpeed - t * waveFreq;
-                float angle2 = angle1 + MathHelper.Pi;
+                float envelope = MathHelper.Clamp((float)Math.Sin(t * MathHelper.Pi) * 1.5f, 0.2f, 1f);
+                float radius = (isLocked ? 14f : 7f) * envelope;
 
-                float envelope = MathHelper.Clamp((float)Math.Sin(t * MathHelper.Pi) * 1.4f, 0.15f, 1f);
-                float radius = (isLocked ? 11.5f : 5.5f) * envelope;
-
-                ribbon1Points[i] = cPt + segNormal * ((float)Math.Sin(angle1) * radius);
-                depth1[i] = (float)Math.Cos(angle1);
-
-                ribbon2Points[i] = cPt + segNormal * ((float)Math.Sin(angle2) * radius);
-                depth2[i] = (float)Math.Cos(angle2);
+                // 4 Strands spaced evenly at 90 degree offsets (0, Pi/2, Pi, 3Pi/2)
+                for (int s = 0; s < 4; s++)
+                {
+                    float angle = time * waveSpeed - t * waveFreq + (s * MathHelper.PiOver2);
+                    strandPoints[s][i] = cPt + segNormal * ((float)Math.Sin(angle) * radius);
+                    strandDepth[s][i] = (float)Math.Cos(angle);
+                }
             }
 
             Vector2 origin = new Vector2(0f, 0.5f);
 
             // ==========================================
-            // PASS 1: Draw Ribbon Segments BEHIND Center Line (depth < 0)
+            // PASS 1: Draw All 4 Strands Behind Center Beam (depth < 0)
             // ==========================================
-            for (int i = 1; i <= segments; i++)
+            for (int s = 0; s < 4; s++)
             {
-                // Ribbon 1 (Nebula Violet) - Behind
-                if (depth1[i] < 0 || depth1[i - 1] < 0)
+                Color strandCol = isLocked ? strandColorsLocked[s] * 0.5f : strandColorsIdle[s] * 0.4f;
+                for (int i = 1; i <= segments; i++)
                 {
-                    Vector2 rDiff = ribbon1Points[i] - ribbon1Points[i - 1];
-                    float rLen = Math.Max(1f, rDiff.Length());
-                    float rRot = (float)Math.Atan2(rDiff.Y, rDiff.X);
-                    Color col = isLocked ? new Color(240, 40, 190, 100) : new Color(200, 50, 170, 50);
-                    Main.EntitySpriteDraw(pixel, ribbon1Points[i - 1] - Main.screenPosition, new Rectangle(0, 0, (int)rLen + 1, 2), col, rRot, origin, 1f, SpriteEffects.None, 0);
-                }
-
-                // Ribbon 2 (Stardust Azure) - Behind
-                if (depth2[i] < 0 || depth2[i - 1] < 0)
-                {
-                    Vector2 rDiff = ribbon2Points[i] - ribbon2Points[i - 1];
-                    float rLen = Math.Max(1f, rDiff.Length());
-                    float rRot = (float)Math.Atan2(rDiff.Y, rDiff.X);
-                    Color col = isLocked ? new Color(0, 220, 255, 100) : new Color(40, 170, 240, 50);
-                    Main.EntitySpriteDraw(pixel, ribbon2Points[i - 1] - Main.screenPosition, new Rectangle(0, 0, (int)rLen + 1, 2), col, rRot, origin, 1f, SpriteEffects.None, 0);
+                    if (strandDepth[s][i] < 0 || strandDepth[s][i - 1] < 0)
+                    {
+                        Vector2 diff = strandPoints[s][i] - strandPoints[s][i - 1];
+                        float len = Math.Max(1f, diff.Length());
+                        float rot = (float)Math.Atan2(diff.Y, diff.X);
+                        Main.EntitySpriteDraw(pixel, strandPoints[s][i - 1] - Main.screenPosition, new Rectangle(0, 0, (int)len + 1, 2), strandCol, rot, origin, 1f, SpriteEffects.None, 0);
+                    }
                 }
             }
 
             // ==========================================
-            // PASS 2: Draw Sleek Central Beam in the Middle
+            // PASS 2: Heavy Celestial Super-Conduit Core Beam (Thick, Radiant & Pulsing)
             // ==========================================
             for (int i = 1; i <= segments; i++)
             {
@@ -416,131 +419,135 @@ namespace Augments.Projectiles
                 float segLen = Math.Max(1f, segDiff.Length());
                 float segRot = (float)Math.Atan2(segDiff.Y, segDiff.X);
 
-                // 1. Cosmic Nebula Outer Glow (9px)
-                Color outerColor = isLocked
-                    ? new Color(210, 60, 255, 65) * 0.85f
-                    : new Color(130, 90, 255, 35) * 0.5f;
-                Main.EntitySpriteDraw(pixel, centerPoints[i - 1] - Main.screenPosition, new Rectangle(0, 0, (int)segLen + 1, 9), outerColor, segRot, origin, 1f, SpriteEffects.None, 0);
+                // 1. Broad Solar-Stardust Celestial Corona (14px)
+                Color coronaColor = isLocked
+                    ? new Color(255, 140, 50, 60) * 0.9f
+                    : new Color(120, 80, 255, 30) * 0.6f;
+                Main.EntitySpriteDraw(pixel, centerPoints[i - 1] - Main.screenPosition, new Rectangle(0, 0, (int)segLen + 1, 14), coronaColor, segRot, origin, 1f, SpriteEffects.None, 0);
 
-                // 2. Focused Celestial Solar Core (4px)
-                Color coreColor = isLocked
-                    ? new Color(255, 230, 150, 205)
-                    : new Color(170, 230, 255, 140);
-                Main.EntitySpriteDraw(pixel, centerPoints[i - 1] - Main.screenPosition, new Rectangle(0, 0, (int)segLen + 1, 4), coreColor, segRot, origin, 1f, SpriteEffects.None, 0);
+                // 2. Intense Luminite-Solar Plasma Core (7px)
+                Color plasmaColor = isLocked
+                    ? new Color(255, 235, 130, 200)
+                    : new Color(130, 220, 255, 140);
+                Main.EntitySpriteDraw(pixel, centerPoints[i - 1] - Main.screenPosition, new Rectangle(0, 0, (int)segLen + 1, 7), plasmaColor, segRot, origin, 1f, SpriteEffects.None, 0);
 
-                // 3. Central Luminous White Filament (1px)
-                Color filamentColor = isLocked
-                    ? new Color(255, 255, 255, 255)
-                    : new Color(245, 250, 255, 210);
-                Main.EntitySpriteDraw(pixel, centerPoints[i - 1] - Main.screenPosition, new Rectangle(0, 0, (int)segLen + 1, 1), filamentColor, segRot, origin, 1f, SpriteEffects.None, 0);
+                // 3. Central Searing White-Hot Singularity (3px)
+                Color whiteHot = isLocked ? Color.White : new Color(240, 255, 255, 220);
+                Main.EntitySpriteDraw(pixel, centerPoints[i - 1] - Main.screenPosition, new Rectangle(0, 0, (int)segLen + 1, 3), whiteHot, segRot, origin, 1f, SpriteEffects.None, 0);
             }
 
             // ==========================================
-            // PASS 3: Draw Ribbon Segments IN FRONT OF Center Line (depth >= 0)
+            // PASS 3: Draw All 4 Strands In Front of Center Beam (depth >= 0)
             // ==========================================
-            for (int i = 1; i <= segments; i++)
+            for (int s = 0; s < 4; s++)
             {
-                // Ribbon 1 (Nebula Violet) - Front
-                if (depth1[i] >= 0 || depth1[i - 1] >= 0)
+                Color strandCol = isLocked ? strandColorsLocked[s] : strandColorsIdle[s];
+                for (int i = 1; i <= segments; i++)
                 {
-                    Vector2 rDiff = ribbon1Points[i] - ribbon1Points[i - 1];
-                    float rLen = Math.Max(1f, rDiff.Length());
-                    float rRot = (float)Math.Atan2(rDiff.Y, rDiff.X);
-                    Color col = isLocked ? new Color(255, 50, 210, 225) : new Color(225, 75, 190, 130);
-                    Main.EntitySpriteDraw(pixel, ribbon1Points[i - 1] - Main.screenPosition, new Rectangle(0, 0, (int)rLen + 1, 2), col, rRot, origin, 1f, SpriteEffects.None, 0);
-                }
-
-                // Ribbon 2 (Stardust Azure) - Front
-                if (depth2[i] >= 0 || depth2[i - 1] >= 0)
-                {
-                    Vector2 rDiff = ribbon2Points[i] - ribbon2Points[i - 1];
-                    float rLen = Math.Max(1f, rDiff.Length());
-                    float rRot = (float)Math.Atan2(rDiff.Y, rDiff.X);
-                    Color col = isLocked ? new Color(0, 240, 255, 225) : new Color(80, 200, 255, 130);
-                    Main.EntitySpriteDraw(pixel, ribbon2Points[i - 1] - Main.screenPosition, new Rectangle(0, 0, (int)rLen + 1, 2), col, rRot, origin, 1f, SpriteEffects.None, 0);
+                    if (strandDepth[s][i] >= 0 || strandDepth[s][i - 1] >= 0)
+                    {
+                        Vector2 diff = strandPoints[s][i] - strandPoints[s][i - 1];
+                        float len = Math.Max(1f, diff.Length());
+                        float rot = (float)Math.Atan2(diff.Y, diff.X);
+                        Main.EntitySpriteDraw(pixel, strandPoints[s][i - 1] - Main.screenPosition, new Rectangle(0, 0, (int)len + 1, 3), strandCol, rot, origin, 1f, SpriteEffects.None, 0);
+                    }
                 }
             }
 
             // ==========================================
-            // PASS 4: Surging Cosmic Packets (6 travelling packets cycling lunar colors)
+            // PASS 4: Orbiting Celestial Hadron Ring Nodes along the Beam
             // ==========================================
             if (isLocked)
             {
-                Color[] lunarColors = new Color[] {
-                    new Color(255, 150, 50, 180),  // Solar
-                    new Color(0, 240, 220, 180),   // Vortex
-                    new Color(255, 60, 200, 180),  // Nebula
-                    new Color(0, 200, 255, 180)    // Stardust
-                };
-
-                for (int p = 0; p < 6; p++)
+                // 5 superconducting orbital nodes travelling along the beam
+                for (int n = 0; n < 5; n++)
                 {
-                    float pulseT = ((float)Main.GlobalTimeWrappedHourly * 2.8f + p * 0.166f) % 1f;
-                    float invP = 1f - pulseT;
-                    Vector2 pulsePos = invP * invP * muzzlePos + 2f * invP * pulseT * controlPoint + pulseT * pulseT * targetPos;
-                    float pulseScale = 0.95f + 0.4f * (float)Math.Sin(pulseT * MathHelper.Pi);
+                    float nodeT = ((float)Main.GlobalTimeWrappedHourly * 1.6f + n * 0.2f) % 1f;
+                    float invN = 1f - nodeT;
+                    Vector2 nodePos = invN * invN * muzzlePos + 2f * invN * nodeT * controlPoint + nodeT * nodeT * targetPos;
 
-                    Color packetAura = lunarColors[p % lunarColors.Length];
-                    Color packetCore = new Color(255, 255, 255, 255);
+                    Vector2 tangent = 2f * invN * (controlPoint - muzzlePos) + 2f * nodeT * (targetPos - controlPoint);
+                    Vector2 segNorm = tangent.LengthSquared() > 0.001f ? new Vector2(-tangent.Y, tangent.X).SafeNormalize(normal) : normal;
+                    float rot = (float)Math.Atan2(segNorm.Y, segNorm.X);
 
-                    float packetRot = (float)Main.GlobalTimeWrappedHourly * 9f + p * MathHelper.PiOver4;
-                    Main.EntitySpriteDraw(pixel, pulsePos - Main.screenPosition, new Rectangle(0, 0, 9, 9), packetAura, packetRot, new Vector2(4.5f, 4.5f), pulseScale, SpriteEffects.None, 0);
-                    Main.EntitySpriteDraw(pixel, pulsePos - Main.screenPosition, new Rectangle(0, 0, 5, 5), packetCore, packetRot, new Vector2(2.5f, 2.5f), pulseScale, SpriteEffects.None, 0);
+                    float ringScale = 1.1f + 0.3f * (float)Math.Sin(nodeT * MathHelper.Pi);
+                    Color nodeCol = strandColorsLocked[n % 4];
+
+                    // Draw perpendicular diamond accelerator ring
+                    Main.EntitySpriteDraw(pixel, nodePos - Main.screenPosition, new Rectangle(0, 0, 18, 3), nodeCol * 0.9f, rot, new Vector2(9f, 1.5f), ringScale, SpriteEffects.None, 0);
+                    Main.EntitySpriteDraw(pixel, nodePos - Main.screenPosition, new Rectangle(0, 0, 8, 8), Color.White, rot + MathHelper.PiOver4, new Vector2(4f, 4f), ringScale * 0.7f, SpriteEffects.None, 0);
                 }
             }
 
             // ==========================================
-            // PASS 5: Muzzle Cosmic Star Flare
+            // PASS 5: Muzzle Celestial Supernova Flare
             // ==========================================
-            float muzzlePulse = 1f + 0.22f * (float)Math.Sin(Main.GlobalTimeWrappedHourly * 22f);
+            float muzzlePulse = 1f + 0.25f * (float)Math.Sin(Main.GlobalTimeWrappedHourly * 24f);
             float muzzleRot = (float)Main.GlobalTimeWrappedHourly * 4f;
-            Color muzzleColor = isLocked ? new Color(255, 60, 210, 210) : new Color(120, 210, 255, 170);
-            Main.EntitySpriteDraw(pixel, muzzlePos - Main.screenPosition, new Rectangle(0, 0, 16, 16), muzzleColor * 0.75f, muzzleRot, new Vector2(8, 8), muzzlePulse, SpriteEffects.None, 0);
-            Main.EntitySpriteDraw(pixel, muzzlePos - Main.screenPosition, new Rectangle(0, 0, 9, 9), new Color(255, 240, 150, 230), muzzleRot + MathHelper.PiOver4, new Vector2(4.5f, 4.5f), muzzlePulse, SpriteEffects.None, 0);
+
+            // Solar fire core flare
+            Main.EntitySpriteDraw(pixel, muzzlePos - Main.screenPosition, new Rectangle(0, 0, 20, 20), new Color(255, 160, 40, 220) * 0.8f, muzzleRot, new Vector2(10, 10), muzzlePulse, SpriteEffects.None, 0);
+            // Vortex star rays
+            Main.EntitySpriteDraw(pixel, muzzlePos - Main.screenPosition, new Rectangle(0, 0, 12, 12), new Color(0, 255, 200, 230), muzzleRot + MathHelper.PiOver4, new Vector2(6, 6), muzzlePulse * 1.1f, SpriteEffects.None, 0);
+            // Brilliant white core
+            Main.EntitySpriteDraw(pixel, muzzlePos - Main.screenPosition, new Rectangle(0, 0, 6, 6), Color.White, muzzleRot * 2f, new Vector2(3, 3), muzzlePulse, SpriteEffects.None, 0);
 
             // ==========================================
-            // PASS 6: Quad-Ring Celestial Holographic Medical Reticle
+            // PASS 6: Grand Celestial Mandala & Zodiac Aegis at Target Ally
             // ==========================================
             if (isLocked)
             {
-                float reticlePulse = 1f + 0.15f * (float)Math.Sin(Main.GlobalTimeWrappedHourly * 13f);
-                float reticleRot = (float)Main.GlobalTimeWrappedHourly * 2.2f;
+                float mandalaTime = (float)Main.GlobalTimeWrappedHourly;
+                float pulse = 1f + 0.12f * (float)Math.Sin(mandalaTime * 14f);
 
-                Color solarOrange = new Color(255, 160, 50, 220) * reticlePulse;
-                Color vortexTeal = new Color(0, 245, 210, 220) * reticlePulse;
-                Color nebulaPink = new Color(255, 70, 210, 220) * reticlePulse;
-                Color stardustAzure = new Color(0, 210, 255, 220) * reticlePulse;
-                Color coreWhite = Color.White * reticlePulse;
+                // 1. Massive 8-Spoke Solar Mandala Ring (Radius 36px)
+                float rot1 = mandalaTime * 1.5f;
+                Color solarColor = new Color(255, 175, 40, 220) * pulse;
+                for (int sp = 0; sp < 8; sp++)
+                {
+                    float angle = rot1 + sp * MathHelper.PiOver4;
+                    Vector2 spokeOffset = angle.ToRotationVector2() * 30f;
+                    Main.EntitySpriteDraw(pixel, targetPos + spokeOffset - Main.screenPosition, new Rectangle(0, 0, 14, 3), solarColor, angle, new Vector2(7f, 1.5f), 1f, SpriteEffects.None, 0);
+                }
 
-                // Ring 1: Outermost Solar Orange diamond brackets
-                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 32, 2), solarOrange * 0.85f, reticleRot, new Vector2(16, 1), 1f, SpriteEffects.None, 0);
-                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 2, 32), solarOrange * 0.85f, reticleRot, new Vector2(1, 16), 1f, SpriteEffects.None, 0);
+                // 2. Counter-Rotating Diamond Ring in Vortex Teal (Radius 24px)
+                float rot2 = -mandalaTime * 2.2f;
+                Color vortexColor = new Color(0, 255, 200, 220) * pulse;
+                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 36, 2), vortexColor, rot2, new Vector2(18, 1), 1f, SpriteEffects.None, 0);
+                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 2, 36), vortexColor, rot2, new Vector2(1, 18), 1f, SpriteEffects.None, 0);
 
-                // Ring 2: Nebula Pink octagonal brackets
-                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 26, 2), nebulaPink * 0.8f, -reticleRot * 1.2f, new Vector2(13, 1), 1f, SpriteEffects.None, 0);
-                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 2, 26), nebulaPink * 0.8f, -reticleRot * 1.2f, new Vector2(1, 13), 1f, SpriteEffects.None, 0);
+                // 3. Four Orbiting Lunar Spheres circling the ally (90 deg intervals)
+                for (int m = 0; m < 4; m++)
+                {
+                    float orbAngle = mandalaTime * 3f + (m * MathHelper.PiOver2);
+                    Vector2 orbPos = targetPos + orbAngle.ToRotationVector2() * 26f;
+                    Color orbCol = strandColorsLocked[m];
+                    Main.EntitySpriteDraw(pixel, orbPos - Main.screenPosition, new Rectangle(0, 0, 8, 8), orbCol, orbAngle, new Vector2(4, 4), 1f, SpriteEffects.None, 0);
+                    Main.EntitySpriteDraw(pixel, orbPos - Main.screenPosition, new Rectangle(0, 0, 4, 4), Color.White, orbAngle + MathHelper.PiOver4, new Vector2(2, 2), 1f, SpriteEffects.None, 0);
+                }
 
-                // Ring 3: Vortex Teal square brackets
-                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 20, 2), vortexTeal * 0.75f, reticleRot * 1.7f, new Vector2(10, 1), 1f, SpriteEffects.None, 0);
-                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 2, 20), vortexTeal * 0.75f, reticleRot * 1.7f, new Vector2(1, 10), 1f, SpriteEffects.None, 0);
+                // 4. Central 8-Pointed Star of Life (Radiant White & Nebula Violet)
+                Color starAura = new Color(230, 70, 255, 230) * pulse;
+                Color starCore = Color.White * pulse;
 
-                // Ring 4: Stardust Azure inner ring
-                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 14, 2), stardustAzure * 0.7f, -reticleRot * 2.2f, new Vector2(7, 1), 1f, SpriteEffects.None, 0);
-                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 2, 14), stardustAzure * 0.7f, -reticleRot * 2.2f, new Vector2(1, 7), 1f, SpriteEffects.None, 0);
+                // Cardinal Cross
+                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 20, 5), starAura, 0f, new Vector2(10, 2.5f), 1f, SpriteEffects.None, 0);
+                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 5, 20), starAura, 0f, new Vector2(2.5f, 10), 1f, SpriteEffects.None, 0);
+                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 16, 3), starCore, 0f, new Vector2(8, 1.5f), 1f, SpriteEffects.None, 0);
+                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 3, 16), starCore, 0f, new Vector2(1.5f, 8), 1f, SpriteEffects.None, 0);
 
-                // Central Radiant White Medical Cross
-                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 18, 4), nebulaPink, 0f, new Vector2(9, 2), 1f, SpriteEffects.None, 0);
-                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 14, 2), coreWhite, 0f, new Vector2(7, 1), 1f, SpriteEffects.None, 0);
+                // Diagonal Star Rays
+                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 14, 3), starAura, MathHelper.PiOver4, new Vector2(7, 1.5f), 1f, SpriteEffects.None, 0);
+                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 3, 14), starAura, MathHelper.PiOver4, new Vector2(1.5f, 7), 1f, SpriteEffects.None, 0);
+                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 10, 2), starCore, MathHelper.PiOver4, new Vector2(5, 1), 1f, SpriteEffects.None, 0);
+                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 2, 10), starCore, MathHelper.PiOver4, new Vector2(1, 5), 1f, SpriteEffects.None, 0);
 
-                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 4, 18), nebulaPink, 0f, new Vector2(2, 9), 1f, SpriteEffects.None, 0);
-                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 2, 14), coreWhite, 0f, new Vector2(1, 7), 1f, SpriteEffects.None, 0);
-
-                // Expanding Dual Radar Ping Rings
-                float pingProgress = ((float)Main.GlobalTimeWrappedHourly * 2.6f) % 1f;
-                float pingScale = 0.5f + pingProgress * 1.4f;
-                Color pingColor = stardustAzure * (1f - pingProgress) * 0.65f;
-                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 30, 2), pingColor, reticleRot + MathHelper.PiOver4, new Vector2(15, 1), pingScale, SpriteEffects.None, 0);
-                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 2, 30), pingColor, reticleRot + MathHelper.PiOver4, new Vector2(1, 15), pingScale, SpriteEffects.None, 0);
+                // 5. Pulsing Celestial Resonant Wave Ring
+                float ringProgress = (mandalaTime * 2.5f) % 1f;
+                float ringScale = 0.5f + ringProgress * 1.5f;
+                Color ringColor = new Color(255, 200, 50, 200) * (1f - ringProgress) * 0.7f;
+                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 34, 2), ringColor, rot1 + MathHelper.PiOver4, new Vector2(17, 1), ringScale, SpriteEffects.None, 0);
+                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 2, 34), ringColor, rot1 + MathHelper.PiOver4, new Vector2(1, 17), ringScale, SpriteEffects.None, 0);
             }
 
             return false;
