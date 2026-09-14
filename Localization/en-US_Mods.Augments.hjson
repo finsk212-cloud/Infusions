@@ -24,7 +24,8 @@ NPCs: {
 		}
 	}
 
-	TestDummyNPC.DisplayName: Test Dummy N P C
+	TestDummyNPC.DisplayName: Target Dummy
+	SmallStubbyNPC.DisplayName: Small Stubby
 }
 
 Items: {

@@ -70,6 +70,26 @@ namespace Augments
 			// We want: Auras (bottom) -> List UI -> Shop UI -> Choice UI -> Charges -> Cooldowns -> Tooltip (top) -> Mouse Text.
 			// So in code: insert Tooltip first, ..., List UI, then Auras last.
 			layers.Insert(mouseTextIndex, new LegacyGameInterfaceLayer(
+				"Augments: Sanitize Mouse Text",
+				delegate
+				{
+					if (!string.IsNullOrEmpty(Main.hoverItemName))
+					{
+						if (Main.hoverItemName.Contains("[Augments]"))
+							Main.hoverItemName = Main.hoverItemName.Replace("[Augments]", "").Trim();
+						if (Main.hoverItemName.Contains("[augments]"))
+							Main.hoverItemName = Main.hoverItemName.Replace("[augments]", "").Trim();
+						if (Main.hoverItemName.EndsWith(" N P C"))
+							Main.hoverItemName = Main.hoverItemName.Substring(0, Main.hoverItemName.Length - 6);
+						else if (Main.hoverItemName.EndsWith(" NPC"))
+							Main.hoverItemName = Main.hoverItemName.Substring(0, Main.hoverItemName.Length - 4);
+					}
+					return true;
+				},
+				InterfaceScaleType.UI)
+			);
+
+			layers.Insert(mouseTextIndex, new LegacyGameInterfaceLayer(
 				"Augments: Tooltip",
 				delegate
 				{

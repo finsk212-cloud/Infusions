@@ -72,6 +72,22 @@ namespace Augments
                 npcLoot.Add(ItemDropRule.Common(essenceType, 4, 1, 1));
         }
 
+        public override void ModifyTypeName(NPC npc, ref string typeName)
+        {
+            if (string.IsNullOrEmpty(typeName))
+                return;
+
+            if (typeName.EndsWith(" N P C"))
+                typeName = typeName.Substring(0, typeName.Length - 6);
+            else if (typeName.EndsWith(" NPC"))
+                typeName = typeName.Substring(0, typeName.Length - 4);
+
+            if (typeName.Contains("[Augments]"))
+                typeName = typeName.Replace("[Augments]", "").Trim();
+            if (typeName.Contains("[augments]"))
+                typeName = typeName.Replace("[augments]", "").Trim();
+        }
+
         public override void OnKill(NPC npc)
         {
             if (npc.friendly || npc.lastInteraction < 0 || npc.lastInteraction >= Main.maxPlayers)
