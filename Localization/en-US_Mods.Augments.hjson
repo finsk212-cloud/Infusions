@@ -62,6 +62,16 @@ Items: {
 			Tether breaks if line of sight is obstructed or distance exceeds range
 			'''
 	}
+
+	MediGunMK4Item: {
+		DisplayName: Medi Gun MK IV
+		Tooltip:
+			'''
+			Hold to lock onto a nearby teammate and channel an ultimate celestial healing beam
+			Heals 16 HP per second with screen-wide tether range
+			Tether breaks if line of sight is obstructed or distance exceeds range
+			'''
+	}
 }
 
 Buffs: {
@@ -101,4 +111,5 @@ Projectiles: {
 	MediGunBeamProjectile.DisplayName: Medi Gun Beam
 	MediGunMK2BeamProjectile.DisplayName: Medi Gun MK II Beam
 	MediGunMK3BeamProjectile.DisplayName: Medi Gun MK III Beam
+	MediGunMK4BeamProjectile.DisplayName: Medi Gun MK IV Beam
 }

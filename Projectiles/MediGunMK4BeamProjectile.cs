@@ -1,0 +1,549 @@
+using System;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
+using Terraria;
+using Terraria.Audio;
+using Terraria.GameContent;
+using Terraria.ID;
+using Terraria.ModLoader;
+
+namespace Augments.Projectiles
+{
+    public class MediGunMK4BeamProjectile : ModProjectile
+    {
+        private const float MaxAcquireRange = 1000f;
+        private const float MaxBreakRange = 1200f;
+        private const int HealPulseInterval = 15; // 4 pulses per second (16 HP/sec total)
+        private const int HealAmount = 4;
+
+        private int targetPlayerWhoAmI = -1;
+        private int targetNPCWhoAmI = -1;
+        private int healPulseTimer;
+        private Vector2 laggedMidPoint = Vector2.Zero;
+
+        public override string Texture => "Terraria/Images/MagicPixel";
+
+        public override void SetDefaults()
+        {
+            Projectile.width = 16;
+            Projectile.height = 16;
+            Projectile.friendly = false;
+            Projectile.hostile = false;
+            Projectile.tileCollide = false;
+            Projectile.ignoreWater = true;
+            Projectile.penetrate = -1;
+            Projectile.timeLeft = 2;
+        }
+
+        public override bool ShouldUpdatePosition() => false;
+
+        public override void AI()
+        {
+            Player player = Main.player[Projectile.owner];
+            if (!player.active || player.dead || !player.channel || player.noItems || player.CCed)
+            {
+                Projectile.Kill();
+                return;
+            }
+
+            // Eliminate duplicate projectiles: if another beam projectile exists for this owner, kill self
+            for (int i = 0; i < Main.maxProjectiles; i++)
+            {
+                Projectile other = Main.projectile[i];
+                if (other.active && other.owner == Projectile.owner && other.type == Projectile.type && other.whoAmI > Projectile.whoAmI)
+                {
+                    Projectile.Kill();
+                    return;
+                }
+            }
+
+            Projectile.timeLeft = 2;
+
+            Vector2 muzzlePos = player.MountedCenter;
+
+            // ONLY the local owner determines targeting and sends healing requests
+            if (Projectile.owner == Main.myPlayer)
+            {
+                // 1. Maintain or drop current target
+                if (targetPlayerWhoAmI >= 0)
+                {
+                    Player target = Main.player[targetPlayerWhoAmI];
+                    if (!target.active || target.dead || Vector2.Distance(muzzlePos, target.Center) > MaxBreakRange ||
+                        !Collision.CanHitLine(muzzlePos, 1, 1, target.Center, 1, 1) || !SupportEffects.AreAllies(player, target))
+                    {
+                        targetPlayerWhoAmI = -1;
+                    }
+                }
+
+                if (targetNPCWhoAmI >= 0)
+                {
+                    NPC npc = Main.npc[targetNPCWhoAmI];
+                    if (!npc.active || (!npc.townNPC && npc.type != NPCID.TargetDummy && !npc.friendly) ||
+                        Vector2.Distance(muzzlePos, npc.Center) > MaxBreakRange ||
+                        !Collision.CanHitLine(muzzlePos, 1, 1, npc.Center, 1, 1))
+                    {
+                        targetNPCWhoAmI = -1;
+                    }
+                }
+
+                // 2. If no target locked, acquire closest eligible target near cursor
+                if (targetPlayerWhoAmI < 0 && targetNPCWhoAmI < 0)
+                {
+                    float bestScore = float.MaxValue;
+
+                    // Check players first
+                    for (int i = 0; i < Main.maxPlayers; i++)
+                    {
+                        Player candidate = Main.player[i];
+                        if (!candidate.active || candidate.dead || candidate.whoAmI == player.whoAmI)
+                            continue;
+                        if (!SupportEffects.AreAllies(player, candidate))
+                            continue;
+                        if (Vector2.Distance(muzzlePos, candidate.Center) > MaxAcquireRange)
+                            continue;
+                        if (!Collision.CanHitLine(muzzlePos, 1, 1, candidate.Center, 1, 1))
+                            continue;
+
+                        float cursorDist = Vector2.Distance(Main.MouseWorld, candidate.Center);
+                        if (cursorDist < bestScore)
+                        {
+                            bestScore = cursorDist;
+                            targetPlayerWhoAmI = candidate.whoAmI;
+                        }
+                    }
+
+                    // If no player in range, check town NPCs or target dummies
+                    if (targetPlayerWhoAmI < 0)
+                    {
+                        for (int i = 0; i < Main.maxNPCs; i++)
+                        {
+                            NPC candidate = Main.npc[i];
+                            if (!candidate.active || (!candidate.townNPC && candidate.type != NPCID.TargetDummy && !candidate.friendly))
+                                continue;
+                            if (Vector2.Distance(muzzlePos, candidate.Center) > MaxAcquireRange)
+                                continue;
+                            if (!Collision.CanHitLine(muzzlePos, 1, 1, candidate.Center, 1, 1))
+                                continue;
+
+                            float cursorDist = Vector2.Distance(Main.MouseWorld, candidate.Center);
+                            if (cursorDist < bestScore)
+                            {
+                                bestScore = cursorDist;
+                                targetNPCWhoAmI = candidate.whoAmI;
+                            }
+                        }
+                    }
+                }
+
+                // Sync encoded target across network (players: 0..255, NPCs: 1000+, none: -1)
+                int encoded = targetPlayerWhoAmI >= 0 ? targetPlayerWhoAmI : (targetNPCWhoAmI >= 0 ? 1000 + targetNPCWhoAmI : -1);
+                if ((int)Projectile.ai[0] != encoded)
+                {
+                    Projectile.ai[0] = encoded;
+                    Projectile.netUpdate = true;
+                }
+
+                // 3. Massive Endgame Healing pulses (owner only)
+                bool isLocked = targetPlayerWhoAmI >= 0 || targetNPCWhoAmI >= 0;
+                if (isLocked)
+                {
+                    healPulseTimer++;
+                    if (healPulseTimer >= HealPulseInterval)
+                    {
+                        healPulseTimer = 0;
+
+                        if (targetPlayerWhoAmI >= 0)
+                        {
+                            Player target = Main.player[targetPlayerWhoAmI];
+                            if (target.statLife < target.statLifeMax2)
+                            {
+                                if (Main.netMode == NetmodeID.SinglePlayer)
+                                {
+                                    SupportEffects.ServerHealPlayer(target, HealAmount);
+                                }
+                                else if (Main.netMode == NetmodeID.MultiplayerClient)
+                                {
+                                    ModPacket packet = ModContent.GetInstance<Augments>().GetPacket();
+                                    packet.Write((byte)AugmentPacketType.MediGunHealRequest);
+                                    packet.Write((byte)target.whoAmI);
+                                    packet.Write(HealAmount);
+                                    packet.Send();
+                                }
+                                SoundEngine.PlaySound(SoundID.Item29 with { Volume = 0.08f, Pitch = 1.25f }, target.Center);
+                            }
+                        }
+                        else if (targetNPCWhoAmI >= 0)
+                        {
+                            NPC npc = Main.npc[targetNPCWhoAmI];
+                            if (npc.life < npc.lifeMax)
+                            {
+                                npc.life = Math.Min(npc.lifeMax, npc.life + HealAmount);
+                                npc.HealEffect(HealAmount);
+                                if (Main.netMode == NetmodeID.Server)
+                                {
+                                    NetMessage.SendData(MessageID.SyncNPC, -1, -1, null, npc.whoAmI);
+                                }
+                                SoundEngine.PlaySound(SoundID.Item29 with { Volume = 0.08f, Pitch = 1.25f }, npc.Center);
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    healPulseTimer = 0;
+                }
+            }
+            else
+            {
+                // Remote clients read target from synced ai[0]
+                int encoded = (int)Projectile.ai[0];
+                if (encoded >= 1000 && encoded - 1000 < Main.maxNPCs)
+                {
+                    targetPlayerWhoAmI = -1;
+                    targetNPCWhoAmI = encoded - 1000;
+                }
+                else if (encoded >= 0 && encoded < Main.maxPlayers)
+                {
+                    targetPlayerWhoAmI = encoded;
+                    targetNPCWhoAmI = -1;
+                }
+                else
+                {
+                    targetPlayerWhoAmI = -1;
+                    targetNPCWhoAmI = -1;
+                }
+            }
+
+            // 4. Aim player and projectile position
+            Vector2 aimTarget;
+            bool targetActive = false;
+            if (targetPlayerWhoAmI >= 0 && targetPlayerWhoAmI < Main.maxPlayers && Main.player[targetPlayerWhoAmI].active)
+            {
+                aimTarget = Main.player[targetPlayerWhoAmI].Center;
+                targetActive = true;
+            }
+            else if (targetNPCWhoAmI >= 0 && targetNPCWhoAmI < Main.maxNPCs && Main.npc[targetNPCWhoAmI].active)
+            {
+                aimTarget = Main.npc[targetNPCWhoAmI].Center;
+                targetActive = true;
+            }
+            else
+            {
+                aimTarget = Projectile.owner == Main.myPlayer ? Main.MouseWorld : muzzlePos + player.direction * Vector2.UnitX * 180f;
+            }
+
+            Vector2 aimDir = (aimTarget - muzzlePos).SafeNormalize(Vector2.UnitX * player.direction);
+            player.ChangeDir(aimDir.X >= 0 ? 1 : -1);
+            player.itemRotation = (float)Math.Atan2(aimDir.Y * player.direction, aimDir.X * player.direction);
+            player.itemTime = 2;
+            player.itemAnimation = 2;
+            player.heldProj = Projectile.whoAmI;
+
+            Projectile.Center = muzzlePos + aimDir * 38f;
+
+            // 5. Dynamic Lighting & Dust along the beam (Celestial Nebula & Stardust theme)
+            float beamLightIntensity = targetActive ? 0.65f : 0.32f;
+            Lighting.AddLight(Projectile.Center, 0.85f * beamLightIntensity, 0.45f * beamLightIntensity, 0.95f * beamLightIntensity);
+
+            if (targetActive)
+            {
+                Lighting.AddLight(aimTarget, 0.75f, 0.5f, 1.0f);
+
+                // Stream particles forward from gun towards ally (Nebula & Stardust)
+                if (Main.rand.NextBool(2))
+                {
+                    float t = Main.rand.NextFloat();
+                    Vector2 beamPt = Vector2.Lerp(Projectile.Center, aimTarget, t);
+                    int dustType = Main.rand.NextBool() ? DustID.Enchanted_Pink : DustID.Vortex;
+                    Dust d = Dust.NewDustDirect(beamPt - new Vector2(2, 2), 4, 4, dustType);
+                    d.noGravity = true;
+                    d.velocity = (aimTarget - beamPt).SafeNormalize(Vector2.Zero) * Main.rand.NextFloat(4.5f, 8f);
+                    d.scale = Main.rand.NextFloat(0.8f, 1.25f);
+                }
+
+                // Cosmic sparkles drifting upward from target
+                if (Main.rand.NextBool(2))
+                {
+                    Vector2 auraOffset = new Vector2(Main.rand.NextFloat(-20f, 20f), Main.rand.NextFloat(-14f, 24f));
+                    int dustType = Main.rand.NextBool() ? DustID.SolarFlare : DustID.GemDiamond;
+                    Dust d = Dust.NewDustDirect(aimTarget + auraOffset, 4, 4, dustType);
+                    d.noGravity = true;
+                    d.velocity = new Vector2(Main.rand.NextFloat(-0.7f, 0.7f), -Main.rand.NextFloat(1.8f, 3.4f));
+                    d.scale = Main.rand.NextFloat(0.8f, 1.3f);
+                }
+            }
+            else
+            {
+                // Searching sparks from gun muzzle
+                if (Main.rand.NextBool(2))
+                {
+                    int dustType = Main.rand.NextBool() ? DustID.Enchanted_Pink : DustID.Electric;
+                    Dust d = Dust.NewDustDirect(Projectile.Center - new Vector2(2, 2), 4, 4, dustType);
+                    d.noGravity = true;
+                    d.velocity = aimDir * Main.rand.NextFloat(4.5f, 9f) + Main.rand.NextVector2Circular(1.6f, 1.6f);
+                    d.scale = 0.75f;
+                }
+            }
+        }
+
+        public override bool PreDraw(ref Color lightColor)
+        {
+            Player player = Main.player[Projectile.owner];
+            Vector2 muzzlePos = Projectile.Center;
+
+            Vector2 targetPos;
+            bool isLocked = false;
+            if (targetPlayerWhoAmI >= 0 && targetPlayerWhoAmI < Main.maxPlayers && Main.player[targetPlayerWhoAmI].active)
+            {
+                targetPos = Main.player[targetPlayerWhoAmI].Center;
+                isLocked = true;
+            }
+            else if (targetNPCWhoAmI >= 0 && targetNPCWhoAmI < Main.maxNPCs && Main.npc[targetNPCWhoAmI].active)
+            {
+                targetPos = Main.npc[targetNPCWhoAmI].Center;
+                isLocked = true;
+            }
+            else
+            {
+                Vector2 fallbackDir = Projectile.owner == Main.myPlayer
+                    ? (Main.MouseWorld - muzzlePos).SafeNormalize(Vector2.UnitX * player.direction)
+                    : Vector2.UnitX * player.direction;
+                targetPos = muzzlePos + fallbackDir * 300f;
+            }
+
+            Texture2D pixel = TextureAssets.MagicPixel.Value;
+            int segments = 52;
+
+            Vector2 beamDiff = targetPos - muzzlePos;
+            float totalLen = Math.Max(1f, beamDiff.Length());
+            Vector2 beamDir = beamDiff / totalLen;
+            Vector2 normal = new Vector2(-beamDir.Y, beamDir.X);
+
+            // Dynamic Bézier curvature when moving
+            Vector2 idealMid = (muzzlePos + targetPos) * 0.5f;
+            if (laggedMidPoint == Vector2.Zero || Vector2.DistanceSquared(laggedMidPoint, idealMid) > 1100f * 1100f)
+            {
+                laggedMidPoint = idealMid;
+            }
+            else
+            {
+                laggedMidPoint = Vector2.Lerp(laggedMidPoint, idealMid, 0.14f);
+                Vector2 offset = laggedMidPoint - idealMid;
+                float maxBow = Math.Min(60f, totalLen * 0.22f);
+                if (offset.Length() > maxBow)
+                {
+                    laggedMidPoint = idealMid + Vector2.Normalize(offset) * maxBow;
+                }
+            }
+
+            Vector2 controlPoint = 2f * laggedMidPoint - idealMid;
+
+            float time = (float)Main.GlobalTimeWrappedHourly;
+
+            Vector2[] centerPoints = new Vector2[segments + 1];
+            Vector2[] ribbon1Points = new Vector2[segments + 1];
+            Vector2[] ribbon2Points = new Vector2[segments + 1];
+            float[] depth1 = new float[segments + 1];
+            float[] depth2 = new float[segments + 1];
+
+            float waveSpeed = 13f;
+            float waveFreq = 28f;
+
+            for (int i = 0; i <= segments; i++)
+            {
+                float t = i / (float)segments;
+                float invT = 1f - t;
+
+                Vector2 cPt = invT * invT * muzzlePos + 2f * invT * t * controlPoint + t * t * targetPos;
+                if (!isLocked)
+                {
+                    cPt += normal * ((float)Math.Sin(time * 6.5f + t * 18f) * 4.5f);
+                }
+                centerPoints[i] = cPt;
+
+                Vector2 tangent = 2f * invT * (controlPoint - muzzlePos) + 2f * t * (targetPos - controlPoint);
+                Vector2 segNormal = tangent.LengthSquared() > 0.001f
+                    ? new Vector2(-tangent.Y, tangent.X).SafeNormalize(normal)
+                    : normal;
+
+                float angle1 = time * waveSpeed - t * waveFreq;
+                float angle2 = angle1 + MathHelper.Pi;
+
+                float envelope = MathHelper.Clamp((float)Math.Sin(t * MathHelper.Pi) * 1.4f, 0.15f, 1f);
+                float radius = (isLocked ? 11.5f : 5.5f) * envelope;
+
+                ribbon1Points[i] = cPt + segNormal * ((float)Math.Sin(angle1) * radius);
+                depth1[i] = (float)Math.Cos(angle1);
+
+                ribbon2Points[i] = cPt + segNormal * ((float)Math.Sin(angle2) * radius);
+                depth2[i] = (float)Math.Cos(angle2);
+            }
+
+            Vector2 origin = new Vector2(0f, 0.5f);
+
+            // ==========================================
+            // PASS 1: Draw Ribbon Segments BEHIND Center Line (depth < 0)
+            // ==========================================
+            for (int i = 1; i <= segments; i++)
+            {
+                // Ribbon 1 (Nebula Violet) - Behind
+                if (depth1[i] < 0 || depth1[i - 1] < 0)
+                {
+                    Vector2 rDiff = ribbon1Points[i] - ribbon1Points[i - 1];
+                    float rLen = Math.Max(1f, rDiff.Length());
+                    float rRot = (float)Math.Atan2(rDiff.Y, rDiff.X);
+                    Color col = isLocked ? new Color(240, 40, 190, 100) : new Color(200, 50, 170, 50);
+                    Main.EntitySpriteDraw(pixel, ribbon1Points[i - 1] - Main.screenPosition, new Rectangle(0, 0, (int)rLen + 1, 2), col, rRot, origin, 1f, SpriteEffects.None, 0);
+                }
+
+                // Ribbon 2 (Stardust Azure) - Behind
+                if (depth2[i] < 0 || depth2[i - 1] < 0)
+                {
+                    Vector2 rDiff = ribbon2Points[i] - ribbon2Points[i - 1];
+                    float rLen = Math.Max(1f, rDiff.Length());
+                    float rRot = (float)Math.Atan2(rDiff.Y, rDiff.X);
+                    Color col = isLocked ? new Color(0, 220, 255, 100) : new Color(40, 170, 240, 50);
+                    Main.EntitySpriteDraw(pixel, ribbon2Points[i - 1] - Main.screenPosition, new Rectangle(0, 0, (int)rLen + 1, 2), col, rRot, origin, 1f, SpriteEffects.None, 0);
+                }
+            }
+
+            // ==========================================
+            // PASS 2: Draw Sleek Central Beam in the Middle
+            // ==========================================
+            for (int i = 1; i <= segments; i++)
+            {
+                Vector2 segDiff = centerPoints[i] - centerPoints[i - 1];
+                float segLen = Math.Max(1f, segDiff.Length());
+                float segRot = (float)Math.Atan2(segDiff.Y, segDiff.X);
+
+                // 1. Cosmic Nebula Outer Glow (9px)
+                Color outerColor = isLocked
+                    ? new Color(210, 60, 255, 65) * 0.85f
+                    : new Color(130, 90, 255, 35) * 0.5f;
+                Main.EntitySpriteDraw(pixel, centerPoints[i - 1] - Main.screenPosition, new Rectangle(0, 0, (int)segLen + 1, 9), outerColor, segRot, origin, 1f, SpriteEffects.None, 0);
+
+                // 2. Focused Celestial Solar Core (4px)
+                Color coreColor = isLocked
+                    ? new Color(255, 230, 150, 205)
+                    : new Color(170, 230, 255, 140);
+                Main.EntitySpriteDraw(pixel, centerPoints[i - 1] - Main.screenPosition, new Rectangle(0, 0, (int)segLen + 1, 4), coreColor, segRot, origin, 1f, SpriteEffects.None, 0);
+
+                // 3. Central Luminous White Filament (1px)
+                Color filamentColor = isLocked
+                    ? new Color(255, 255, 255, 255)
+                    : new Color(245, 250, 255, 210);
+                Main.EntitySpriteDraw(pixel, centerPoints[i - 1] - Main.screenPosition, new Rectangle(0, 0, (int)segLen + 1, 1), filamentColor, segRot, origin, 1f, SpriteEffects.None, 0);
+            }
+
+            // ==========================================
+            // PASS 3: Draw Ribbon Segments IN FRONT OF Center Line (depth >= 0)
+            // ==========================================
+            for (int i = 1; i <= segments; i++)
+            {
+                // Ribbon 1 (Nebula Violet) - Front
+                if (depth1[i] >= 0 || depth1[i - 1] >= 0)
+                {
+                    Vector2 rDiff = ribbon1Points[i] - ribbon1Points[i - 1];
+                    float rLen = Math.Max(1f, rDiff.Length());
+                    float rRot = (float)Math.Atan2(rDiff.Y, rDiff.X);
+                    Color col = isLocked ? new Color(255, 50, 210, 225) : new Color(225, 75, 190, 130);
+                    Main.EntitySpriteDraw(pixel, ribbon1Points[i - 1] - Main.screenPosition, new Rectangle(0, 0, (int)rLen + 1, 2), col, rRot, origin, 1f, SpriteEffects.None, 0);
+                }
+
+                // Ribbon 2 (Stardust Azure) - Front
+                if (depth2[i] >= 0 || depth2[i - 1] >= 0)
+                {
+                    Vector2 rDiff = ribbon2Points[i] - ribbon2Points[i - 1];
+                    float rLen = Math.Max(1f, rDiff.Length());
+                    float rRot = (float)Math.Atan2(rDiff.Y, rDiff.X);
+                    Color col = isLocked ? new Color(0, 240, 255, 225) : new Color(80, 200, 255, 130);
+                    Main.EntitySpriteDraw(pixel, ribbon2Points[i - 1] - Main.screenPosition, new Rectangle(0, 0, (int)rLen + 1, 2), col, rRot, origin, 1f, SpriteEffects.None, 0);
+                }
+            }
+
+            // ==========================================
+            // PASS 4: Surging Cosmic Packets (6 travelling packets cycling lunar colors)
+            // ==========================================
+            if (isLocked)
+            {
+                Color[] lunarColors = new Color[] {
+                    new Color(255, 150, 50, 180),  // Solar
+                    new Color(0, 240, 220, 180),   // Vortex
+                    new Color(255, 60, 200, 180),  // Nebula
+                    new Color(0, 200, 255, 180)    // Stardust
+                };
+
+                for (int p = 0; p < 6; p++)
+                {
+                    float pulseT = ((float)Main.GlobalTimeWrappedHourly * 2.8f + p * 0.166f) % 1f;
+                    float invP = 1f - pulseT;
+                    Vector2 pulsePos = invP * invP * muzzlePos + 2f * invP * pulseT * controlPoint + pulseT * pulseT * targetPos;
+                    float pulseScale = 0.95f + 0.4f * (float)Math.Sin(pulseT * MathHelper.Pi);
+
+                    Color packetAura = lunarColors[p % lunarColors.Length];
+                    Color packetCore = new Color(255, 255, 255, 255);
+
+                    float packetRot = (float)Main.GlobalTimeWrappedHourly * 9f + p * MathHelper.PiOver4;
+                    Main.EntitySpriteDraw(pixel, pulsePos - Main.screenPosition, new Rectangle(0, 0, 9, 9), packetAura, packetRot, new Vector2(4.5f, 4.5f), pulseScale, SpriteEffects.None, 0);
+                    Main.EntitySpriteDraw(pixel, pulsePos - Main.screenPosition, new Rectangle(0, 0, 5, 5), packetCore, packetRot, new Vector2(2.5f, 2.5f), pulseScale, SpriteEffects.None, 0);
+                }
+            }
+
+            // ==========================================
+            // PASS 5: Muzzle Cosmic Star Flare
+            // ==========================================
+            float muzzlePulse = 1f + 0.22f * (float)Math.Sin(Main.GlobalTimeWrappedHourly * 22f);
+            float muzzleRot = (float)Main.GlobalTimeWrappedHourly * 4f;
+            Color muzzleColor = isLocked ? new Color(255, 60, 210, 210) : new Color(120, 210, 255, 170);
+            Main.EntitySpriteDraw(pixel, muzzlePos - Main.screenPosition, new Rectangle(0, 0, 16, 16), muzzleColor * 0.75f, muzzleRot, new Vector2(8, 8), muzzlePulse, SpriteEffects.None, 0);
+            Main.EntitySpriteDraw(pixel, muzzlePos - Main.screenPosition, new Rectangle(0, 0, 9, 9), new Color(255, 240, 150, 230), muzzleRot + MathHelper.PiOver4, new Vector2(4.5f, 4.5f), muzzlePulse, SpriteEffects.None, 0);
+
+            // ==========================================
+            // PASS 6: Quad-Ring Celestial Holographic Medical Reticle
+            // ==========================================
+            if (isLocked)
+            {
+                float reticlePulse = 1f + 0.15f * (float)Math.Sin(Main.GlobalTimeWrappedHourly * 13f);
+                float reticleRot = (float)Main.GlobalTimeWrappedHourly * 2.2f;
+
+                Color solarOrange = new Color(255, 160, 50, 220) * reticlePulse;
+                Color vortexTeal = new Color(0, 245, 210, 220) * reticlePulse;
+                Color nebulaPink = new Color(255, 70, 210, 220) * reticlePulse;
+                Color stardustAzure = new Color(0, 210, 255, 220) * reticlePulse;
+                Color coreWhite = Color.White * reticlePulse;
+
+                // Ring 1: Outermost Solar Orange diamond brackets
+                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 32, 2), solarOrange * 0.85f, reticleRot, new Vector2(16, 1), 1f, SpriteEffects.None, 0);
+                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 2, 32), solarOrange * 0.85f, reticleRot, new Vector2(1, 16), 1f, SpriteEffects.None, 0);
+
+                // Ring 2: Nebula Pink octagonal brackets
+                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 26, 2), nebulaPink * 0.8f, -reticleRot * 1.2f, new Vector2(13, 1), 1f, SpriteEffects.None, 0);
+                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 2, 26), nebulaPink * 0.8f, -reticleRot * 1.2f, new Vector2(1, 13), 1f, SpriteEffects.None, 0);
+
+                // Ring 3: Vortex Teal square brackets
+                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 20, 2), vortexTeal * 0.75f, reticleRot * 1.7f, new Vector2(10, 1), 1f, SpriteEffects.None, 0);
+                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 2, 20), vortexTeal * 0.75f, reticleRot * 1.7f, new Vector2(1, 10), 1f, SpriteEffects.None, 0);
+
+                // Ring 4: Stardust Azure inner ring
+                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 14, 2), stardustAzure * 0.7f, -reticleRot * 2.2f, new Vector2(7, 1), 1f, SpriteEffects.None, 0);
+                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 2, 14), stardustAzure * 0.7f, -reticleRot * 2.2f, new Vector2(1, 7), 1f, SpriteEffects.None, 0);
+
+                // Central Radiant White Medical Cross
+                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 18, 4), nebulaPink, 0f, new Vector2(9, 2), 1f, SpriteEffects.None, 0);
+                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 14, 2), coreWhite, 0f, new Vector2(7, 1), 1f, SpriteEffects.None, 0);
+
+                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 4, 18), nebulaPink, 0f, new Vector2(2, 9), 1f, SpriteEffects.None, 0);
+                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 2, 14), coreWhite, 0f, new Vector2(1, 7), 1f, SpriteEffects.None, 0);
+
+                // Expanding Dual Radar Ping Rings
+                float pingProgress = ((float)Main.GlobalTimeWrappedHourly * 2.6f) % 1f;
+                float pingScale = 0.5f + pingProgress * 1.4f;
+                Color pingColor = stardustAzure * (1f - pingProgress) * 0.65f;
+                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 30, 2), pingColor, reticleRot + MathHelper.PiOver4, new Vector2(15, 1), pingScale, SpriteEffects.None, 0);
+                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 2, 30), pingColor, reticleRot + MathHelper.PiOver4, new Vector2(1, 15), pingScale, SpriteEffects.None, 0);
+            }
+
+            return false;
+        }
+    }
+}
