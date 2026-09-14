@@ -10,8 +10,8 @@ namespace Augments
 
         public override void SetDefaults()
         {
-            Item.width = 24;
-            Item.height = 24;
+            Item.width = 28;
+            Item.height = 28;
             Item.maxStack = 9999;
             Item.rare = ItemRarityID.Orange;
             Item.value = Item.buyPrice(silver: 50);
