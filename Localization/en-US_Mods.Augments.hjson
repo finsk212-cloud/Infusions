@@ -42,6 +42,16 @@ Items: {
 			Tether breaks if line of sight is obstructed or distance exceeds range
 			'''
 	}
+
+	MediGunMK2Item: {
+		DisplayName: Medi Gun MK II
+		Tooltip:
+			'''
+			Hold to lock onto a nearby teammate and channel an advanced healing beam
+			Heals 6 HP per second with extended tether range
+			Tether breaks if line of sight is obstructed or distance exceeds range
+			'''
+	}
 }
 
 Buffs: {
@@ -79,4 +89,5 @@ Projectiles: {
 	EldritchLaserProjectile.DisplayName: Eldritch Laser Projectile
 	WarGodShockwaveProjectile.DisplayName: War God Shockwave Projectile
 	MediGunBeamProjectile.DisplayName: Medi Gun Beam
+	MediGunMK2BeamProjectile.DisplayName: Medi Gun MK II Beam
 }
