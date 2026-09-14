@@ -185,8 +185,8 @@ namespace Augments
 			if (!AreAllies(sender, target))
 				return;
 
-			// Range check (~1000f safety buffer against latency across MK I and MK II tiers)
-			if (Vector2.DistanceSquared(sender.Center, target.Center) > 1000f * 1000f)
+			// Range check (~1150f safety buffer against latency across MK I, MK II, and MK III tiers)
+			if (Vector2.DistanceSquared(sender.Center, target.Center) > 1150f * 1150f)
 				return;
 
 			int clampedHeal = Math.Clamp(healAmount, 1, 50);

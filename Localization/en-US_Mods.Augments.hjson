@@ -52,6 +52,16 @@ Items: {
 			Tether breaks if line of sight is obstructed or distance exceeds range
 			'''
 	}
+
+	MediGunMK3Item: {
+		DisplayName: Medi Gun MK III
+		Tooltip:
+			'''
+			Hold to lock onto a nearby teammate and channel an advanced spectral healing beam
+			Heals 10 HP per second with maximum tether range
+			Tether breaks if line of sight is obstructed or distance exceeds range
+			'''
+	}
 }
 
 Buffs: {
@@ -90,4 +100,5 @@ Projectiles: {
 	WarGodShockwaveProjectile.DisplayName: War God Shockwave Projectile
 	MediGunBeamProjectile.DisplayName: Medi Gun Beam
 	MediGunMK2BeamProjectile.DisplayName: Medi Gun MK II Beam
+	MediGunMK3BeamProjectile.DisplayName: Medi Gun MK III Beam
 }

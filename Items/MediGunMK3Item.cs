@@ -1,0 +1,75 @@
+﻿using Microsoft.Xna.Framework;
+using Terraria;
+using Terraria.DataStructures;
+using Terraria.ID;
+using Terraria.ModLoader;
+
+namespace Augments.Items
+{
+    public class MediGunMK3Item : ModItem
+    {
+        public override string Texture => "Terraria/Images/Item_" + ItemID.ChargedBlasterCannon;
+
+        public override void SetDefaults()
+        {
+            Item.width = 46;
+            Item.height = 24;
+            Item.useStyle = ItemUseStyleID.Shoot;
+            Item.useTime = 20;
+            Item.useAnimation = 20;
+            Item.noMelee = true;
+            Item.channel = true;
+            Item.damage = 0;
+            Item.knockBack = 0f;
+            Item.DamageType = DamageClass.Generic;
+            Item.value = Item.buyPrice(gold: 10);
+            Item.rare = ItemRarityID.Yellow;
+            Item.shoot = ModContent.ProjectileType<Projectiles.MediGunMK3BeamProjectile>();
+            Item.shootSpeed = 1f;
+            Item.autoReuse = false;
+        }
+
+        public override bool CanUseItem(Player player)
+        {
+            // Only allow 1 channeled beam projectile at a time
+            return player.ownedProjectileCounts[ModContent.ProjectileType<Projectiles.MediGunMK3BeamProjectile>()] <= 0;
+        }
+
+        public override bool Shoot(Player player, EntitySource_ItemUse_WithAmmo source, Vector2 position, Vector2 velocity, int type, int damage, float knockback)
+        {
+            // Cleanly eliminate any active beam projectiles across all MK tiers for this player
+            int mk1Type = ModContent.ProjectileType<Projectiles.MediGunBeamProjectile>();
+            int mk2Type = ModContent.ProjectileType<Projectiles.MediGunMK2BeamProjectile>();
+            for (int i = 0; i < Main.maxProjectiles; i++)
+            {
+                Projectile p = Main.projectile[i];
+                if (p.active && p.owner == player.whoAmI && (p.type == type || p.type == mk1Type || p.type == mk2Type))
+                {
+                    p.Kill();
+                }
+            }
+            return true;
+        }
+
+        public override void AddRecipes()
+        {
+            // Spectre Bar recipe
+            Recipe recipeSpectre = CreateRecipe();
+            recipeSpectre.AddIngredient(ModContent.ItemType<MediGunMK2Item>(), 1);
+            recipeSpectre.AddIngredient(ItemID.SpectreBar, 10);
+            recipeSpectre.AddIngredient(ItemID.Ectoplasm, 5);
+            recipeSpectre.AddIngredient(ItemID.LifeFruit, 2);
+            recipeSpectre.AddTile(TileID.MythrilAnvil);
+            recipeSpectre.Register();
+
+            // Chlorophyte Bar recipe (alternative)
+            Recipe recipeChlorophyte = CreateRecipe();
+            recipeChlorophyte.AddIngredient(ModContent.ItemType<MediGunMK2Item>(), 1);
+            recipeChlorophyte.AddIngredient(ItemID.ChlorophyteBar, 10);
+            recipeChlorophyte.AddIngredient(ItemID.Ectoplasm, 5);
+            recipeChlorophyte.AddIngredient(ItemID.LifeFruit, 2);
+            recipeChlorophyte.AddTile(TileID.MythrilAnvil);
+            recipeChlorophyte.Register();
+        }
+    }
+}
