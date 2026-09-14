@@ -1,4 +1,4 @@
-﻿using Terraria;
+using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
 
@@ -6,6 +6,8 @@ namespace Augments
 {
     public class AugmentEssenceItem : ModItem
     {
+        public override string Texture => "Augments/Items/AugmentEssenceItem";
+
         public override void SetDefaults()
         {
             Item.width = 24;
