@@ -42,4 +42,9 @@ Hold left click near a teammate to lock on with a bending energy tether that hea
 [*][b]???[/b]
 [/list]
 
-Drop any feedback, bug reports, or powerup ideas in the comments!
+Drop any feedback, bug reports, or chip ideas in the comments or hop into the discord!
+[url=https://discord.gg/cE92pA3fdu]Join the Discord[/url]
+
+[quote=Automata: Plug-in Chips]
+Developed by Finsk
+[/quote]
