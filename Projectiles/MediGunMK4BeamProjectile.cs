@@ -140,7 +140,7 @@ namespace Augments.Projectiles
                     Projectile.netUpdate = true;
                 }
 
-                // 3. Endgame Sustained Healing Pulses
+                // 3. Clean Divine Healing Pulses
                 bool isLocked = targetPlayerWhoAmI >= 0 || targetNPCWhoAmI >= 0;
                 if (isLocked)
                 {
@@ -166,7 +166,7 @@ namespace Augments.Projectiles
                                     packet.Write(HealAmount);
                                     packet.Send();
                                 }
-                                SoundEngine.PlaySound(SoundID.Item29 with { Volume = 0.08f, Pitch = 1.35f }, target.Center);
+                                SoundEngine.PlaySound(SoundID.Item29 with { Volume = 0.08f, Pitch = 0.95f }, target.Center);
                             }
                         }
                         else if (targetNPCWhoAmI >= 0)
@@ -180,7 +180,7 @@ namespace Augments.Projectiles
                                 {
                                     NetMessage.SendData(MessageID.SyncNPC, -1, -1, null, npc.whoAmI);
                                 }
-                                SoundEngine.PlaySound(SoundID.Item29 with { Volume = 0.08f, Pitch = 1.35f }, npc.Center);
+                                SoundEngine.PlaySound(SoundID.Item29 with { Volume = 0.08f, Pitch = 0.95f }, npc.Center);
                             }
                         }
                     }
@@ -225,7 +225,7 @@ namespace Augments.Projectiles
             }
             else
             {
-                aimTarget = Projectile.owner == Main.myPlayer ? Main.MouseWorld : muzzlePos + player.direction * Vector2.UnitX * 180f;
+                aimTarget = Projectile.owner == Main.myPlayer ? Main.MouseWorld : muzzlePos + player.direction * Vector2.UnitX * 160f;
             }
 
             Vector2 aimDir = (aimTarget - muzzlePos).SafeNormalize(Vector2.UnitX * player.direction);
@@ -235,48 +235,46 @@ namespace Augments.Projectiles
             player.itemAnimation = 2;
             player.heldProj = Projectile.whoAmI;
 
-            Projectile.Center = muzzlePos + aimDir * 40f;
+            Projectile.Center = muzzlePos + aimDir * 36f;
 
-            // 5. Dynamic Cosmic Lighting & Dust
-            float beamLightIntensity = targetActive ? 0.75f : 0.35f;
-            Lighting.AddLight(Projectile.Center, 0.9f * beamLightIntensity, 0.7f * beamLightIntensity, 1.0f * beamLightIntensity);
+            // 5. Clean, Warm Divine Light & Healing Sparkles (Holy Gold & Diamond Light)
+            float beamLightIntensity = targetActive ? 0.55f : 0.28f;
+            Lighting.AddLight(Projectile.Center, 0.95f * beamLightIntensity, 0.85f * beamLightIntensity, 0.5f * beamLightIntensity);
 
             if (targetActive)
             {
-                Lighting.AddLight(aimTarget, 0.95f, 0.75f, 1.0f);
+                Lighting.AddLight(aimTarget, 0.9f, 0.8f, 0.55f);
 
-                // Cosmic Solar Flare & Vortex particles streaming towards ally
+                // Pure golden healing flecks streaming forward towards ally
                 if (Main.rand.NextBool(2))
                 {
                     float t = Main.rand.NextFloat();
                     Vector2 beamPt = Vector2.Lerp(Projectile.Center, aimTarget, t);
-                    int dustType = Main.rand.NextBool() ? DustID.SolarFlare : DustID.Vortex;
+                    int dustType = Main.rand.NextBool() ? DustID.GoldFlame : DustID.GemDiamond;
                     Dust d = Dust.NewDustDirect(beamPt - new Vector2(2, 2), 4, 4, dustType);
                     d.noGravity = true;
-                    d.velocity = (aimTarget - beamPt).SafeNormalize(Vector2.Zero) * Main.rand.NextFloat(5f, 9f);
-                    d.scale = Main.rand.NextFloat(0.85f, 1.35f);
+                    d.velocity = (aimTarget - beamPt).SafeNormalize(Vector2.Zero) * Main.rand.NextFloat(4f, 7f);
+                    d.scale = Main.rand.NextFloat(0.7f, 1.1f);
                 }
 
-                // Orbiting celestial starlight motes rising around target
+                // Gentle warm golden sparkles rising from the healed ally
                 if (Main.rand.NextBool(2))
                 {
-                    Vector2 auraOffset = new Vector2(Main.rand.NextFloat(-24f, 24f), Main.rand.NextFloat(-16f, 26f));
-                    int dustType = Main.rand.NextBool() ? DustID.Enchanted_Pink : DustID.GemDiamond;
-                    Dust d = Dust.NewDustDirect(aimTarget + auraOffset, 4, 4, dustType);
+                    Vector2 auraOffset = new Vector2(Main.rand.NextFloat(-16f, 16f), Main.rand.NextFloat(-12f, 20f));
+                    Dust d = Dust.NewDustDirect(aimTarget + auraOffset, 4, 4, DustID.GoldFlame);
                     d.noGravity = true;
-                    d.velocity = new Vector2(Main.rand.NextFloat(-0.8f, 0.8f), -Main.rand.NextFloat(2f, 3.8f));
-                    d.scale = Main.rand.NextFloat(0.9f, 1.4f);
+                    d.velocity = new Vector2(Main.rand.NextFloat(-0.5f, 0.5f), -Main.rand.NextFloat(1.4f, 2.6f));
+                    d.scale = Main.rand.NextFloat(0.7f, 1.15f);
                 }
             }
             else
             {
                 if (Main.rand.NextBool(2))
                 {
-                    int dustType = Main.rand.NextBool() ? DustID.SolarFlare : DustID.Vortex;
-                    Dust d = Dust.NewDustDirect(Projectile.Center - new Vector2(2, 2), 4, 4, dustType);
+                    Dust d = Dust.NewDustDirect(Projectile.Center - new Vector2(2, 2), 4, 4, DustID.GoldFlame);
                     d.noGravity = true;
-                    d.velocity = aimDir * Main.rand.NextFloat(5f, 10f) + Main.rand.NextVector2Circular(1.8f, 1.8f);
-                    d.scale = 0.8f;
+                    d.velocity = aimDir * Main.rand.NextFloat(4f, 7.5f) + Main.rand.NextVector2Circular(1.2f, 1.2f);
+                    d.scale = 0.65f;
                 }
             }
         }
@@ -303,20 +301,20 @@ namespace Augments.Projectiles
                 Vector2 fallbackDir = Projectile.owner == Main.myPlayer
                     ? (Main.MouseWorld - muzzlePos).SafeNormalize(Vector2.UnitX * player.direction)
                     : Vector2.UnitX * player.direction;
-                targetPos = muzzlePos + fallbackDir * 320f;
+                targetPos = muzzlePos + fallbackDir * 280f;
             }
 
             Texture2D pixel = TextureAssets.MagicPixel.Value;
-            int segments = 56;
+            int segments = 48;
 
             Vector2 beamDiff = targetPos - muzzlePos;
             float totalLen = Math.Max(1f, beamDiff.Length());
             Vector2 beamDir = beamDiff / totalLen;
             Vector2 normal = new Vector2(-beamDir.Y, beamDir.X);
 
-            // Dynamic Bézier curvature
+            // Dynamic Bézier curvature when moving
             Vector2 idealMid = (muzzlePos + targetPos) * 0.5f;
-            if (laggedMidPoint == Vector2.Zero || Vector2.DistanceSquared(laggedMidPoint, idealMid) > 1200f * 1200f)
+            if (laggedMidPoint == Vector2.Zero || Vector2.DistanceSquared(laggedMidPoint, idealMid) > 1100f * 1100f)
             {
                 laggedMidPoint = idealMid;
             }
@@ -324,7 +322,7 @@ namespace Augments.Projectiles
             {
                 laggedMidPoint = Vector2.Lerp(laggedMidPoint, idealMid, 0.14f);
                 Vector2 offset = laggedMidPoint - idealMid;
-                float maxBow = Math.Min(65f, totalLen * 0.22f);
+                float maxBow = Math.Min(55f, totalLen * 0.22f);
                 if (offset.Length() > maxBow)
                 {
                     laggedMidPoint = idealMid + Vector2.Normalize(offset) * maxBow;
@@ -334,32 +332,15 @@ namespace Augments.Projectiles
             Vector2 controlPoint = 2f * laggedMidPoint - idealMid;
             float time = (float)Main.GlobalTimeWrappedHourly;
 
-            // 4-Strand Quad-Helix Arrays: 0 = Solar, 1 = Vortex, 2 = Nebula, 3 = Stardust
+            // Clean 2-Strand Double Helix (Same beloved structure, but Premium Divine Gold & Pearlescent White)
             Vector2[] centerPoints = new Vector2[segments + 1];
-            Vector2[][] strandPoints = new Vector2[4][];
-            float[][] strandDepth = new float[4][];
-            for (int s = 0; s < 4; s++)
-            {
-                strandPoints[s] = new Vector2[segments + 1];
-                strandDepth[s] = new float[segments + 1];
-            }
+            Vector2[] ribbon1Points = new Vector2[segments + 1];
+            Vector2[] ribbon2Points = new Vector2[segments + 1];
+            float[] depth1 = new float[segments + 1];
+            float[] depth2 = new float[segments + 1];
 
-            Color[] strandColorsLocked = new Color[] {
-                new Color(255, 175, 45, 230),  // Solar Gold
-                new Color(0, 255, 190, 230),   // Vortex Neon Teal
-                new Color(220, 65, 255, 230),  // Nebula Violet
-                new Color(45, 180, 255, 230)   // Stardust Azure
-            };
-
-            Color[] strandColorsIdle = new Color[] {
-                new Color(230, 140, 40, 120),
-                new Color(0, 210, 160, 120),
-                new Color(180, 50, 220, 120),
-                new Color(40, 150, 220, 120)
-            };
-
-            float waveSpeed = 14f;
-            float waveFreq = 30f;
+            float waveSpeed = 12f;
+            float waveFreq = 26f;
 
             for (int i = 0; i <= segments; i++)
             {
@@ -369,7 +350,7 @@ namespace Augments.Projectiles
                 Vector2 cPt = invT * invT * muzzlePos + 2f * invT * t * controlPoint + t * t * targetPos;
                 if (!isLocked)
                 {
-                    cPt += normal * ((float)Math.Sin(time * 7f + t * 20f) * 5f);
+                    cPt += normal * ((float)Math.Sin(time * 6f + t * 16f) * 4f);
                 }
                 centerPoints[i] = cPt;
 
@@ -378,40 +359,49 @@ namespace Augments.Projectiles
                     ? new Vector2(-tangent.Y, tangent.X).SafeNormalize(normal)
                     : normal;
 
-                float envelope = MathHelper.Clamp((float)Math.Sin(t * MathHelper.Pi) * 1.5f, 0.2f, 1f);
-                float radius = (isLocked ? 14f : 7f) * envelope;
+                float angle1 = time * waveSpeed - t * waveFreq;
+                float angle2 = angle1 + MathHelper.Pi;
 
-                // 4 Strands spaced evenly at 90 degree offsets (0, Pi/2, Pi, 3Pi/2)
-                for (int s = 0; s < 4; s++)
-                {
-                    float angle = time * waveSpeed - t * waveFreq + (s * MathHelper.PiOver2);
-                    strandPoints[s][i] = cPt + segNormal * ((float)Math.Sin(angle) * radius);
-                    strandDepth[s][i] = (float)Math.Cos(angle);
-                }
+                float envelope = MathHelper.Clamp((float)Math.Sin(t * MathHelper.Pi) * 1.4f, 0.15f, 1f);
+                float radius = (isLocked ? 10f : 5f) * envelope;
+
+                ribbon1Points[i] = cPt + segNormal * ((float)Math.Sin(angle1) * radius);
+                depth1[i] = (float)Math.Cos(angle1);
+
+                ribbon2Points[i] = cPt + segNormal * ((float)Math.Sin(angle2) * radius);
+                depth2[i] = (float)Math.Cos(angle2);
             }
 
             Vector2 origin = new Vector2(0f, 0.5f);
 
             // ==========================================
-            // PASS 1: Draw All 4 Strands Behind Center Beam (depth < 0)
+            // PASS 1: Draw Ribbon Segments Behind Central Line (depth < 0)
             // ==========================================
-            for (int s = 0; s < 4; s++)
+            for (int i = 1; i <= segments; i++)
             {
-                Color strandCol = isLocked ? strandColorsLocked[s] * 0.5f : strandColorsIdle[s] * 0.4f;
-                for (int i = 1; i <= segments; i++)
+                // Ribbon 1: Radiant Divine Gold (Behind)
+                if (depth1[i] < 0 || depth1[i - 1] < 0)
                 {
-                    if (strandDepth[s][i] < 0 || strandDepth[s][i - 1] < 0)
-                    {
-                        Vector2 diff = strandPoints[s][i] - strandPoints[s][i - 1];
-                        float len = Math.Max(1f, diff.Length());
-                        float rot = (float)Math.Atan2(diff.Y, diff.X);
-                        Main.EntitySpriteDraw(pixel, strandPoints[s][i - 1] - Main.screenPosition, new Rectangle(0, 0, (int)len + 1, 2), strandCol, rot, origin, 1f, SpriteEffects.None, 0);
-                    }
+                    Vector2 rDiff = ribbon1Points[i] - ribbon1Points[i - 1];
+                    float rLen = Math.Max(1f, rDiff.Length());
+                    float rRot = (float)Math.Atan2(rDiff.Y, rDiff.X);
+                    Color col = isLocked ? new Color(255, 205, 70, 95) : new Color(230, 180, 70, 50);
+                    Main.EntitySpriteDraw(pixel, ribbon1Points[i - 1] - Main.screenPosition, new Rectangle(0, 0, (int)rLen + 1, 2), col, rRot, origin, 1f, SpriteEffects.None, 0);
+                }
+
+                // Ribbon 2: Pearlescent Angelic White (Behind)
+                if (depth2[i] < 0 || depth2[i - 1] < 0)
+                {
+                    Vector2 rDiff = ribbon2Points[i] - ribbon2Points[i - 1];
+                    float rLen = Math.Max(1f, rDiff.Length());
+                    float rRot = (float)Math.Atan2(rDiff.Y, rDiff.X);
+                    Color col = isLocked ? new Color(255, 250, 225, 95) : new Color(240, 240, 220, 50);
+                    Main.EntitySpriteDraw(pixel, ribbon2Points[i - 1] - Main.screenPosition, new Rectangle(0, 0, (int)rLen + 1, 2), col, rRot, origin, 1f, SpriteEffects.None, 0);
                 }
             }
 
             // ==========================================
-            // PASS 2: Heavy Celestial Super-Conduit Core Beam (Thick, Radiant & Pulsing)
+            // PASS 2: Premium Clean Central Medical Beam (Warm Holy Glow)
             // ==========================================
             for (int i = 1; i <= segments; i++)
             {
@@ -419,135 +409,114 @@ namespace Augments.Projectiles
                 float segLen = Math.Max(1f, segDiff.Length());
                 float segRot = (float)Math.Atan2(segDiff.Y, segDiff.X);
 
-                // 1. Broad Solar-Stardust Celestial Corona (14px)
-                Color coronaColor = isLocked
-                    ? new Color(255, 140, 50, 60) * 0.9f
-                    : new Color(120, 80, 255, 30) * 0.6f;
-                Main.EntitySpriteDraw(pixel, centerPoints[i - 1] - Main.screenPosition, new Rectangle(0, 0, (int)segLen + 1, 14), coronaColor, segRot, origin, 1f, SpriteEffects.None, 0);
+                // 1. Soft Golden Healing Halo (8px)
+                Color outerHalo = isLocked
+                    ? new Color(255, 210, 80, 55) * 0.8f
+                    : new Color(240, 190, 80, 30) * 0.5f;
+                Main.EntitySpriteDraw(pixel, centerPoints[i - 1] - Main.screenPosition, new Rectangle(0, 0, (int)segLen + 1, 8), outerHalo, segRot, origin, 1f, SpriteEffects.None, 0);
 
-                // 2. Intense Luminite-Solar Plasma Core (7px)
-                Color plasmaColor = isLocked
-                    ? new Color(255, 235, 130, 200)
-                    : new Color(130, 220, 255, 140);
-                Main.EntitySpriteDraw(pixel, centerPoints[i - 1] - Main.screenPosition, new Rectangle(0, 0, (int)segLen + 1, 7), plasmaColor, segRot, origin, 1f, SpriteEffects.None, 0);
+                // 2. Focused Radiant Gold Core (3px)
+                Color coreColor = isLocked
+                    ? new Color(255, 235, 140, 190)
+                    : new Color(245, 215, 120, 130);
+                Main.EntitySpriteDraw(pixel, centerPoints[i - 1] - Main.screenPosition, new Rectangle(0, 0, (int)segLen + 1, 3), coreColor, segRot, origin, 1f, SpriteEffects.None, 0);
 
-                // 3. Central Searing White-Hot Singularity (3px)
-                Color whiteHot = isLocked ? Color.White : new Color(240, 255, 255, 220);
-                Main.EntitySpriteDraw(pixel, centerPoints[i - 1] - Main.screenPosition, new Rectangle(0, 0, (int)segLen + 1, 3), whiteHot, segRot, origin, 1f, SpriteEffects.None, 0);
+                // 3. Central Pure Luminous White Filament (1px)
+                Color filament = isLocked
+                    ? Color.White
+                    : new Color(255, 255, 245, 200);
+                Main.EntitySpriteDraw(pixel, centerPoints[i - 1] - Main.screenPosition, new Rectangle(0, 0, (int)segLen + 1, 1), filament, segRot, origin, 1f, SpriteEffects.None, 0);
             }
 
             // ==========================================
-            // PASS 3: Draw All 4 Strands In Front of Center Beam (depth >= 0)
+            // PASS 3: Draw Ribbon Segments In Front Of Central Line (depth >= 0)
             // ==========================================
-            for (int s = 0; s < 4; s++)
+            for (int i = 1; i <= segments; i++)
             {
-                Color strandCol = isLocked ? strandColorsLocked[s] : strandColorsIdle[s];
-                for (int i = 1; i <= segments; i++)
+                // Ribbon 1: Radiant Divine Gold (Front)
+                if (depth1[i] >= 0 || depth1[i - 1] >= 0)
                 {
-                    if (strandDepth[s][i] >= 0 || strandDepth[s][i - 1] >= 0)
-                    {
-                        Vector2 diff = strandPoints[s][i] - strandPoints[s][i - 1];
-                        float len = Math.Max(1f, diff.Length());
-                        float rot = (float)Math.Atan2(diff.Y, diff.X);
-                        Main.EntitySpriteDraw(pixel, strandPoints[s][i - 1] - Main.screenPosition, new Rectangle(0, 0, (int)len + 1, 3), strandCol, rot, origin, 1f, SpriteEffects.None, 0);
-                    }
+                    Vector2 rDiff = ribbon1Points[i] - ribbon1Points[i - 1];
+                    float rLen = Math.Max(1f, rDiff.Length());
+                    float rRot = (float)Math.Atan2(rDiff.Y, rDiff.X);
+                    Color col = isLocked ? new Color(255, 215, 80, 215) : new Color(240, 190, 80, 120);
+                    Main.EntitySpriteDraw(pixel, ribbon1Points[i - 1] - Main.screenPosition, new Rectangle(0, 0, (int)rLen + 1, 2), col, rRot, origin, 1f, SpriteEffects.None, 0);
+                }
+
+                // Ribbon 2: Pearlescent Angelic White (Front)
+                if (depth2[i] >= 0 || depth2[i - 1] >= 0)
+                {
+                    Vector2 rDiff = ribbon2Points[i] - ribbon2Points[i - 1];
+                    float rLen = Math.Max(1f, rDiff.Length());
+                    float rRot = (float)Math.Atan2(rDiff.Y, rDiff.X);
+                    Color col = isLocked ? new Color(255, 255, 240, 215) : new Color(245, 245, 230, 120);
+                    Main.EntitySpriteDraw(pixel, ribbon2Points[i - 1] - Main.screenPosition, new Rectangle(0, 0, (int)rLen + 1, 2), col, rRot, origin, 1f, SpriteEffects.None, 0);
                 }
             }
 
             // ==========================================
-            // PASS 4: Orbiting Celestial Hadron Ring Nodes along the Beam
+            // PASS 4: Clean Travelling Life Packets (Golden Orbs flowing towards ally)
             // ==========================================
             if (isLocked)
             {
-                // 5 superconducting orbital nodes travelling along the beam
-                for (int n = 0; n < 5; n++)
+                for (int p = 0; p < 4; p++)
                 {
-                    float nodeT = ((float)Main.GlobalTimeWrappedHourly * 1.6f + n * 0.2f) % 1f;
-                    float invN = 1f - nodeT;
-                    Vector2 nodePos = invN * invN * muzzlePos + 2f * invN * nodeT * controlPoint + nodeT * nodeT * targetPos;
+                    float pulseT = ((float)Main.GlobalTimeWrappedHourly * 2.2f + p * 0.25f) % 1f;
+                    float invP = 1f - pulseT;
+                    Vector2 pulsePos = invP * invP * muzzlePos + 2f * invP * pulseT * controlPoint + pulseT * pulseT * targetPos;
+                    float pulseScale = 0.85f + 0.35f * (float)Math.Sin(pulseT * MathHelper.Pi);
 
-                    Vector2 tangent = 2f * invN * (controlPoint - muzzlePos) + 2f * nodeT * (targetPos - controlPoint);
-                    Vector2 segNorm = tangent.LengthSquared() > 0.001f ? new Vector2(-tangent.Y, tangent.X).SafeNormalize(normal) : normal;
-                    float rot = (float)Math.Atan2(segNorm.Y, segNorm.X);
+                    Color packetAura = (p % 2 == 0) ? new Color(255, 215, 80, 170) : new Color(255, 245, 180, 170);
+                    Color packetCore = Color.White;
 
-                    float ringScale = 1.1f + 0.3f * (float)Math.Sin(nodeT * MathHelper.Pi);
-                    Color nodeCol = strandColorsLocked[n % 4];
-
-                    // Draw perpendicular diamond accelerator ring
-                    Main.EntitySpriteDraw(pixel, nodePos - Main.screenPosition, new Rectangle(0, 0, 18, 3), nodeCol * 0.9f, rot, new Vector2(9f, 1.5f), ringScale, SpriteEffects.None, 0);
-                    Main.EntitySpriteDraw(pixel, nodePos - Main.screenPosition, new Rectangle(0, 0, 8, 8), Color.White, rot + MathHelper.PiOver4, new Vector2(4f, 4f), ringScale * 0.7f, SpriteEffects.None, 0);
+                    float packetRot = (float)Main.GlobalTimeWrappedHourly * 7f + p * MathHelper.PiOver2;
+                    Main.EntitySpriteDraw(pixel, pulsePos - Main.screenPosition, new Rectangle(0, 0, 8, 8), packetAura, packetRot, new Vector2(4f, 4f), pulseScale, SpriteEffects.None, 0);
+                    Main.EntitySpriteDraw(pixel, pulsePos - Main.screenPosition, new Rectangle(0, 0, 4, 4), packetCore, packetRot, new Vector2(2f, 2f), pulseScale, SpriteEffects.None, 0);
                 }
             }
 
             // ==========================================
-            // PASS 5: Muzzle Celestial Supernova Flare
+            // PASS 5: Clean Muzzle Energy Flare (Warm Gold & White Star)
             // ==========================================
-            float muzzlePulse = 1f + 0.25f * (float)Math.Sin(Main.GlobalTimeWrappedHourly * 24f);
-            float muzzleRot = (float)Main.GlobalTimeWrappedHourly * 4f;
-
-            // Solar fire core flare
-            Main.EntitySpriteDraw(pixel, muzzlePos - Main.screenPosition, new Rectangle(0, 0, 20, 20), new Color(255, 160, 40, 220) * 0.8f, muzzleRot, new Vector2(10, 10), muzzlePulse, SpriteEffects.None, 0);
-            // Vortex star rays
-            Main.EntitySpriteDraw(pixel, muzzlePos - Main.screenPosition, new Rectangle(0, 0, 12, 12), new Color(0, 255, 200, 230), muzzleRot + MathHelper.PiOver4, new Vector2(6, 6), muzzlePulse * 1.1f, SpriteEffects.None, 0);
-            // Brilliant white core
-            Main.EntitySpriteDraw(pixel, muzzlePos - Main.screenPosition, new Rectangle(0, 0, 6, 6), Color.White, muzzleRot * 2f, new Vector2(3, 3), muzzlePulse, SpriteEffects.None, 0);
+            float muzzlePulse = 1f + 0.18f * (float)Math.Sin(Main.GlobalTimeWrappedHourly * 18f);
+            float muzzleRot = (float)Main.GlobalTimeWrappedHourly * 3f;
+            Color muzzleColor = isLocked ? new Color(255, 215, 80, 200) : new Color(240, 195, 100, 150);
+            Main.EntitySpriteDraw(pixel, muzzlePos - Main.screenPosition, new Rectangle(0, 0, 13, 13), muzzleColor * 0.75f, muzzleRot, new Vector2(6.5f, 6.5f), muzzlePulse, SpriteEffects.None, 0);
+            Main.EntitySpriteDraw(pixel, muzzlePos - Main.screenPosition, new Rectangle(0, 0, 7, 7), Color.White, muzzleRot + MathHelper.PiOver4, new Vector2(3.5f, 3.5f), muzzlePulse, SpriteEffects.None, 0);
 
             // ==========================================
-            // PASS 6: Grand Celestial Mandala & Zodiac Aegis at Target Ally
+            // PASS 6: Premium Divine Medical Halo Reticle at Target Ally
             // ==========================================
             if (isLocked)
             {
-                float mandalaTime = (float)Main.GlobalTimeWrappedHourly;
-                float pulse = 1f + 0.12f * (float)Math.Sin(mandalaTime * 14f);
+                float reticlePulse = 1f + 0.12f * (float)Math.Sin(Main.GlobalTimeWrappedHourly * 11f);
+                float reticleRot = (float)Main.GlobalTimeWrappedHourly * 1.8f;
 
-                // 1. Massive 8-Spoke Solar Mandala Ring (Radius 36px)
-                float rot1 = mandalaTime * 1.5f;
-                Color solarColor = new Color(255, 175, 40, 220) * pulse;
-                for (int sp = 0; sp < 8; sp++)
-                {
-                    float angle = rot1 + sp * MathHelper.PiOver4;
-                    Vector2 spokeOffset = angle.ToRotationVector2() * 30f;
-                    Main.EntitySpriteDraw(pixel, targetPos + spokeOffset - Main.screenPosition, new Rectangle(0, 0, 14, 3), solarColor, angle, new Vector2(7f, 1.5f), 1f, SpriteEffects.None, 0);
-                }
+                Color divineGold = new Color(255, 220, 80, 220) * reticlePulse;
+                Color holyWhite = Color.White * reticlePulse;
 
-                // 2. Counter-Rotating Diamond Ring in Vortex Teal (Radius 24px)
-                float rot2 = -mandalaTime * 2.2f;
-                Color vortexColor = new Color(0, 255, 200, 220) * pulse;
-                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 36, 2), vortexColor, rot2, new Vector2(18, 1), 1f, SpriteEffects.None, 0);
-                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 2, 36), vortexColor, rot2, new Vector2(1, 18), 1f, SpriteEffects.None, 0);
+                // 1. Elegant Rotating Outer Halo Ring (Gold)
+                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 26, 2), divineGold * 0.8f, reticleRot, new Vector2(13, 1), 1f, SpriteEffects.None, 0);
+                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 2, 26), divineGold * 0.8f, reticleRot, new Vector2(1, 13), 1f, SpriteEffects.None, 0);
 
-                // 3. Four Orbiting Lunar Spheres circling the ally (90 deg intervals)
-                for (int m = 0; m < 4; m++)
-                {
-                    float orbAngle = mandalaTime * 3f + (m * MathHelper.PiOver2);
-                    Vector2 orbPos = targetPos + orbAngle.ToRotationVector2() * 26f;
-                    Color orbCol = strandColorsLocked[m];
-                    Main.EntitySpriteDraw(pixel, orbPos - Main.screenPosition, new Rectangle(0, 0, 8, 8), orbCol, orbAngle, new Vector2(4, 4), 1f, SpriteEffects.None, 0);
-                    Main.EntitySpriteDraw(pixel, orbPos - Main.screenPosition, new Rectangle(0, 0, 4, 4), Color.White, orbAngle + MathHelper.PiOver4, new Vector2(2, 2), 1f, SpriteEffects.None, 0);
-                }
+                // 2. Corner Bracket Accents (Clean Medical Framing)
+                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 20, 2), divineGold * 0.7f, -reticleRot, new Vector2(10, 1), 1f, SpriteEffects.None, 0);
+                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 2, 20), divineGold * 0.7f, -reticleRot, new Vector2(1, 10), 1f, SpriteEffects.None, 0);
 
-                // 4. Central 8-Pointed Star of Life (Radiant White & Nebula Violet)
-                Color starAura = new Color(230, 70, 255, 230) * pulse;
-                Color starCore = Color.White * pulse;
+                // 3. Pristine Sovereign Medical Cross (Bold, Pure & Clean)
+                // Horizontal bar
+                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 16, 4), divineGold, 0f, new Vector2(8, 2), 1f, SpriteEffects.None, 0);
+                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 12, 2), holyWhite, 0f, new Vector2(6, 1), 1f, SpriteEffects.None, 0);
+                // Vertical bar
+                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 4, 16), divineGold, 0f, new Vector2(2, 8), 1f, SpriteEffects.None, 0);
+                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 2, 12), holyWhite, 0f, new Vector2(1, 6), 1f, SpriteEffects.None, 0);
 
-                // Cardinal Cross
-                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 20, 5), starAura, 0f, new Vector2(10, 2.5f), 1f, SpriteEffects.None, 0);
-                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 5, 20), starAura, 0f, new Vector2(2.5f, 10), 1f, SpriteEffects.None, 0);
-                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 16, 3), starCore, 0f, new Vector2(8, 1.5f), 1f, SpriteEffects.None, 0);
-                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 3, 16), starCore, 0f, new Vector2(1.5f, 8), 1f, SpriteEffects.None, 0);
-
-                // Diagonal Star Rays
-                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 14, 3), starAura, MathHelper.PiOver4, new Vector2(7, 1.5f), 1f, SpriteEffects.None, 0);
-                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 3, 14), starAura, MathHelper.PiOver4, new Vector2(1.5f, 7), 1f, SpriteEffects.None, 0);
-                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 10, 2), starCore, MathHelper.PiOver4, new Vector2(5, 1), 1f, SpriteEffects.None, 0);
-                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 2, 10), starCore, MathHelper.PiOver4, new Vector2(1, 5), 1f, SpriteEffects.None, 0);
-
-                // 5. Pulsing Celestial Resonant Wave Ring
-                float ringProgress = (mandalaTime * 2.5f) % 1f;
-                float ringScale = 0.5f + ringProgress * 1.5f;
-                Color ringColor = new Color(255, 200, 50, 200) * (1f - ringProgress) * 0.7f;
-                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 34, 2), ringColor, rot1 + MathHelper.PiOver4, new Vector2(17, 1), ringScale, SpriteEffects.None, 0);
-                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 2, 34), ringColor, rot1 + MathHelper.PiOver4, new Vector2(1, 17), ringScale, SpriteEffects.None, 0);
+                // 4. Gentle Warm Healing Pulse Ring
+                float pingProgress = ((float)Main.GlobalTimeWrappedHourly * 2.2f) % 1f;
+                float pingScale = 0.5f + pingProgress * 1.2f;
+                Color pingColor = divineGold * (1f - pingProgress) * 0.55f;
+                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 24, 2), pingColor, reticleRot + MathHelper.PiOver4, new Vector2(12, 1), pingScale, SpriteEffects.None, 0);
+                Main.EntitySpriteDraw(pixel, targetPos - Main.screenPosition, new Rectangle(0, 0, 2, 24), pingColor, reticleRot + MathHelper.PiOver4, new Vector2(1, 12), pingScale, SpriteEffects.None, 0);
             }
 
             return false;
