@@ -29,8 +29,8 @@ NPCs: {
 
 Items: {
 	AugmentEssenceItem: {
-		DisplayName: Plug-in Essence
-		Tooltip: Used to buy or re-acquire Plug-in Chips from Mistress 2B.
+		DisplayName: Machine Core
+		Tooltip: A pulsing power unit salvaged from machines, traded with Mistress 2B to acquire and re-forge Plug-in Chips.
 	}
 
 	MediGunItem: {

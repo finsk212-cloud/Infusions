@@ -205,7 +205,7 @@ namespace Augments
 				if (refund > 0)
 					SpawnEssenceRefund(refund);
 
-				string msg = $"✦ [Slots Full] {augment.DisplayName} transferred to Mistress 2B's archive! Received {refund} Plug-in Essence. ✦";
+				string msg = $"✦ [Slots Full] {augment.DisplayName} transferred to Mistress 2B's archive! Received {refund} Machine Core{(refund > 1 ? "s" : "")}. ✦";
 				if (Main.netMode == NetmodeID.Server)
 				{
 					ChatHelper.SendChatMessageToClient(NetworkText.FromLiteral(msg), new Color(255, 140, 90), Player.whoAmI);

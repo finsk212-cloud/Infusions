@@ -84,7 +84,7 @@ namespace Augments
 			essenceBadge.BackgroundColor = new Color(15, 22, 42) * 0.95f;
 			essenceBadge.BorderColor = new Color(80, 180, 255) * 0.7f;
 
-			essenceText = new UIText("Plug-in Essence: 0", 0.82f)
+			essenceText = new UIText("Machine Cores: 0", 0.82f)
 			{
 				HAlign = 0.5f,
 				VAlign = 0.5f,
@@ -172,7 +172,7 @@ namespace Augments
 					continue;
 
 				int buyBackCost = AugmentPlayer.GetBuyBackCost(augment.Rarity);
-				var entry = new AugmentShopEntry(augment, $"Buy ({buyBackCost} Essence)", BuyBack);
+				var entry = new AugmentShopEntry(augment, $"Buy ({buyBackCost} Core{(buyBackCost > 1 ? "s" : "")})", BuyBack);
 				entry.Width.Set(0f, 1f);
 				entry.Height.Set(54f, 0f);
 				buyBackList.Add(entry);
@@ -201,7 +201,7 @@ namespace Augments
 				else
 				{
 					int removeRefund = AugmentPlayer.GetRemoveRefund(augment.Rarity);
-					string label = removeRefund > 0 ? $"Remove (+{removeRefund} Essence)" : "Remove (Free)";
+					string label = removeRefund > 0 ? $"Remove (+{removeRefund} Core{(removeRefund > 1 ? "s" : "")})" : "Remove (Free)";
 					entry = new AugmentShopEntry(augment, label, SellOwned);
 				}
 				entry.Width.Set(0f, 1f);
@@ -255,7 +255,7 @@ namespace Augments
 		private void RefreshEssenceText()
 		{
 			int count = Main.LocalPlayer.CountItem(ModContent.ItemType<AugmentEssenceItem>());
-			essenceText.SetText($"Plug-in Essence: {count}");
+			essenceText.SetText($"Machine Cores: {count}");
 		}
 
 		private void BuyBack(Augment augment)
@@ -272,7 +272,7 @@ namespace Augments
 			int cost = AugmentPlayer.GetBuyBackCost(augment.Rarity);
 			if (player.CountItem(ModContent.ItemType<AugmentEssenceItem>(), cost) < cost)
 			{
-				Main.NewText("Not enough Plug-in Essence.", 255, 80, 80);
+				Main.NewText("Not enough Machine Cores.", 255, 80, 80);
 				return;
 			}
 

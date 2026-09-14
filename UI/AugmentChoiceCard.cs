@@ -491,14 +491,14 @@ namespace Augments
 			float textY = rect.Bottom - 26f;
 			var ap = Main.LocalPlayer?.GetModPlayer<AugmentPlayer>();
 			bool slotsFull = ap != null && ap.Owned.Count >= AugmentPlayer.MaxOwnedAugments;
-			int essenceRefund = AugmentPlayer.GetRewardRefund(Augment.Rarity);
+			int coreRefund = AugmentPlayer.GetRewardRefund(Augment.Rarity);
 
 			string installText;
 			Color installColor;
 
 			if (slotsFull)
 			{
-				installText = isHovered ? $"▶  TRANSFER (+{essenceRefund} ESSENCE)  ◀" : $"Transfer to 2B (+{essenceRefund} Essence)";
+				installText = isHovered ? $"▶  TRANSFER (+{coreRefund} CORE{(coreRefund > 1 ? "S" : "")})  ◀" : $"Transfer to 2B (+{coreRefund} Core{(coreRefund > 1 ? "s" : "")})";
 				installColor = isHovered ? new Color(255, 175, 120) : new Color(225, 120, 110) * 0.9f;
 			}
 			else

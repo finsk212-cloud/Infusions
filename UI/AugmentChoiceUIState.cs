@@ -396,7 +396,7 @@ namespace Augments
 		{
 			var ap = Main.LocalPlayer.GetModPlayer<AugmentPlayer>();
 			capNoticeText.SetText(ap.Owned.Count >= AugmentPlayer.MaxOwnedAugments
-				? "⚠ NOTICE: Neural Frame full (5/5) — Selection will be archived at Mistress 2B & dismantled for Essence."
+				? "⚠ NOTICE: Neural Frame full (5/5) — Selection will be archived at Mistress 2B & dismantled for Machine Cores."
 				: "");
 		}
 
@@ -422,7 +422,7 @@ namespace Augments
 			{
 				if (player.CountItem(essenceType, 1) < 1)
 				{
-					Main.NewText("Not enough Plug-in Essence to reroll.", 255, 80, 80);
+					Main.NewText("Not enough Machine Cores to reroll.", 255, 80, 80);
 					SoundEngine.PlaySound(SoundID.MenuClose);
 					RefreshRerollButton();
 					return;
@@ -480,11 +480,11 @@ namespace Augments
 
 			if (essenceCount >= 1)
 			{
-				rerollButton.SetEnabled(true, "Reroll (1 Essence)");
+				rerollButton.SetEnabled(true, "Reroll (1 Core)");
 			}
 			else
 			{
-				rerollButton.SetEnabled(false, "Need 1 Essence");
+				rerollButton.SetEnabled(false, "Need 1 Core");
 			}
 		}
 
@@ -518,7 +518,7 @@ namespace Augments
 				BackgroundColor = idleColor;
 				BorderColor = Color.White * 0.4f;
 
-				labelText = new UIText("Reroll (1 Essence)", 0.8f)
+				labelText = new UIText("Reroll (1 Core)", 0.8f)
 				{
 					HAlign = 0.5f,
 					VAlign = 0.5f
