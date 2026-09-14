@@ -24,14 +24,15 @@ Hold left click near a teammate to lock on with a bending energy tether that hea
 [*]Universal and class specific powerups for melee, ranged, mage, and summoner
 [/list]
 
-[h2]Example Powerups[/h2]
-[b]Second Wind[/b]: Heals a chunk of HP when you drop dangerously low
-[b]Bloodletter[/b]: Melee crits make enemies bleed out over time
-[b]Vampiric Edge[/b]: Melee kills restore your health
-[b]Sunder[/b]: Melee crits shred enemy defense with Ichor
-[b]Ambush[/b]: Stand still to charge up a huge burst hit
-[b]Riposte[/b]: Take a hit, hit right back for heavy bonus damage
-[b]Momentum Swing[/b]: Keep attacking the same target to ramp up your damage
+[h2]Example Plug-in Chips[/h2]
+[b]Godslayer Blade[/b] (Legendary Melee): Melee crits summon a colossal falling blade that crushes targets for 75% weapon damage and shreds them with Ichor.
+[b]Ricochet Engine[/b] (Legendary Ranged): Ranged hits spawn ricochet rounds that bounce between enemies and trigger on-hit effects.
+[b]Queen's Swarm[/b] (Legendary Summon): Minion strikes build infestation stacks, bursting into a vicious swarm of void bugs.
+[b]Time Warp[/b] (Epic Magic): Magic crits distort temporal flow, slowing all nearby enemies by 40% for 3 seconds.
+[b]Chain Lightning[/b] (Rare Melee): Crits arc bolts of high-voltage lightning to up to 2 nearby enemies for 50% damage.
+[b]Second Wind[/b] (Common Universal): Dropping below 25% HP instantly triggers an emergency heal for 40 health.
+[b]Ironclad Aura[/b] (Support): Radiates +8 defense to all nearby allies during multiplayer boss battles.
+[b]Master Angler[/b] (Utility): Grants +10 Fishing Power and gives opened crates a 20% chance for bonus gold loot.
 
 [h2]What's Coming Next[/h2]
 [list]
