@@ -8,12 +8,10 @@ namespace Augments.Items
 {
     public class MediGunItem : ModItem
     {
-        public override string Texture => "Terraria/Images/Item_" + ItemID.LaserRifle;
-
         public override void SetDefaults()
         {
-            Item.width = 38;
-            Item.height = 18;
+            Item.width = 56;
+            Item.height = 26;
             Item.useStyle = ItemUseStyleID.Shoot;
             Item.useTime = 20;
             Item.useAnimation = 20;

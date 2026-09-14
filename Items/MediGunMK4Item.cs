@@ -8,11 +8,9 @@ namespace Augments.Items
 {
     public class MediGunMK4Item : ModItem
     {
-        public override string Texture => "Terraria/Images/Item_" + ItemID.VortexBeater;
-
         public override void SetDefaults()
         {
-            Item.width = 50;
+            Item.width = 56;
             Item.height = 26;
             Item.useStyle = ItemUseStyleID.Shoot;
             Item.useTime = 20;

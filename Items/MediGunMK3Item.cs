@@ -1,4 +1,4 @@
-﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework;
 using Terraria;
 using Terraria.DataStructures;
 using Terraria.ID;
@@ -8,12 +8,10 @@ namespace Augments.Items
 {
     public class MediGunMK3Item : ModItem
     {
-        public override string Texture => "Terraria/Images/Item_" + ItemID.ChargedBlasterCannon;
-
         public override void SetDefaults()
         {
-            Item.width = 46;
-            Item.height = 24;
+            Item.width = 56;
+            Item.height = 26;
             Item.useStyle = ItemUseStyleID.Shoot;
             Item.useTime = 20;
             Item.useAnimation = 20;
