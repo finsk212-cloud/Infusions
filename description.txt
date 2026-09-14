@@ -6,6 +6,8 @@ Instead of bosses just dropping standard loot, you get to pick from powerful pow
 Kill a boss, pick 1 of 3 powerups, and it is permanently bound to your character. No inventory clutter, no accessory slots wasted. The mod also tracks what you already have so you never get offered duplicates.
 
 [h2]The Medi Gun (TF2 Style Healing!)[/h2]
+[img]https://i.imgur.com/c5RV7ed.gif[/img]
+
 Wanted to play actual medic in Terraria so I made this!
 Craft it early game at an anvil using a Life Crystal, Gold or Platinum bars, and a Fallen Star.
 
