@@ -41,42 +41,33 @@ namespace Augments
         {
             int essenceType = ModContent.ItemType<AugmentEssenceItem>();
 
-            // --- Pre-Hardmode Rare Encounters ---
-            // Tim — rare skeleton wizard in caverns (100% drop).
-            if (npc.type == NPCID.Tim)
-                npcLoot.Add(ItemDropRule.Common(essenceType, 1, 1, 1));
+            // --- Pre-Hardmode Thematic Constructs & Bosses ---
+            // Meteor Head — extraterrestrial scrap (5% drop, 1 in 20).
+            if (npc.type == NPCID.MeteorHead)
+                npcLoot.Add(ItemDropRule.Common(essenceType, 20, 1, 1));
 
-            // Nymph — transformed cavern encounter (100% drop, belongs on Nymph, not LostGirl).
-            if (npc.type == NPCID.Nymph)
-                npcLoot.Add(ItemDropRule.Common(essenceType, 1, 1, 1));
+            // Granite Golem & Granite Flyer — energized automaton constructs (20% drop, 1 in 5).
+            if (npc.type == NPCID.GraniteGolem || npc.type == NPCID.GraniteFlyer)
+                npcLoot.Add(ItemDropRule.Common(essenceType, 5, 1, 1));
 
-            // Pinky — rare miniature slime encounter (100% drop).
-            if (npc.type == NPCID.Pinky)
-                npcLoot.Add(ItemDropRule.Common(essenceType, 1, 1, 1));
+            // Skeletron Head — dungeon guardian (100% drop, 2-3 cores).
+            if (npc.type == NPCID.SkeletronHead)
+                npcLoot.Add(ItemDropRule.Common(essenceType, 1, 2, 3));
 
-            // Undead Miner — cavern skeleton miner (50% drop, 1 in 2).
-            if (npc.type == NPCID.UndeadMiner)
-                npcLoot.Add(ItemDropRule.Common(essenceType, 2, 1, 1));
+            // --- Hardmode & Invasion Mechanical Units ---
+            // Martian Saucer — mothership construct (100% drop, 3-5 cores).
+            if (npc.type == NPCID.MartianSaucerCore || npc.type == NPCID.MartianSaucer)
+                npcLoot.Add(ItemDropRule.Common(essenceType, 1, 3, 5));
 
-            // --- Hardmode Rare Encounters ---
-            // Rune Wizard — rare cavern wizard (100% drop, 1 Essence).
-            if (npc.type == NPCID.RuneWizard)
-                npcLoot.Add(ItemDropRule.Common(essenceType, 1, 1, 1));
+            // Scutlix Gunner — cybernetic rider (50% drop, 1-2 cores).
+            if (npc.type == NPCID.ScutlixRider)
+                npcLoot.Add(ItemDropRule.Common(essenceType, 2, 1, 2));
 
-            // All mimic variants — early Hardmode risk-reward (33% drop, 1 in 3).
-            // BigMimic* are the hardmode biome-key mimics (separate NPCIDs from base Mimic).
-            if (npc.type == NPCID.Mimic          ||
-                npc.type == NPCID.IceMimic        ||
-                npc.type == NPCID.PresentMimic    ||
-                npc.type == NPCID.BigMimicCorruption ||
-                npc.type == NPCID.BigMimicCrimson    ||
-                npc.type == NPCID.BigMimicHallow     ||
-                npc.type == NPCID.BigMimicJungle)
-            {
-                npcLoot.Add(ItemDropRule.Common(essenceType, 3, 1, 1));
-            }
+            // Martian Walker — heavy bipedal mech (50% drop, 1-2 cores).
+            if (npc.type == NPCID.MartianWalker)
+                npcLoot.Add(ItemDropRule.Common(essenceType, 2, 1, 2));
 
-            // Dungeon Spirit — late-game post-Plantera dungeon (25% drop, 1 in 4).
+            // Dungeon Spirit — late-game post-Plantera dungeon (25% drop, 1 core).
             if (npc.type == NPCID.DungeonSpirit)
                 npcLoot.Add(ItemDropRule.Common(essenceType, 4, 1, 1));
         }
