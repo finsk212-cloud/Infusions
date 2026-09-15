@@ -104,6 +104,32 @@ namespace Augments
 			});
 		}
 
+		public void SpawnVortex(Vector2 center, Color color, float radius = 120f)
+		{
+			if (particles.Count >= maxParticles)
+				return;
+
+			float angle = Main.rand.NextFloat(MathHelper.TwoPi);
+			Vector2 pos = center + new Vector2((float)Math.Cos(angle), (float)Math.Sin(angle)) * radius;
+			Vector2 toCenter = Vector2.Normalize(center - pos);
+			Vector2 tangent = new Vector2(-toCenter.Y, toCenter.X);
+			Vector2 vel = toCenter * Main.rand.NextFloat(1.6f, 2.8f) + tangent * Main.rand.NextFloat(0.6f, 1.6f);
+
+			particles.Add(new UIParticle
+			{
+				Position = pos,
+				Velocity = vel,
+				BaseColor = color,
+				Scale = Main.rand.NextFloat(1.8f, 3.2f),
+				Alpha = 1f,
+				Life = 0,
+				MaxLife = Main.rand.Next(35, 55),
+				HasGravity = false,
+				SinOffset = 0f,
+				SinSpeed = 0f
+			});
+		}
+
 		public void Update()
 		{
 			for (int i = particles.Count - 1; i >= 0; i--)

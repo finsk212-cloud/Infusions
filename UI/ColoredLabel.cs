@@ -10,11 +10,15 @@ namespace Augments
 	{
 		private string text;
 		private readonly float scale;
+		private readonly bool centerHorizontal;
+		private readonly bool centerVertical;
 
-		public ColoredLabel(string text, float scale = 0.85f)
+		public ColoredLabel(string text, float scale = 0.85f, bool centerH = true, bool centerV = true)
 		{
 			this.text = text;
 			this.scale = scale;
+			this.centerHorizontal = centerH;
+			this.centerVertical = centerV;
 		}
 
 		public void SetText(string newText)
@@ -30,8 +34,11 @@ namespace Augments
 			CalculatedStyle d = GetDimensions();
 			var font = FontAssets.MouseText.Value;
 			Vector2 size = ChatManager.GetStringSize(font, text, new Vector2(scale));
-			Vector2 pos = new Vector2(d.X + (d.Width - size.X) * 0.5f, d.Y + (d.Height - size.Y) * 0.5f);
-			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, text, pos, Color.White, 0f, Vector2.Zero, new Vector2(scale));
+
+			float x = (centerHorizontal && d.Width > size.X) ? d.X + (d.Width - size.X) * 0.5f : d.X;
+			float y = (centerVertical && d.Height > size.Y) ? d.Y + (d.Height - size.Y) * 0.5f : d.Y;
+
+			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, text, new Vector2(x, y), Color.White, 0f, Vector2.Zero, new Vector2(scale));
 		}
 	}
 }

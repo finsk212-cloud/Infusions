@@ -32,18 +32,17 @@ namespace Augments
 
 		private ChamberState state = ChamberState.Idle;
 		private int animTimer;
-		private const int RollDuration = 195; // ~3.25 seconds
-		private const int WinnerReelIndex = 22;
+		private const int RollDuration = 180; // ~3.0 seconds
 
 		private Augment wonAugment;
 		private bool wonAugmentArchived;
 		private int wonRefundCores;
 
-		private readonly List<Augment> reelCards = new List<Augment>();
 		private readonly UIParticleSystem particles = new UIParticleSystem(160);
 
-		private const float PanelWidth = 640f;
-		private const float PanelHeight = 490f;
+		// Spacious window layout so all texts and elements breathe cleanly
+		private const float PanelWidth = 840f;
+		private const float PanelHeight = 560f;
 
 		public override void Update(GameTime gameTime)
 		{
@@ -73,9 +72,20 @@ namespace Augments
 
 				if (chamberDims.Width > 0)
 				{
-					Vector2 reticlePos = new Vector2(chamberDims.X + chamberDims.Width * 0.5f, chamberDims.Y + 25f + Main.rand.NextFloat(chamberDims.Height - 50f));
-					Color sparkColor = Main.rand.NextBool(3) ? new Color(255, 225, 100) : new Color(0, 230, 255);
-					particles.SpawnLaserSpark(reticlePos, sparkColor);
+					Vector2 center = new Vector2(chamberDims.X + chamberDims.Width * 0.5f, chamberDims.Y + 140f);
+
+					// Draw particles inward in a spiraling vortex towards the pod core
+					if (animTimer < 150 && Main.rand.NextBool(2))
+					{
+						Color vortexColor = GetTeaseColor(animTimer);
+						particles.SpawnVortex(center, vortexColor, radius: Main.rand.NextFloat(90f, 160f));
+					}
+
+					// Laser sparks at core
+					if (Main.rand.NextBool(3))
+					{
+						particles.SpawnLaserSpark(center + new Vector2(Main.rand.NextFloat(-20f, 20f), Main.rand.NextFloat(-20f, 20f)), Color.Cyan);
+					}
 				}
 
 				if (animTimer >= RollDuration)
@@ -109,21 +119,23 @@ namespace Augments
 			var storageTab = new TabButton("← Chip Storage & Dismantle", () => ModContent.GetInstance<AugmentUISystem>().ShowShop());
 			storageTab.Left.Set(14f, 0f);
 			storageTab.Top.Set(10f, 0f);
-			storageTab.Width.Set(210f, 0f);
+			storageTab.Width.Set(220f, 0f);
 			storageTab.Height.Set(26f, 0f);
 			backPanel.Append(storageTab);
 
 			// Machine Cores Badge with rich colored text
 			UIPanel essenceBadge = new UIPanel();
-			essenceBadge.Width.Set(190f, 0f);
+			essenceBadge.Width.Set(200f, 0f);
 			essenceBadge.Height.Set(26f, 0f);
-			essenceBadge.Left.Set(-234f, 1f);
+			essenceBadge.Left.Set(-244f, 1f);
 			essenceBadge.Top.Set(10f, 0f);
 			essenceBadge.SetPadding(0f);
 			essenceBadge.BackgroundColor = new Color(12, 18, 36) * 0.95f;
 			essenceBadge.BorderColor = new Color(80, 180, 255) * 0.7f;
 
-			essenceLabel = new ColoredLabel("[c/FFE080:Machine Cores:] [c/00FFFF:0]", 0.82f);
+			essenceLabel = new ColoredLabel("[c/FFE080:Machine Cores:] [c/00FFFF:0]", 0.84f);
+			essenceLabel.Width.Set(0f, 1f);
+			essenceLabel.Height.Set(0f, 1f);
 			essenceBadge.Append(essenceLabel);
 			backPanel.Append(essenceBadge);
 
@@ -137,7 +149,7 @@ namespace Augments
 			backPanel.Append(closeBtn);
 
 			// Title Header
-			UIText title = new UIText("YoRHa Neural Decryption Chamber", 1.15f)
+			UIText title = new UIText("YoRHa Neural Decryption Chamber", 1.22f)
 			{
 				HAlign = 0.5f,
 				TextColor = new Color(255, 235, 175)
@@ -146,21 +158,21 @@ namespace Augments
 			backPanel.Append(title);
 
 			// Active Protocol with bright cyan accent
-			protocolLabel = new ColoredLabel("[c/70A0D0:Active Protocol:] [c/00FFFF:Pre-Hardmode Protocol]", 0.82f)
+			protocolLabel = new ColoredLabel("[c/70A0D0:Active Protocol:] [c/00FFFF:Pre-Hardmode Protocol]", 0.84f)
 			{
 				HAlign = 0.5f
 			};
-			protocolLabel.Top.Set(68f, 0f);
+			protocolLabel.Top.Set(70f, 0f);
 			protocolLabel.Width.Set(PanelWidth - 40f, 0f);
 			protocolLabel.Height.Set(18f, 0f);
 			backPanel.Append(protocolLabel);
 
 			// Live Odds Row with distinct rarity colors
-			oddsLabel = new ColoredLabel("[c/80B0E0:Odds:] [c/D0D8E8:Common 80%]  |  [c/00FFFF:Rare 15%]  |  [c/D060FF:Epic 5%]  |  [c/FFD700:Legendary 0%]", 0.78f)
+			oddsLabel = new ColoredLabel("[c/80B0E0:Decryption Odds:]  [c/D0D8E8:Common 80%]  •  [c/00FFFF:Rare 15%]  •  [c/D060FF:Epic 5%]  •  [c/FFD700:Legendary 0%]", 0.80f)
 			{
 				HAlign = 0.5f
 			};
-			oddsLabel.Top.Set(88f, 0f);
+			oddsLabel.Top.Set(92f, 0f);
 			oddsLabel.Width.Set(PanelWidth - 40f, 0f);
 			oddsLabel.Height.Set(18f, 0f);
 			backPanel.Append(oddsLabel);
@@ -168,11 +180,11 @@ namespace Augments
 			// Main Containment Chamber Container
 			chamberContainer = new UIPanel();
 			chamberContainer.Width.Set(-28f, 1f);
-			chamberContainer.Height.Set(350f, 0f);
+			chamberContainer.Height.Set(420f, 0f);
 			chamberContainer.Left.Set(14f, 0f);
-			chamberContainer.Top.Set(114f, 0f);
-			chamberContainer.BackgroundColor = new Color(10, 14, 28) * 0.95f;
-			chamberContainer.BorderColor = new Color(40, 65, 115) * 0.85f;
+			chamberContainer.Top.Set(118f, 0f);
+			chamberContainer.BackgroundColor = new Color(10, 14, 28) * 0.96f;
+			chamberContainer.BorderColor = new Color(36, 58, 105) * 0.85f;
 			backPanel.Append(chamberContainer);
 
 			Append(backPanel);
@@ -196,7 +208,7 @@ namespace Augments
 			protocolLabel?.SetText($"[c/70A0D0:Active Protocol:] [c/00FFFF:{bracketName} Protocol]");
 
 			RarityRollChances chances = BossRarityRoller.GetChancesForBracket(bracket);
-			oddsLabel?.SetText($"[c/80B0E0:Odds:]  [c/D0D8E8:Common {chances.Common}%]  |  [c/00FFFF:Rare {chances.Rare}%]  |  [c/D060FF:Epic {chances.Epic}%]  |  [c/FFD700:Legendary {chances.Legendary}%]");
+			oddsLabel?.SetText($"[c/80B0E0:Decryption Odds:]  [c/D0D8E8:Common {chances.Common}%]  •  [c/00FFFF:Rare {chances.Rare}%]  •  [c/D060FF:Epic {chances.Epic}%]  •  [c/FFD700:Legendary {chances.Legendary}%]");
 
 			if (state != ChamberState.Decrypting)
 			{
@@ -230,81 +242,80 @@ namespace Augments
 		{
 			// Pod graphic preview in the center
 			var podView = new PodDisplayCard();
-			podView.Width.Set(120f, 0f);
-			podView.Height.Set(120f, 0f);
+			podView.Width.Set(140f, 0f);
+			podView.Height.Set(140f, 0f);
 			podView.HAlign = 0.5f;
-			podView.Top.Set(20f, 0f);
+			podView.Top.Set(30f, 0f);
 			chamberContainer.Append(podView);
 
-			var readyLabel = new ColoredLabel("[c/FFE080:YoRHa Encrypted Salvage Pod Loaded]", 0.94f)
+			var readyLabel = new ColoredLabel("[c/FFE080:YoRHa Encrypted Salvage Pod Loaded]", 1.0f)
 			{
 				HAlign = 0.5f
 			};
-			readyLabel.Top.Set(150f, 0f);
-			readyLabel.Width.Set(450f, 0f);
-			readyLabel.Height.Set(22f, 0f);
+			readyLabel.Top.Set(185f, 0f);
+			readyLabel.Width.Set(500f, 0f);
+			readyLabel.Height.Set(24f, 0f);
 			chamberContainer.Append(readyLabel);
 
-			var subtext = new ColoredLabel("[c/90B0D0:Synthesize neural frequency to decrypt and extract 1 combat Plug-in Chip]", 0.76f)
+			var subtext = new ColoredLabel("[c/90B0D0:Consume 3 Machine Cores to synthesize neural frequency and extract 1 combat Plug-in Chip]", 0.78f)
 			{
 				HAlign = 0.5f
 			};
-			subtext.Top.Set(176f, 0f);
-			subtext.Width.Set(520f, 0f);
-			subtext.Height.Set(20f, 0f);
+			subtext.Top.Set(215f, 0f);
+			subtext.Width.Set(600f, 0f);
+			subtext.Height.Set(22f, 0f);
 			chamberContainer.Append(subtext);
 
-			// Decrypt action button with glowing cyan & gold styling
+			// Decrypt action button with glowing cyan & gold styling - clean single-line label with NO overlap
 			var decryptBtn = new ChamberActionButton(
-				"[c/00FFFF:INITIALIZE DECRYPTION]",
-				"[c/FFD700:Cost: 3 Machine Cores]",
+				"[c/00FFFF:INITIALIZE DECRYPTION]   [c/FFE066:•   3 Machine Cores]",
 				new Color(18, 48, 80),
 				new Color(28, 85, 140),
 				new Color(0, 220, 255) * 0.9f,
 				new Color(255, 215, 80),
 				StartDecryption
 			);
-			decryptBtn.Width.Set(360f, 0f);
-			decryptBtn.Height.Set(56f, 0f);
+			decryptBtn.Width.Set(440f, 0f);
+			decryptBtn.Height.Set(50f, 0f);
 			decryptBtn.HAlign = 0.5f;
-			decryptBtn.Top.Set(222f, 0f);
+			decryptBtn.Top.Set(265f, 0f);
 			chamberContainer.Append(decryptBtn);
 
-			var footer = new ColoredLabel("[c/7890B0:Rolls prioritize unowned chips from your active progression bracket.]", 0.70f)
+			var footer = new ColoredLabel("[c/7890B0:Rolls prioritize unowned chips from your active progression bracket.]", 0.72f)
 			{
 				HAlign = 0.5f
 			};
-			footer.Top.Set(294f, 0f);
-			footer.Width.Set(500f, 0f);
+			footer.Top.Set(345f, 0f);
+			footer.Width.Set(600f, 0f);
 			footer.Height.Set(18f, 0f);
 			chamberContainer.Append(footer);
 		}
 
 		private void BuildDecryptingChamber()
 		{
-			// High-speed Roulette Reel rolling horizontal tape
-			var reelView = new RouletteReelView(reelCards, WinnerReelIndex, RollDuration, () => animTimer);
-			reelView.Width.Set(-20f, 1f);
-			reelView.Height.Set(190f, 0f);
-			reelView.HAlign = 0.5f;
-			reelView.Top.Set(18f, 0f);
-			chamberContainer.Append(reelView);
+			// Unique YoRHa Neural Core Synthesizer (Holographic Laser Rings & Frequency Oscilloscope)
+			var coreView = new NeuralDecryptionCoreView(() => animTimer, RollDuration, () => wonAugment);
+			coreView.Width.Set(-20f, 1f);
+			coreView.Height.Set(260f, 0f);
+			coreView.HAlign = 0.5f;
+			coreView.Top.Set(15f, 0f);
+			chamberContainer.Append(coreView);
 
-			var statusLabel = new ColoredLabel("[c/00FFFF:SYNCHRONIZING NEURAL FREQUENCY...]", 0.95f)
+			var statusLabel = new ColoredLabel("[c/00FFFF:SYNCHRONIZING NEURAL FREQUENCY...]", 1.0f)
 			{
 				HAlign = 0.5f
 			};
-			statusLabel.Top.Set(232f, 0f);
-			statusLabel.Width.Set(450f, 0f);
+			statusLabel.Top.Set(290f, 0f);
+			statusLabel.Width.Set(500f, 0f);
 			statusLabel.Height.Set(24f, 0f);
 			chamberContainer.Append(statusLabel);
 
-			var subLabel = new ColoredLabel("[c/FFE080:Decelerating target reticle across active combat memory streams]", 0.76f)
+			var subLabel = new ColoredLabel("[c/FFE080:Harmonizing combat memory stream]   [c/70A0D0:•   Deciphering YoRHa Pod telemetry]", 0.78f)
 			{
 				HAlign = 0.5f
 			};
-			subLabel.Top.Set(262f, 0f);
-			subLabel.Width.Set(520f, 0f);
+			subLabel.Top.Set(322f, 0f);
+			subLabel.Width.Set(600f, 0f);
 			subLabel.Height.Set(20f, 0f);
 			chamberContainer.Append(subLabel);
 		}
@@ -320,40 +331,48 @@ namespace Augments
 
 			Color rarityColor = GetRarityColor(wonAugment.Rarity);
 
-			// Winning Chip Card Container with rarity glowing frame
+			// Winning Chip Card Container with generous dimensions so all text fits comfortably
 			var chipCard = new RevealedChipCard(wonAugment, rarityColor);
-			chipCard.Width.Set(520f, 0f);
-			chipCard.Height.Set(185f, 0f);
+			chipCard.Width.Set(660f, 0f);
+			chipCard.Height.Set(220f, 0f);
 			chipCard.HAlign = 0.5f;
-			chipCard.Top.Set(18f, 0f);
+			chipCard.Top.Set(24f, 0f);
 
 			// Chip Name with bold rarity font
-			var nameText = new UIText(wonAugment.DisplayName, 1.18f)
+			var nameText = new UIText(wonAugment.DisplayName, 1.25f)
 			{
 				TextColor = rarityColor
 			};
-			nameText.Left.Set(88f, 0f);
-			nameText.Top.Set(18f, 0f);
+			nameText.Left.Set(110f, 0f);
+			nameText.Top.Set(20f, 0f);
 			chipCard.Append(nameText);
 
 			// Rarity & Class pill
 			string rarityLabel = wonAugment.KeystoneFamily != null ? $"[{wonAugment.Rarity.ToString().ToUpper()} KEYSTONE]" : $"[{wonAugment.Rarity.ToString().ToUpper()}]";
-			var tierText = new UIText($"{rarityLabel}  •  Class: {wonAugment.Class}", 0.80f)
+			string rarityHex = wonAugment.Rarity switch
 			{
-				TextColor = new Color(205, 220, 245)
+				AugmentRarity.Legendary => "FFD700",
+				AugmentRarity.Epic => "D060FF",
+				AugmentRarity.Rare => "00FFFF",
+				_ => "D0D8E8"
 			};
-			tierText.Left.Set(88f, 0f);
-			tierText.Top.Set(48f, 0f);
-			chipCard.Append(tierText);
 
-			// Description
-			var descText = new UIText(wonAugment.Description, 0.76f)
+			var tierLabel = new ColoredLabel($"[c/{rarityHex}:{rarityLabel}]   •   [c/D0E0FF:Class: {wonAugment.Class}]", 0.82f, centerH: false, centerV: true);
+			tierLabel.Left.Set(110f, 0f);
+			tierLabel.Top.Set(52f, 0f);
+			tierLabel.Width.Set(450f, 0f);
+			tierLabel.Height.Set(20f, 0f);
+			chipCard.Append(tierLabel);
+
+			// Description with wide space so multi-line text fits without clipping
+			var descText = new UIText(wonAugment.Description, 0.78f)
 			{
-				TextColor = new Color(175, 195, 225)
+				TextColor = new Color(185, 205, 235),
+				IsWrapped = true
 			};
-			descText.Left.Set(88f, 0f);
-			descText.Top.Set(74f, 0f);
-			descText.Width.Set(400f, 0f);
+			descText.Left.Set(110f, 0f);
+			descText.Top.Set(80f, 0f);
+			descText.Width.Set(520f, 0f);
 			chipCard.Append(descText);
 
 			// Install notice badge
@@ -361,46 +380,44 @@ namespace Augments
 				? $"✦ Neural Frame full (5/5) — Archived at Mistress 2B (+{wonRefundCores} Cores) ✦"
 				: "✦ Installed directly into your Neural Frame! ✦";
 
-			var statusLabel = new ColoredLabel(wonAugmentArchived ? $"[c/FFA064:{statusNotice}]" : $"[c/64FFB4:{statusNotice}]", 0.78f)
+			var statusLabel = new ColoredLabel(wonAugmentArchived ? $"[c/FFA064:{statusNotice}]" : $"[c/64FFB4:{statusNotice}]", 0.82f)
 			{
 				HAlign = 0.5f
 			};
-			statusLabel.Top.Set(150f, 0f);
-			statusLabel.Width.Set(480f, 0f);
-			statusLabel.Height.Set(20f, 0f);
+			statusLabel.Top.Set(176f, 0f);
+			statusLabel.Width.Set(560f, 0f);
+			statusLabel.Height.Set(22f, 0f);
 			chipCard.Append(statusLabel);
 
 			chamberContainer.Append(chipCard);
 
-			// Action Buttons
+			// Action Buttons: Clean single-line labels with NO overlapping text
 			var decryptAgainBtn = new ChamberActionButton(
-				"[c/00FFFF:DECRYPT AGAIN]",
-				"[c/FFD700:(3 Cores)]",
+				"[c/00FFFF:DECRYPT AGAIN]   [c/FFE066:•   3 Cores]",
 				new Color(18, 48, 80),
 				new Color(28, 85, 140),
 				new Color(0, 220, 255) * 0.9f,
 				new Color(255, 215, 80),
 				StartDecryption
 			);
-			decryptAgainBtn.Width.Set(240f, 0f);
-			decryptAgainBtn.Height.Set(50f, 0f);
-			decryptAgainBtn.Left.Set(45f, 0f);
-			decryptAgainBtn.Top.Set(232f, 0f);
+			decryptAgainBtn.Width.Set(290f, 0f);
+			decryptAgainBtn.Height.Set(48f, 0f);
+			decryptAgainBtn.Left.Set(70f, 0f);
+			decryptAgainBtn.Top.Set(285f, 0f);
 			chamberContainer.Append(decryptAgainBtn);
 
 			var returnBtn = new ChamberActionButton(
-				"[c/D0E0FF:RETURN TO STORAGE]",
-				"[c/80A0C0:View Archive & Frame]",
+				"[c/D0E0FF:← RETURN TO STORAGE]",
 				new Color(32, 42, 68),
 				new Color(48, 62, 98),
 				new Color(90, 120, 170) * 0.85f,
 				new Color(140, 180, 240),
 				() => ModContent.GetInstance<AugmentUISystem>().ShowShop()
 			);
-			returnBtn.Width.Set(240f, 0f);
-			returnBtn.Height.Set(50f, 0f);
-			returnBtn.Left.Set(-285f, 1f);
-			returnBtn.Top.Set(232f, 0f);
+			returnBtn.Width.Set(290f, 0f);
+			returnBtn.Height.Set(48f, 0f);
+			returnBtn.Left.Set(-360f, 1f);
+			returnBtn.Top.Set(285f, 0f);
 			chamberContainer.Append(returnBtn);
 		}
 
@@ -449,29 +466,12 @@ namespace Augments
 				}
 			}
 
-			// Pre-generate the 28-card tape strip with wonAugment cleanly placed at WinnerReelIndex (22)
-			reelCards.Clear();
-			var allChips = AugmentDatabase.All;
-			for (int i = 0; i < 28; i++)
-			{
-				if (i == WinnerReelIndex)
-				{
-					reelCards.Add(wonAugment);
-				}
-				else
-				{
-					// Random chip for rolling suspense
-					Augment randomChip = allChips[Main.rand.Next(allChips.Count)];
-					reelCards.Add(randomChip);
-				}
-			}
-
 			// Transition to Decrypting state
 			state = ChamberState.Decrypting;
 			animTimer = 0;
 
-			// Sound effect for starting decryption cycle
-			SoundEngine.PlaySound(SoundID.Item29 with { Volume = 0.75f, Pitch = -0.2f }, player.Center);
+			// Spool-up hum
+			SoundEngine.PlaySound(SoundID.Item29 with { Volume = 0.75f, Pitch = -0.3f }, player.Center);
 			RebuildChamberContent();
 		}
 
@@ -483,16 +483,16 @@ namespace Augments
 
 			// Sound and particle fanfare based on rarity
 			CalculatedStyle chamberDims = chamberContainer != null ? chamberContainer.GetDimensions() : default;
-			Vector2 revealCenter = new Vector2(chamberDims.X + chamberDims.Width * 0.5f, chamberDims.Y + 110f);
+			Vector2 revealCenter = new Vector2(chamberDims.X + chamberDims.Width * 0.5f, chamberDims.Y + 130f);
 
 			Color rarityColor = GetRarityColor(wonAugment.Rarity);
-			particles.SpawnBurst(revealCenter, rarityColor, count: 55, maxSpeed: 5f);
+			particles.SpawnBurst(revealCenter, rarityColor, count: 60, maxSpeed: 5.2f);
 
 			switch (wonAugment.Rarity)
 			{
 				case AugmentRarity.Legendary:
-					SoundEngine.PlaySound(SoundID.Item29 with { Volume = 1.0f, Pitch = 0.1f }, player.Center);
-					for (int i = 0; i < 35; i++)
+					SoundEngine.PlaySound(SoundID.Item29 with { Volume = 1.0f, Pitch = 0.15f }, player.Center);
+					for (int i = 0; i < 40; i++)
 					{
 						Dust d = Dust.NewDustDirect(player.position, player.width, player.height, DustID.GoldFlame, Main.rand.NextFloat(-4f, 4f), Main.rand.NextFloat(-4f, 4f), 0, default, 1.5f);
 						d.noGravity = true;
@@ -500,7 +500,7 @@ namespace Augments
 					break;
 				case AugmentRarity.Epic:
 					SoundEngine.PlaySound(SoundID.Item100 with { Volume = 0.95f, Pitch = 0.1f }, player.Center);
-					for (int i = 0; i < 25; i++)
+					for (int i = 0; i < 30; i++)
 					{
 						Dust d = Dust.NewDustDirect(player.position, player.width, player.height, DustID.PurpleTorch, Main.rand.NextFloat(-3f, 3f), Main.rand.NextFloat(-3f, 3f), 0, default, 1.3f);
 						d.noGravity = true;
@@ -508,7 +508,7 @@ namespace Augments
 					break;
 				case AugmentRarity.Rare:
 					SoundEngine.PlaySound(SoundID.Item4 with { Volume = 0.90f, Pitch = 0.1f }, player.Center);
-					for (int i = 0; i < 20; i++)
+					for (int i = 0; i < 22; i++)
 					{
 						Dust d = Dust.NewDustDirect(player.position, player.width, player.height, DustID.Electric, Main.rand.NextFloat(-3f, 3f), Main.rand.NextFloat(-3f, 3f), 0, default, 1.2f);
 						d.noGravity = true;
@@ -516,7 +516,7 @@ namespace Augments
 					break;
 				default:
 					SoundEngine.PlaySound(SoundID.Research with { Volume = 0.90f, Pitch = 0.1f }, player.Center);
-					for (int i = 0; i < 15; i++)
+					for (int i = 0; i < 16; i++)
 					{
 						Dust d = Dust.NewDustDirect(player.position, player.width, player.height, DustID.Iron, Main.rand.NextFloat(-2f, 2f), Main.rand.NextFloat(-2f, 2f), 0, default, 1.1f);
 						d.noGravity = true;
@@ -524,7 +524,7 @@ namespace Augments
 					break;
 			}
 
-			// NOW authoritatively grant or archive the augment so chat announces it at the exact moment of reveal!
+			// Authoritatively grant or archive the augment so chat announces it at the exact moment of reveal!
 			var ap = player.GetModPlayer<AugmentPlayer>();
 			wonAugmentArchived = ap.Owned.Count >= AugmentPlayer.MaxOwnedAugments;
 			wonRefundCores = wonAugmentArchived ? AugmentPlayer.GetRemoveRefund(wonAugment.Rarity) : 0;
@@ -542,7 +542,21 @@ namespace Augments
 			};
 		}
 
-		// Floating 2.5x pixel art pod preview
+		private static Color GetTeaseColor(int timer)
+		{
+			if (timer < 40) return new Color(80, 190, 255);
+			if (timer < 80) return new Color(200, 100, 255);
+			if (timer < 120) return new Color(255, 200, 50);
+			int cycle = (timer / 6) % 3;
+			return cycle switch
+			{
+				0 => new Color(80, 190, 255),
+				1 => new Color(200, 100, 255),
+				_ => new Color(255, 200, 50)
+			};
+		}
+
+		// Floating 2.8x pixel art pod preview
 		private class PodDisplayCard : UIElement
 		{
 			protected override void DrawSelf(SpriteBatch spriteBatch)
@@ -554,154 +568,137 @@ namespace Augments
 					Texture2D tex = cacheAsset.Value;
 					if (tex != null)
 					{
-						float bob = (float)Math.Sin(Main.timeForVisualEffects * 0.04f) * 3.5f;
+						float bob = (float)Math.Sin(Main.timeForVisualEffects * 0.04f) * 4f;
 						Vector2 center = new Vector2(d.X + d.Width * 0.5f, d.Y + d.Height * 0.5f + bob);
 						Vector2 origin = tex.Size() * 0.5f;
 
-						// Subtle glowing aura behind pod
+						// Glowing aura behind pod
 						float pulse = 0.5f + 0.5f * (float)Math.Sin(Main.timeForVisualEffects * 0.08f);
-						Color aura = new Color(0, 200, 255) * (0.25f * pulse);
-						spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle((int)center.X - 35, (int)center.Y - 35, 70, 70), aura);
+						Color aura = new Color(0, 200, 255) * (0.28f * pulse);
+						spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle((int)center.X - 45, (int)center.Y - 45, 90, 90), aura);
 
-						spriteBatch.Draw(tex, center, null, Color.White, 0f, origin, 2.5f, SpriteEffects.None, 0f);
+						spriteBatch.Draw(tex, center, null, Color.White, 0f, origin, 2.8f, SpriteEffects.None, 0f);
 					}
 				}
 			}
 		}
 
-		// Horizontal Roulette Reel Tape with Deceleration & Sound Ticks
-		private class RouletteReelView : UIElement
+		// Unique YoRHa Neural Core Synthesizer (Concentric Holographic Scanning Rings & Audio Waveform Surge)
+		private class NeuralDecryptionCoreView : UIElement
 		{
-			private readonly List<Augment> cards;
-			private readonly int targetWinnerIndex;
-			private readonly int duration;
 			private readonly Func<int> getTimer;
-			private int lastTickedIndex = -1;
+			private readonly int maxDuration;
+			private readonly Func<Augment> getWonChip;
+			private int lastTickedStep = -1;
 
-			private const float CardWidth = 112f;
-			private const float CardHeight = 150f;
-			private const float CardGap = 12f;
-			private const float CardPitch = CardWidth + CardGap; // 124px
-
-			public RouletteReelView(List<Augment> cards, int targetWinnerIndex, int duration, Func<int> getTimer)
+			public NeuralDecryptionCoreView(Func<int> getTimer, int maxDuration, Func<Augment> getWonChip)
 			{
-				this.cards = cards;
-				this.targetWinnerIndex = targetWinnerIndex;
-				this.duration = duration;
 				this.getTimer = getTimer;
+				this.maxDuration = maxDuration;
+				this.getWonChip = getWonChip;
 			}
 
 			protected override void DrawSelf(SpriteBatch spriteBatch)
 			{
 				CalculatedStyle d = GetDimensions();
 				Texture2D pixel = TextureAssets.MagicPixel.Value;
-
-				// Background dark viewport panel
-				spriteBatch.Draw(pixel, new Rectangle((int)d.X, (int)d.Y, (int)d.Width, (int)d.Height), new Color(8, 12, 24) * 0.96f);
-				DrawBorder(spriteBatch, new Rectangle((int)d.X, (int)d.Y, (int)d.Width, (int)d.Height), new Color(40, 65, 115) * 0.8f, 1);
-
-				float viewportCenter = d.Width * 0.5f;
-				float targetScroll = (targetWinnerIndex * CardPitch + CardWidth * 0.5f) - viewportCenter;
-
 				int timer = getTimer();
-				float progress = MathHelper.Clamp(timer / (float)duration, 0f, 1f);
 
-				// Quintic ease-out curve for fast spin transitioning into suspenseful slow ticks
-				float ease = 1f - (float)Math.Pow(1f - progress, 5.0);
-				float currentScroll = targetScroll * ease;
+				Vector2 center = new Vector2(d.X + d.Width * 0.5f, d.Y + 130f);
 
-				// Sound tick detection when a card boundary crosses the center line
-				int currentCenterCardIndex = (int)Math.Floor((currentScroll + viewportCenter) / CardPitch);
-				if (currentCenterCardIndex != lastTickedIndex && timer < duration)
+				// Pitch rising audio feedback
+				int tickInterval = timer > 120 ? 6 : (timer > 70 ? 9 : 14);
+				int currentStep = timer / tickInterval;
+				if (currentStep != lastTickedStep && timer < maxDuration - 15)
 				{
-					lastTickedIndex = currentCenterCardIndex;
-					float pitch = -0.12f + (progress * 0.35f);
-					SoundEngine.PlaySound(SoundID.MenuTick with { Pitch = pitch, Volume = 0.82f });
+					lastTickedStep = currentStep;
+					float pitch = -0.2f + (timer / (float)maxDuration) * 0.5f;
+					SoundEngine.PlaySound(SoundID.MenuTick with { Pitch = pitch, Volume = 0.85f });
 				}
 
-				// Draw all visible cards
-				float cardY = d.Y + (d.Height - CardHeight) * 0.5f;
-				for (int i = 0; i < cards.Count; i++)
+				// Rarity tease color based on synthesis phase
+				Color coreColor;
+				if (timer >= 150)
 				{
-					float cardX = d.X + (i * CardPitch) - currentScroll;
-					if (cardX + CardWidth < d.X || cardX > d.X + d.Width)
-						continue; // Culled outside viewport
+					Augment won = getWonChip();
+					coreColor = won != null ? GetRarityColor(won.Rarity) : Color.Cyan;
+				}
+				else
+				{
+					coreColor = GetTeaseColor(timer);
+				}
 
-					Augment card = cards[i];
-					Color rColor = GetRarityColor(card.Rarity);
+				float progress = MathHelper.Clamp(timer / (float)maxDuration, 0f, 1f);
 
-					// Card box
-					Rectangle cardRect = new Rectangle((int)cardX, (int)cardY, (int)CardWidth, (int)CardHeight);
-					spriteBatch.Draw(pixel, cardRect, new Color(14, 20, 38) * 0.95f);
-					DrawBorder(spriteBatch, cardRect, rColor * 0.75f, 1);
+				// Concentric ring radii with implosion contraction in final phase
+				float contraction = timer >= 150 ? (1f - (timer - 150) / 30f) : 1f;
+				float r1 = 50f * contraction;
+				float r2 = 85f * contraction;
+				float r3 = 125f * contraction;
 
-					// Rarity label at top
-					string rarityTag = $"[{card.Rarity.ToString().ToUpper()}]";
-					var font = FontAssets.MouseText.Value;
-					Vector2 tagSize = font.MeasureString(rarityTag) * 0.65f;
-					Vector2 tagPos = new Vector2(cardX + (CardWidth - tagSize.X) * 0.5f, cardY + 8f);
-					Utils.DrawBorderString(spriteBatch, rarityTag, tagPos, rColor * 0.9f, 0.65f);
+				float speedMult = 1f + progress * 3.5f;
+				float angle1 = timer * 0.04f * speedMult;
+				float angle2 = -timer * 0.03f * speedMult;
+				float angle3 = timer * 0.02f * speedMult;
 
-					// Class icon centered
-					Texture2D classIcon = AugmentSlotElement.GetClassIcon(card.Class);
-					if (classIcon != null)
+				// Draw Inner Holographic Ring
+				DrawDottedRing(spriteBatch, pixel, center, r1, angle1, 28, coreColor * 0.85f, 2);
+
+				// Draw Middle Reticle Ring with 4 Cardinal Crosshair Ticks
+				DrawDottedRing(spriteBatch, pixel, center, r2, angle2, 36, coreColor * 0.75f, 2);
+				DrawCardinalTicks(spriteBatch, pixel, center, r2, angle2, coreColor * 0.9f);
+
+				// Draw Outer Segmented Ring
+				DrawDottedRing(spriteBatch, pixel, center, r3, angle3, 48, coreColor * 0.55f, 2);
+
+				// Draw Central Pod with vibration tremor
+				if (ModContent.RequestIfExists<Texture2D>("Augments/Items/SealedChipCacheItem", out var cacheAsset))
+				{
+					Texture2D tex = cacheAsset.Value;
+					if (tex != null)
 					{
-						Vector2 iconCenter = new Vector2(cardX + CardWidth * 0.5f, cardY + 65f);
-						spriteBatch.Draw(classIcon, iconCenter, null, rColor, 0f, classIcon.Size() * 0.5f, 1.45f, SpriteEffects.None, 0f);
+						float tremor = (timer / (float)maxDuration) * (float)Math.Sin(timer * 1.6f) * 3.5f;
+						Vector2 podCenter = center + new Vector2(tremor, tremor * 0.5f);
+						Vector2 origin = tex.Size() * 0.5f;
+
+						// Glowing singularity core
+						float corePulse = 0.5f + 0.5f * (float)Math.Sin(timer * 0.25f);
+						Color aura = coreColor * (0.35f + 0.35f * corePulse);
+						int auraSize = (int)(70f + 25f * corePulse);
+						spriteBatch.Draw(pixel, new Rectangle((int)center.X - auraSize / 2, (int)center.Y - auraSize / 2, auraSize, auraSize), aura);
+
+						spriteBatch.Draw(tex, podCenter, null, Color.White, 0f, origin, 2.8f, SpriteEffects.None, 0f);
 					}
-
-					// Chip display name centered below icon
-					string displayName = card.DisplayName;
-					if (displayName.Length > 12)
-						displayName = displayName.Substring(0, 10) + "..";
-					Vector2 nameSize = font.MeasureString(displayName) * 0.70f;
-					Vector2 namePos = new Vector2(cardX + (CardWidth - nameSize.X) * 0.5f, cardY + 115f);
-					Utils.DrawBorderString(spriteBatch, displayName, namePos, Color.White * 0.95f, 0.70f);
 				}
 
-				// Soft side vignette fade gradient masks on left and right edges for a seamless cinematic look
-				const int fadeWidth = 65;
-				const int steps = 13;
-				float stepWidth = fadeWidth / (float)steps;
-				Color edgeBg = new Color(8, 12, 24);
-
-				for (int s = 0; s < steps; s++)
-				{
-					float alpha = 1f - (s / (float)steps);
-					Color fadeCol = edgeBg * alpha;
-
-					// Left edge fade
-					spriteBatch.Draw(pixel, new Rectangle((int)(d.X + s * stepWidth), (int)d.Y, (int)Math.Ceiling(stepWidth) + 1, (int)d.Height), fadeCol);
-					// Right edge fade
-					spriteBatch.Draw(pixel, new Rectangle((int)(d.X + d.Width - (s + 1) * stepWidth), (int)d.Y, (int)Math.Ceiling(stepWidth) + 1, (int)d.Height), fadeCol);
-				}
-
-				// Central Reticle Laser Needle & Neon Indicator Arrows
-				float reticleX = d.X + viewportCenter;
-				float pulse = 0.6f + 0.4f * (float)Math.Sin(Main.timeForVisualEffects * 0.15f);
-				Color laserColor = Color.Lerp(new Color(0, 225, 255), new Color(255, 215, 80), pulse);
-
-				// Vertical neon laser beam
-				spriteBatch.Draw(pixel, new Rectangle((int)reticleX - 1, (int)d.Y, 2, (int)d.Height), laserColor * 0.85f);
-
-				// Top neon pointer arrow [▼]
-				Vector2 topArrowSize = FontAssets.MouseText.Value.MeasureString("▼") * 0.85f;
-				Vector2 topArrowPos = new Vector2(reticleX - topArrowSize.X * 0.5f, d.Y + 2f);
-				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, FontAssets.MouseText.Value, "▼", topArrowPos, laserColor, 0f, Vector2.Zero, new Vector2(0.85f));
-
-				// Bottom neon pointer arrow [▲]
-				Vector2 botArrowSize = FontAssets.MouseText.Value.MeasureString("▲") * 0.85f;
-				Vector2 botArrowPos = new Vector2(reticleX - botArrowSize.X * 0.5f, d.Y + d.Height - botArrowSize.Y - 2f);
-				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, FontAssets.MouseText.Value, "▲", botArrowPos, laserColor, 0f, Vector2.Zero, new Vector2(0.85f));
+				// Vertical Holographic Scanning Beam
+				float scanPulse = 0.5f + 0.5f * (float)Math.Sin(timer * 0.2f);
+				spriteBatch.Draw(pixel, new Rectangle((int)center.X - 1, (int)d.Y + 20, 2, 220), coreColor * (0.4f + 0.3f * scanPulse));
 			}
 
-			private static void DrawBorder(SpriteBatch sb, Rectangle rect, Color color, int thickness)
+			private static void DrawDottedRing(SpriteBatch sb, Texture2D pixel, Vector2 center, float radius, float startAngle, int count, Color col, int dotSize)
 			{
-				Texture2D pixel = TextureAssets.MagicPixel.Value;
-				sb.Draw(pixel, new Rectangle(rect.X, rect.Y, rect.Width, thickness), color);
-				sb.Draw(pixel, new Rectangle(rect.X, rect.Bottom - thickness, rect.Width, thickness), color);
-				sb.Draw(pixel, new Rectangle(rect.X, rect.Y, thickness, rect.Height), color);
-				sb.Draw(pixel, new Rectangle(rect.Right - thickness, rect.Y, thickness, rect.Height), color);
+				if (radius <= 4f) return;
+				float step = MathHelper.TwoPi / count;
+				for (int i = 0; i < count; i++)
+				{
+					float a = startAngle + i * step;
+					Vector2 pos = center + new Vector2((float)Math.Cos(a), (float)Math.Sin(a)) * radius;
+					sb.Draw(pixel, new Rectangle((int)pos.X - dotSize / 2, (int)pos.Y - dotSize / 2, dotSize, dotSize), col);
+				}
+			}
+
+			private static void DrawCardinalTicks(SpriteBatch sb, Texture2D pixel, Vector2 center, float radius, float rot, Color col)
+			{
+				if (radius <= 6f) return;
+				for (int i = 0; i < 4; i++)
+				{
+					float a = rot + i * MathHelper.PiOver2;
+					Vector2 p1 = center + new Vector2((float)Math.Cos(a), (float)Math.Sin(a)) * (radius - 6f);
+					Vector2 p2 = center + new Vector2((float)Math.Cos(a), (float)Math.Sin(a)) * (radius + 6f);
+					sb.Draw(pixel, new Rectangle((int)p1.X - 1, (int)p1.Y - 1, 3, 3), col);
+					sb.Draw(pixel, new Rectangle((int)p2.X - 1, (int)p2.Y - 1, 3, 3), col);
+				}
 			}
 		}
 
@@ -730,21 +727,20 @@ namespace Augments
 				Color aura = rarityColor * (0.12f * pulse);
 				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle((int)d.X + 6, (int)d.Y + 6, (int)d.Width - 12, (int)d.Height - 12), aura);
 
-				// Draw class icon
+				// Draw class emblem icon
 				Texture2D icon = AugmentSlotElement.GetClassIcon(augment.Class);
 				if (icon != null)
 				{
-					Vector2 center = new Vector2(d.X + 46f, d.Y + 52f);
-					spriteBatch.Draw(icon, center, null, rarityColor, 0f, icon.Size() * 0.5f, 1.6f, SpriteEffects.None, 0f);
+					Vector2 center = new Vector2(d.X + 55f, d.Y + 58f);
+					spriteBatch.Draw(icon, center, null, rarityColor, 0f, icon.Size() * 0.5f, 1.8f, SpriteEffects.None, 0f);
 				}
 			}
 		}
 
-		// Action button with animated glowing borders and colored text
+		// Action button with single-line centered label to completely eliminate text overlap
 		private class ChamberActionButton : UIElement
 		{
-			private readonly string primaryText;
-			private readonly string subText;
+			private readonly string labelText;
 			private readonly Color idleBg;
 			private readonly Color hoverBg;
 			private readonly Color idleBorder;
@@ -752,10 +748,9 @@ namespace Augments
 			private readonly Action onClick;
 			private bool isHovered;
 
-			public ChamberActionButton(string primaryText, string subText, Color idleBg, Color hoverBg, Color idleBorder, Color hoverBorder, Action onClick)
+			public ChamberActionButton(string labelText, Color idleBg, Color hoverBg, Color idleBorder, Color hoverBorder, Action onClick)
 			{
-				this.primaryText = primaryText;
-				this.subText = subText;
+				this.labelText = labelText;
 				this.idleBg = idleBg;
 				this.hoverBg = hoverBg;
 				this.idleBorder = idleBorder;
@@ -766,6 +761,7 @@ namespace Augments
 			public override void LeftClick(UIMouseEvent evt)
 			{
 				base.LeftClick(evt);
+				SoundEngine.PlaySound(SoundID.MenuTick);
 				onClick?.Invoke();
 			}
 
@@ -773,7 +769,6 @@ namespace Augments
 			{
 				base.MouseOver(evt);
 				isHovered = true;
-				SoundEngine.PlaySound(SoundID.MenuTick);
 			}
 
 			public override void MouseOut(UIMouseEvent evt)
@@ -805,28 +800,16 @@ namespace Augments
 				// Inner hover bloom
 				if (isHovered)
 				{
-					spriteBatch.Draw(pixel, new Rectangle(rect.X + 2, rect.Y + 2, rect.Width - 4, rect.Height - 4), hoverBorder * 0.12f);
+					spriteBatch.Draw(pixel, new Rectangle(rect.X + 2, rect.Y + 2, rect.Width - 4, rect.Height - 4), hoverBorder * 0.14f);
 				}
 
-				// Draw Primary and Subtext with ChatManager
+				// Draw single crisp, centered formatted text with ChatManager
 				var font = FontAssets.MouseText.Value;
-				if (!string.IsNullOrEmpty(primaryText))
-				{
-					Vector2 primSize = ChatManager.GetStringSize(font, primaryText, new Vector2(0.92f));
-					float primY = string.IsNullOrEmpty(subText) ? d.Y + (d.Height - primSize.Y) * 0.5f : d.Y + 8f;
-					Vector2 primPos = new Vector2(d.X + (d.Width - primSize.X) * 0.5f, primY);
-					ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, primaryText, primPos, Color.White, 0f, Vector2.Zero, new Vector2(0.92f));
-				}
-
-				if (!string.IsNullOrEmpty(subText))
-				{
-					Vector2 subSize = ChatManager.GetStringSize(font, subText, new Vector2(0.74f));
-					Vector2 subPos = new Vector2(d.X + (d.Width - subSize.X) * 0.5f, d.Y + d.Height - subSize.Y - 8f);
-					ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, subText, subPos, Color.White, 0f, Vector2.Zero, new Vector2(0.74f));
-				}
+				Vector2 textSize = ChatManager.GetStringSize(font, labelText, new Vector2(0.88f));
+				Vector2 textPos = new Vector2(d.X + (d.Width - textSize.X) * 0.5f, d.Y + (d.Height - textSize.Y) * 0.5f);
+				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, labelText, textPos, Color.White, 0f, Vector2.Zero, new Vector2(0.88f));
 			}
 		}
-
 
 		private class TabButton : UIPanel
 		{
@@ -840,7 +823,7 @@ namespace Augments
 				BackgroundColor = new Color(20, 28, 54);
 				BorderColor = new Color(45, 75, 120);
 
-				var label = new UIText(text, 0.80f)
+				var label = new UIText(text, 0.82f)
 				{
 					HAlign = 0.5f,
 					VAlign = 0.5f,
