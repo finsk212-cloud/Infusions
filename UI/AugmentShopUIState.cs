@@ -8,6 +8,7 @@ using Terraria.GameContent.UI.Elements;
 using Terraria.ID;
 using Terraria.ModLoader;
 using Terraria.UI;
+using Terraria.UI.Chat;
 
 namespace Augments
 {
@@ -15,10 +16,12 @@ namespace Augments
 	public class AugmentShopUIState : UIState
 	{
 		private ShopBackPanel backPanel;
-		private UIText essenceText;
+		private ColoredLabel essenceLabel;
 		private UndoReforgeBar undoReforgeBar;
 		private UIList buyBackList;
 		private UIList removeList;
+
+		private readonly UIParticleSystem shopParticles = new UIParticleSystem(70);
 
 		private const float PanelWidth = 800f;
 		private const float PanelHeight = 520f;
@@ -32,6 +35,25 @@ namespace Augments
 			{
 				Main.LocalPlayer.mouseInterface = true;
 			}
+
+			shopParticles.Update();
+
+			if (backPanel != null && Main.rand.NextBool(8))
+			{
+				CalculatedStyle dims = backPanel.GetDimensions();
+				if (dims.Width > 0)
+				{
+					Rectangle rect = new Rectangle((int)dims.X, (int)dims.Y, (int)dims.Width, (int)dims.Height);
+					Color emberCol = Main.rand.NextBool(3) ? new Color(0, 220, 255) : new Color(60, 140, 240);
+					shopParticles.SpawnAmbient(rect, emberCol, 1.8f);
+				}
+			}
+		}
+
+		public override void Draw(SpriteBatch spriteBatch)
+		{
+			base.Draw(spriteBatch);
+			shopParticles.Draw(spriteBatch);
 		}
 
 		public override void OnInitialize()
@@ -45,15 +67,15 @@ namespace Augments
 			backPanel.BorderColor = new Color(38, 52, 98);
 
 			// Navigation Tabs
-			var decryptTab = new TabButton("★ Decrypt Chips ★", false, () => ModContent.GetInstance<AugmentUISystem>().ShowGacha());
+			var decryptTab = new GlowTabButton("[c/00FFFF:★] [c/FFE066:Decrypt Chips] [c/00FFFF:★]", () => ModContent.GetInstance<AugmentUISystem>().ShowGacha());
 			decryptTab.Left.Set(14f, 0f);
 			decryptTab.Top.Set(10f, 0f);
-			decryptTab.Width.Set(150f, 0f);
+			decryptTab.Width.Set(156f, 0f);
 			decryptTab.Height.Set(26f, 0f);
 			backPanel.Append(decryptTab);
 
 			var storageTab = new TabButton("Chip Storage", true, null);
-			storageTab.Left.Set(170f, 0f);
+			storageTab.Left.Set(176f, 0f);
 			storageTab.Top.Set(10f, 0f);
 			storageTab.Width.Set(120f, 0f);
 			storageTab.Height.Set(26f, 0f);
@@ -79,13 +101,8 @@ namespace Augments
 			essenceBadge.BackgroundColor = new Color(15, 22, 42) * 0.95f;
 			essenceBadge.BorderColor = new Color(80, 180, 255) * 0.7f;
 
-			essenceText = new UIText("Machine Cores: 0", 0.82f)
-			{
-				HAlign = 0.5f,
-				VAlign = 0.5f,
-				TextColor = new Color(100, 225, 255)
-			};
-			essenceBadge.Append(essenceText);
+			essenceLabel = new ColoredLabel("[c/FFE080:Machine Cores:] [c/00FFFF:0]", 0.82f);
+			essenceBadge.Append(essenceLabel);
 			backPanel.Append(essenceBadge);
 
 			// Title Header
@@ -268,7 +285,7 @@ namespace Augments
 		private void RefreshEssenceText()
 		{
 			int count = Main.LocalPlayer.CountItem(ModContent.ItemType<AugmentEssenceItem>());
-			essenceText.SetText($"Machine Cores: {count}");
+			essenceLabel?.SetText($"[c/FFE080:Machine Cores:] [c/00FFFF:{count}]");
 		}
 
 		private void BuyBack(Augment augment)
@@ -305,7 +322,7 @@ namespace Augments
 				Refresh();
 		}
 
-		// Custom panel drawing header & column divider lines
+		// Custom background panel that draws a subtle dividing line between columns
 		private class ShopBackPanel : UIPanel
 		{
 			protected override void DrawSelf(SpriteBatch spriteBatch)
@@ -323,6 +340,71 @@ namespace Augments
 				int listStartY = divY + 8;
 				int listHeight = (int)dims.Height - 128;
 				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(midX, listStartY, 1, listHeight), new Color(45, 62, 105) * 0.7f);
+			}
+		}
+
+		private class GlowTabButton : UIElement
+		{
+			private readonly string text;
+			private readonly Action onClick;
+			private bool isHovered;
+
+			public GlowTabButton(string text, Action onClick)
+			{
+				this.text = text;
+				this.onClick = onClick;
+			}
+
+			public override void LeftClick(UIMouseEvent evt)
+			{
+				base.LeftClick(evt);
+				SoundEngine.PlaySound(SoundID.MenuTick);
+				onClick?.Invoke();
+			}
+
+			public override void MouseOver(UIMouseEvent evt)
+			{
+				base.MouseOver(evt);
+				isHovered = true;
+			}
+
+			public override void MouseOut(UIMouseEvent evt)
+			{
+				base.MouseOut(evt);
+				isHovered = false;
+			}
+
+			protected override void DrawSelf(SpriteBatch spriteBatch)
+			{
+				CalculatedStyle d = GetDimensions();
+				Texture2D pixel = TextureAssets.MagicPixel.Value;
+
+				float pulse = 0.6f + 0.4f * (float)Math.Sin(Main.timeForVisualEffects * 0.12f);
+				Color borderCol = isHovered
+					? new Color(0, 255, 255)
+					: Color.Lerp(new Color(0, 200, 255), new Color(255, 215, 80), pulse);
+
+				Color bgCol = isHovered ? new Color(26, 44, 82) : new Color(16, 24, 48);
+
+				Rectangle rect = new Rectangle((int)d.X, (int)d.Y, (int)d.Width, (int)d.Height);
+				spriteBatch.Draw(pixel, rect, bgCol * 0.95f);
+
+				// Glowing border
+				int th = isHovered ? 2 : 1;
+				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, rect.Width, th), borderCol);
+				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Bottom - th, rect.Width, th), borderCol);
+				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, th, rect.Height), borderCol);
+				spriteBatch.Draw(pixel, new Rectangle(rect.Right - th, rect.Y, th, rect.Height), borderCol);
+
+				if (isHovered)
+				{
+					spriteBatch.Draw(pixel, new Rectangle(rect.X + 2, rect.Y + 2, rect.Width - 4, rect.Height - 4), borderCol * 0.12f);
+				}
+
+				var font = FontAssets.MouseText.Value;
+				Vector2 textSize = ChatManager.GetStringSize(font, text, new Vector2(0.80f));
+				Vector2 textPos = new Vector2(d.X + (d.Width - textSize.X) * 0.5f, d.Y + (d.Height - textSize.Y) * 0.5f);
+				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, text, textPos, Color.White, 0f, Vector2.Zero, new Vector2(0.80f));
 			}
 		}
 
