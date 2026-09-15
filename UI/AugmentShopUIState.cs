@@ -45,15 +45,15 @@ namespace Augments
 			backPanel.BorderColor = new Color(38, 52, 98);
 
 			// Navigation Tabs
-			var decryptTab = new TabButton("Decrypt Chips", false, () => ModContent.GetInstance<AugmentUISystem>().ShowGacha());
+			var decryptTab = new TabButton("★ Decrypt Chips ★", false, () => ModContent.GetInstance<AugmentUISystem>().ShowGacha());
 			decryptTab.Left.Set(14f, 0f);
 			decryptTab.Top.Set(10f, 0f);
-			decryptTab.Width.Set(120f, 0f);
+			decryptTab.Width.Set(150f, 0f);
 			decryptTab.Height.Set(26f, 0f);
 			backPanel.Append(decryptTab);
 
 			var storageTab = new TabButton("Chip Storage", true, null);
-			storageTab.Left.Set(140f, 0f);
+			storageTab.Left.Set(170f, 0f);
 			storageTab.Top.Set(10f, 0f);
 			storageTab.Width.Set(120f, 0f);
 			storageTab.Height.Set(26f, 0f);

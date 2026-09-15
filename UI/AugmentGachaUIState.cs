@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Terraria;
@@ -13,13 +14,33 @@ namespace Augments
 {
 	public class AugmentGachaUIState : UIState
 	{
+		private enum ChamberState
+		{
+			Idle,
+			Decrypting,
+			Revealed
+		}
+
 		private UIPanel backPanel;
 		private UIText essenceText;
 		private UIText protocolText;
 		private UIText oddsText;
 
-		private const float PanelWidth = 580f;
-		private const float PanelHeight = 410f;
+		// Interactive Content Container
+		private UIPanel chamberContainer;
+
+		private ChamberState state = ChamberState.Idle;
+		private int animTimer;
+		private int lastTickFrame;
+		private Augment wonAugment;
+		private bool wonAugmentArchived;
+		private int wonRefundCores;
+
+		private readonly List<Augment> sampleChips = new List<Augment>();
+		private int currentCycleIndex;
+
+		private const float PanelWidth = 640f;
+		private const float PanelHeight = 490f;
 
 		public override void Update(GameTime gameTime)
 		{
@@ -29,38 +50,62 @@ namespace Augments
 			{
 				Main.LocalPlayer.mouseInterface = true;
 			}
+
+			if (state == ChamberState.Decrypting)
+			{
+				animTimer++;
+
+				// Deceleration curve over 170 frames (~2.8s)
+				int delay = 4;
+				if (animTimer > 130) delay = 18;
+				else if (animTimer > 95) delay = 11;
+				else if (animTimer > 60) delay = 6;
+
+				if (animTimer - lastTickFrame >= delay && animTimer < 165)
+				{
+					lastTickFrame = animTimer;
+					if (sampleChips.Count > 0)
+						currentCycleIndex = (currentCycleIndex + 1) % sampleChips.Count;
+
+					float pitch = -0.1f + (animTimer / 170f) * 0.35f;
+					SoundEngine.PlaySound(SoundID.MenuTick with { Pitch = pitch, Volume = 0.85f });
+				}
+
+				if (animTimer >= 170)
+				{
+					state = ChamberState.Revealed;
+					OnDecryptionRevealed();
+					RebuildChamberContent();
+				}
+			}
 		}
 
 		public override void OnInitialize()
 		{
+			sampleChips.Clear();
+			sampleChips.AddRange(AugmentDatabase.All);
+
 			backPanel = new UIPanel();
 			backPanel.Width.Set(PanelWidth, 0f);
 			backPanel.Height.Set(PanelHeight, 0f);
 			backPanel.HAlign = 0.5f;
 			backPanel.VAlign = 0.5f;
-			backPanel.BackgroundColor = new Color(18, 24, 46);
-			backPanel.BorderColor = new Color(0, 180, 240) * 0.7f;
+			backPanel.BackgroundColor = new Color(16, 22, 42) * 0.98f;
+			backPanel.BorderColor = new Color(0, 190, 255) * 0.7f;
 
-			// Top Navigation Tabs
-			var decryptTab = new TabButton("Decrypt Chips", true, null);
-			decryptTab.Left.Set(14f, 0f);
-			decryptTab.Top.Set(10f, 0f);
-			decryptTab.Width.Set(120f, 0f);
-			decryptTab.Height.Set(26f, 0f);
-			backPanel.Append(decryptTab);
-
-			var storageTab = new TabButton("Chip Storage", false, () => ModContent.GetInstance<AugmentUISystem>().ShowShop());
-			storageTab.Left.Set(140f, 0f);
+			// Top Navigation Tab: Return to Storage
+			var storageTab = new TabButton("← Chip Storage & Dismantle", () => ModContent.GetInstance<AugmentUISystem>().ShowShop());
+			storageTab.Left.Set(14f, 0f);
 			storageTab.Top.Set(10f, 0f);
-			storageTab.Width.Set(120f, 0f);
+			storageTab.Width.Set(210f, 0f);
 			storageTab.Height.Set(26f, 0f);
 			backPanel.Append(storageTab);
 
 			// Machine Cores Badge
 			UIPanel essenceBadge = new UIPanel();
-			essenceBadge.Width.Set(180f, 0f);
+			essenceBadge.Width.Set(190f, 0f);
 			essenceBadge.Height.Set(26f, 0f);
-			essenceBadge.Left.Set(-224f, 1f);
+			essenceBadge.Left.Set(-234f, 1f);
 			essenceBadge.Top.Set(10f, 0f);
 			essenceBadge.SetPadding(0f);
 			essenceBadge.BackgroundColor = new Color(12, 18, 36) * 0.95f;
@@ -84,82 +129,44 @@ namespace Augments
 			closeBtn.Clicked += () => ModContent.GetInstance<AugmentUISystem>().HideGacha();
 			backPanel.Append(closeBtn);
 
-			// Main Center Pod Card
-			var podCard = new PodDisplayCard();
-			podCard.Width.Set(-28f, 1f);
-			podCard.Height.Set(190f, 0f);
-			podCard.Left.Set(14f, 0f);
-			podCard.Top.Set(46f, 0f);
-			podCard.BackgroundColor = new Color(12, 16, 32) * 0.95f;
-			podCard.BorderColor = new Color(45, 65, 110) * 0.8f;
-
-			UIText title = new UIText("YoRHa Data Decryption", 1.15f)
+			// Title Header
+			UIText title = new UIText("YoRHa Neural Decryption Chamber", 1.15f)
 			{
 				HAlign = 0.5f,
 				TextColor = new Color(255, 235, 175)
 			};
-			title.Top.Set(12f, 0f);
-			podCard.Append(title);
+			title.Top.Set(44f, 0f);
+			backPanel.Append(title);
 
 			protocolText = new UIText("Active Protocol: Pre-Hardmode Protocol", 0.82f)
 			{
 				HAlign = 0.5f,
 				TextColor = new Color(100, 220, 255)
 			};
-			protocolText.Top.Set(36f, 0f);
-			podCard.Append(protocolText);
+			protocolText.Top.Set(68f, 0f);
+			backPanel.Append(protocolText);
 
-			oddsText = new UIText("Odds: Common 80%  |  Rare 15%  |  Epic 5%  |  Legendary 0%", 0.80f)
+			oddsText = new UIText("Odds: Common 80%  |  Rare 15%  |  Epic 5%  |  Legendary 0%", 0.78f)
 			{
 				HAlign = 0.5f,
-				TextColor = new Color(185, 205, 235)
+				TextColor = new Color(175, 195, 225)
 			};
-			oddsText.Top.Set(156f, 0f);
-			podCard.Append(oddsText);
+			oddsText.Top.Set(88f, 0f);
+			backPanel.Append(oddsText);
 
-			backPanel.Append(podCard);
-
-			// Action Buttons Row
-			// Button 1: Decrypt Now
-			var decryptAction = new ActionCardButton(
-				"DECRYPT (3 Cores)",
-				"Picks 1 of 3 chips immediately",
-				new Color(20, 60, 95),
-				new Color(30, 100, 155),
-				new Color(0, 200, 255) * 0.8f,
-				PerformDecryptNow
-			);
-			decryptAction.Width.Set(260f, 0f);
-			decryptAction.Height.Set(68f, 0f);
-			decryptAction.Left.Set(14f, 0f);
-			decryptAction.Top.Set(248f, 0f);
-			backPanel.Append(decryptAction);
-
-			// Button 2: Buy Item
-			var buyItemAction = new ActionCardButton(
-				"BUY ITEM (3 Cores)",
-				"Adds Sealed Cache to inventory",
-				new Color(65, 50, 20),
-				new Color(105, 80, 30),
-				new Color(250, 195, 60) * 0.8f,
-				PerformBuyCacheItem
-			);
-			buyItemAction.Width.Set(260f, 0f);
-			buyItemAction.Height.Set(68f, 0f);
-			buyItemAction.Left.Set(-274f, 1f);
-			buyItemAction.Top.Set(248f, 0f);
-			backPanel.Append(buyItemAction);
-
-			// Bottom explanatory note
-			var note = new UIText("Decrypted chips roll from your current progression tier and never duplicate already owned chips.", 0.73f)
-			{
-				HAlign = 0.5f,
-				TextColor = new Color(140, 160, 190)
-			};
-			note.Top.Set(330f, 0f);
-			backPanel.Append(note);
+			// Main Containment Chamber Container
+			chamberContainer = new UIPanel();
+			chamberContainer.Width.Set(-28f, 1f);
+			chamberContainer.Height.Set(350f, 0f);
+			chamberContainer.Left.Set(14f, 0f);
+			chamberContainer.Top.Set(114f, 0f);
+			chamberContainer.BackgroundColor = new Color(10, 14, 28) * 0.95f;
+			chamberContainer.BorderColor = new Color(40, 60, 100) * 0.8f;
+			backPanel.Append(chamberContainer);
 
 			Append(backPanel);
+
+			RebuildChamberContent();
 		}
 
 		public void Refresh()
@@ -173,14 +180,217 @@ namespace Augments
 
 			RarityRollChances chances = BossRarityRoller.GetChancesForBracket(bracket);
 			oddsText?.SetText($"Odds: Common {chances.Common}%  |  Rare {chances.Rare}%  |  Epic {chances.Epic}%  |  Legendary {chances.Legendary}%");
+
+			if (state != ChamberState.Decrypting)
+			{
+				state = ChamberState.Idle;
+				RebuildChamberContent();
+			}
 		}
 
-		private void PerformDecryptNow()
+		private void RebuildChamberContent()
+		{
+			if (chamberContainer == null)
+				return;
+
+			chamberContainer.RemoveAllChildren();
+
+			if (state == ChamberState.Idle)
+			{
+				BuildIdleChamber();
+			}
+			else if (state == ChamberState.Decrypting)
+			{
+				BuildDecryptingChamber();
+			}
+			else if (state == ChamberState.Revealed)
+			{
+				BuildRevealedChamber();
+			}
+		}
+
+		private void BuildIdleChamber()
+		{
+			// Pod graphic preview in the center
+			var podView = new PodDisplayCard();
+			podView.Width.Set(120f, 0f);
+			podView.Height.Set(120f, 0f);
+			podView.HAlign = 0.5f;
+			podView.Top.Set(24f, 0f);
+			chamberContainer.Append(podView);
+
+			var readyText = new UIText("YoRHa Encrypted Salvage Pod Loaded", 0.92f)
+			{
+				HAlign = 0.5f,
+				TextColor = new Color(200, 225, 255)
+			};
+			readyText.Top.Set(156f, 0f);
+			chamberContainer.Append(readyText);
+
+			var subtext = new UIText("Consume 3 Machine Cores to synthesize neural frequency and extract 1 Plug-in Chip", 0.74f)
+			{
+				HAlign = 0.5f,
+				TextColor = new Color(140, 160, 190)
+			};
+			subtext.Top.Set(182f, 0f);
+			chamberContainer.Append(subtext);
+
+			// Decrypt action button
+			var decryptBtn = new ChamberActionButton(
+				"INITIALIZE DECRYPTION (3 Cores)",
+				new Color(22, 65, 100),
+				new Color(35, 105, 160),
+				new Color(0, 200, 255) * 0.9f,
+				StartDecryption
+			);
+			decryptBtn.Width.Set(340f, 0f);
+			decryptBtn.Height.Set(52f, 0f);
+			decryptBtn.HAlign = 0.5f;
+			decryptBtn.Top.Set(230f, 0f);
+			chamberContainer.Append(decryptBtn);
+
+			var footer = new UIText("Rolls are guaranteed to prioritize unowned chips from your active progression bracket.", 0.70f)
+			{
+				HAlign = 0.5f,
+				TextColor = new Color(120, 140, 170)
+			};
+			footer.Top.Set(298f, 0f);
+			chamberContainer.Append(footer);
+		}
+
+		private void BuildDecryptingChamber()
+		{
+			var cyclingView = new CyclingDataCard(() => {
+				if (sampleChips.Count == 0) return null;
+				return sampleChips[currentCycleIndex % sampleChips.Count];
+			});
+			cyclingView.Width.Set(360f, 0f);
+			cyclingView.Height.Set(200f, 0f);
+			cyclingView.HAlign = 0.5f;
+			cyclingView.Top.Set(30f, 0f);
+			chamberContainer.Append(cyclingView);
+
+			var statusText = new UIText("SYNCHRONIZING NEURAL FREQUENCY...", 0.95f)
+			{
+				HAlign = 0.5f,
+				TextColor = new Color(255, 215, 100)
+			};
+			statusText.Top.Set(250f, 0f);
+			chamberContainer.Append(statusText);
+
+			var sub = new UIText("Deciphering combat memory stream", 0.76f)
+			{
+				HAlign = 0.5f,
+				TextColor = new Color(100, 220, 255)
+			};
+			sub.Top.Set(280f, 0f);
+			chamberContainer.Append(sub);
+		}
+
+		private void BuildRevealedChamber()
+		{
+			if (wonAugment == null)
+			{
+				state = ChamberState.Idle;
+				BuildIdleChamber();
+				return;
+			}
+
+			Color rarityColor = GetRarityColor(wonAugment.Rarity);
+
+			// Winning Chip Card Container
+			var chipCard = new UIPanel();
+			chipCard.Width.Set(500f, 0f);
+			chipCard.Height.Set(180f, 0f);
+			chipCard.HAlign = 0.5f;
+			chipCard.Top.Set(20f, 0f);
+			chipCard.BackgroundColor = new Color(18, 25, 48);
+			chipCard.BorderColor = rarityColor * 0.9f;
+
+			// Icon Drawer
+			var iconElement = new RevealedChipIcon(wonAugment);
+			iconElement.Width.Set(50f, 0f);
+			iconElement.Height.Set(50f, 0f);
+			iconElement.Left.Set(20f, 0f);
+			iconElement.Top.Set(24f, 0f);
+			chipCard.Append(iconElement);
+
+			// Chip Name
+			var nameText = new UIText(wonAugment.DisplayName, 1.15f)
+			{
+				TextColor = rarityColor
+			};
+			nameText.Left.Set(84f, 0f);
+			nameText.Top.Set(18f, 0f);
+			chipCard.Append(nameText);
+
+			// Rarity & Class pill
+			string rarityLabel = wonAugment.KeystoneFamily != null ? $"[{wonAugment.Rarity.ToString().ToUpper()} KEYSTONE]" : $"[{wonAugment.Rarity.ToString().ToUpper()}]";
+			var tierText = new UIText($"{rarityLabel}  •  Class: {wonAugment.Class}", 0.78f)
+			{
+				TextColor = new Color(200, 215, 240)
+			};
+			tierText.Left.Set(84f, 0f);
+			tierText.Top.Set(46f, 0f);
+			chipCard.Append(tierText);
+
+			// Description
+			var descText = new UIText(wonAugment.Description, 0.74f)
+			{
+				TextColor = new Color(165, 185, 215)
+			};
+			descText.Left.Set(84f, 0f);
+			descText.Top.Set(72f, 0f);
+			descText.Width.Set(390f, 0f);
+			chipCard.Append(descText);
+
+			// Install notice badge
+			string statusNotice = wonAugmentArchived
+				? $"✦ Neural Frame full (5/5) — Archived at Mistress 2B (+{wonRefundCores} Cores) ✦"
+				: "✦ Installed directly into your Neural Frame! ✦";
+			var statusText = new UIText(statusNotice, 0.78f)
+			{
+				HAlign = 0.5f,
+				TextColor = wonAugmentArchived ? new Color(255, 160, 100) : new Color(100, 255, 180)
+			};
+			statusText.Top.Set(146f, 0f);
+			chipCard.Append(statusText);
+
+			chamberContainer.Append(chipCard);
+
+			// Action Buttons
+			var decryptAgainBtn = new ChamberActionButton(
+				"DECRYPT AGAIN (3 Cores)",
+				new Color(22, 65, 100),
+				new Color(35, 105, 160),
+				new Color(0, 200, 255) * 0.9f,
+				StartDecryption
+			);
+			decryptAgainBtn.Width.Set(240f, 0f);
+			decryptAgainBtn.Height.Set(46f, 0f);
+			decryptAgainBtn.Left.Set(50f, 0f);
+			decryptAgainBtn.Top.Set(230f, 0f);
+			chamberContainer.Append(decryptAgainBtn);
+
+			var returnBtn = new ChamberActionButton(
+				"RETURN TO STORAGE",
+				new Color(40, 50, 75),
+				new Color(60, 75, 110),
+				new Color(120, 140, 180) * 0.8f,
+				() => ModContent.GetInstance<AugmentUISystem>().ShowShop()
+			);
+			returnBtn.Width.Set(240f, 0f);
+			returnBtn.Height.Set(46f, 0f);
+			returnBtn.Left.Set(-290f, 1f);
+			returnBtn.Top.Set(230f, 0f);
+			chamberContainer.Append(returnBtn);
+		}
+
+		private void StartDecryption()
 		{
 			var player = Main.LocalPlayer;
 			int coreType = ModContent.ItemType<AugmentEssenceItem>();
-			int coreCount = player.CountItem(coreType);
-			if (coreCount < 3)
+			if (player.CountItem(coreType) < 3)
 			{
 				Main.NewText("Requires 3 Machine Cores to decrypt.", 255, 90, 90);
 				SoundEngine.PlaySound(SoundID.MenuClose);
@@ -191,55 +401,110 @@ namespace Augments
 			for (int i = 0; i < 3; i++)
 				player.ConsumeItem(coreType);
 
-			// Decryption Audio and FX
-			SoundEngine.PlaySound(SoundID.Research with { Volume = 0.95f, Pitch = 0.1f }, player.Center);
-			for (int i = 0; i < 25; i++)
+			Refresh();
+
+			// Roll winning augment using current world progression bracket
+			RarityBracket currentBracket = BossTierMap.GetCurrentWorldBracket();
+			AugmentRarity rolledRarity = BossRarityRoller.Roll(currentBracket);
+			var ap = player.GetModPlayer<AugmentPlayer>();
+
+			var choices = ap.RollChoices(1, rolledRarity, null);
+			if (choices.Count > 0)
 			{
-				Dust d = Dust.NewDustDirect(player.position, player.width, player.height, DustID.Electric, Main.rand.NextFloat(-3f, 3f), Main.rand.NextFloat(-3f, 3f), 0, default, 1.3f);
-				d.noGravity = true;
+				wonAugment = choices[0];
 			}
-			for (int i = 0; i < 15; i++)
+			else
 			{
-				Dust d = Dust.NewDustDirect(player.position, player.width, player.height, DustID.GoldFlame, Main.rand.NextFloat(-2f, 2f), Main.rand.NextFloat(-2f, 2f), 0, default, 1.1f);
-				d.noGravity = true;
+				foreach (AugmentRarity fallbackRarity in AugmentRewardLogic.GetRarityFallbackOrder(rolledRarity))
+				{
+					choices = ap.RollChoices(1, fallbackRarity, null);
+					if (choices.Count > 0)
+					{
+						wonAugment = choices[0];
+						break;
+					}
+				}
+				if (wonAugment == null)
+				{
+					var all = AugmentDatabase.All;
+					wonAugment = all[Main.rand.Next(all.Count)];
+				}
 			}
 
-			// Close gacha UI and open 3-Card Decryption modal
-			ModContent.GetInstance<AugmentUISystem>().HideGacha();
-			RarityBracket currentBracket = BossTierMap.GetCurrentWorldBracket();
-			AugmentRewardLogic.GrantReward(player, currentBracket);
+			// Authoritatively grant or archive the augment
+			wonAugmentArchived = ap.Owned.Count >= AugmentPlayer.MaxOwnedAugments;
+			wonRefundCores = wonAugmentArchived ? AugmentPlayer.GetRemoveRefund(wonAugment.Rarity) : 0;
+			ap.ChooseReward(wonAugment);
+
+			// Start decryption animation
+			state = ChamberState.Decrypting;
+			animTimer = 0;
+			lastTickFrame = 0;
+			currentCycleIndex = Main.rand.Next(sampleChips.Count);
+
+			SoundEngine.PlaySound(SoundID.Item29 with { Volume = 0.8f, Pitch = -0.2f }, player.Center);
+			RebuildChamberContent();
 		}
 
-		private void PerformBuyCacheItem()
+		private void OnDecryptionRevealed()
 		{
 			var player = Main.LocalPlayer;
-			int coreType = ModContent.ItemType<AugmentEssenceItem>();
-			int coreCount = player.CountItem(coreType);
-			if (coreCount < 3)
+			if (wonAugment == null) return;
+
+			// Sound and particle fanfare based on rarity
+			switch (wonAugment.Rarity)
 			{
-				Main.NewText("Requires 3 Machine Cores to purchase.", 255, 90, 90);
-				SoundEngine.PlaySound(SoundID.MenuClose);
-				return;
+				case AugmentRarity.Legendary:
+					SoundEngine.PlaySound(SoundID.Item29 with { Volume = 1.0f, Pitch = 0.1f }, player.Center);
+					for (int i = 0; i < 35; i++)
+					{
+						Dust d = Dust.NewDustDirect(player.position, player.width, player.height, DustID.GoldFlame, Main.rand.NextFloat(-4f, 4f), Main.rand.NextFloat(-4f, 4f), 0, default, 1.5f);
+						d.noGravity = true;
+					}
+					break;
+				case AugmentRarity.Epic:
+					SoundEngine.PlaySound(SoundID.Item100 with { Volume = 0.95f, Pitch = 0.1f }, player.Center);
+					for (int i = 0; i < 25; i++)
+					{
+						Dust d = Dust.NewDustDirect(player.position, player.width, player.height, DustID.PurpleTorch, Main.rand.NextFloat(-3f, 3f), Main.rand.NextFloat(-3f, 3f), 0, default, 1.3f);
+						d.noGravity = true;
+					}
+					break;
+				case AugmentRarity.Rare:
+					SoundEngine.PlaySound(SoundID.Item4 with { Volume = 0.90f, Pitch = 0.1f }, player.Center);
+					for (int i = 0; i < 20; i++)
+					{
+						Dust d = Dust.NewDustDirect(player.position, player.width, player.height, DustID.Electric, Main.rand.NextFloat(-3f, 3f), Main.rand.NextFloat(-3f, 3f), 0, default, 1.2f);
+						d.noGravity = true;
+					}
+					break;
+				default:
+					SoundEngine.PlaySound(SoundID.Research with { Volume = 0.90f, Pitch = 0.1f }, player.Center);
+					for (int i = 0; i < 15; i++)
+					{
+						Dust d = Dust.NewDustDirect(player.position, player.width, player.height, DustID.Iron, Main.rand.NextFloat(-2f, 2f), Main.rand.NextFloat(-2f, 2f), 0, default, 1.1f);
+						d.noGravity = true;
+					}
+					break;
 			}
-
-			// Consume 3 Machine Cores
-			for (int i = 0; i < 3; i++)
-				player.ConsumeItem(coreType);
-
-			// Award 1 SealedChipCacheItem
-			player.QuickSpawnItem(player.GetSource_FromThis(), ModContent.ItemType<SealedChipCacheItem>());
-			SoundEngine.PlaySound(SoundID.Grab);
-			Main.NewText("Acquired Sealed Chip Cache!", 100, 225, 255);
-			Refresh();
 		}
 
-		// Draws clean pixel art pod sprite with NO fuzzy glow box
-		private class PodDisplayCard : UIPanel
+		private static Color GetRarityColor(AugmentRarity rarity)
+		{
+			return rarity switch
+			{
+				AugmentRarity.Legendary => new Color(255, 200, 50),
+				AugmentRarity.Epic => new Color(200, 100, 255),
+				AugmentRarity.Rare => new Color(80, 190, 255),
+				_ => new Color(220, 230, 245)
+			};
+		}
+
+		// Clean 2.5x pixel art pod preview with zero fuzzy glow box
+		private class PodDisplayCard : UIElement
 		{
 			protected override void DrawSelf(SpriteBatch spriteBatch)
 			{
-				base.DrawSelf(spriteBatch);
-
 				CalculatedStyle d = GetDimensions();
 
 				if (ModContent.RequestIfExists<Texture2D>("Augments/Items/SealedChipCacheItem", out var cacheAsset))
@@ -247,49 +512,106 @@ namespace Augments
 					Texture2D tex = cacheAsset.Value;
 					if (tex != null)
 					{
-						Vector2 center = new Vector2(d.X + d.Width * 0.5f, d.Y + 98f);
+						float bob = (float)Math.Sin(Main.timeForVisualEffects * 0.04f) * 3f;
+						Vector2 center = new Vector2(d.X + d.Width * 0.5f, d.Y + d.Height * 0.5f + bob);
 						Vector2 origin = tex.Size() * 0.5f;
-						// Clean 2.5x pixel art rendering
 						spriteBatch.Draw(tex, center, null, Color.White, 0f, origin, 2.5f, SpriteEffects.None, 0f);
 					}
 				}
 			}
 		}
 
-		// Action card button with title and explanation subtitle
-		private class ActionCardButton : UIPanel
+		// Rapidly cycling holographic chip display during extraction
+		private class CyclingDataCard : UIPanel
+		{
+			private readonly Func<Augment> getChip;
+
+			public CyclingDataCard(Func<Augment> getChip)
+			{
+				this.getChip = getChip;
+				BackgroundColor = new Color(14, 20, 40) * 0.95f;
+				BorderColor = new Color(0, 200, 255) * 0.8f;
+			}
+
+			protected override void DrawSelf(SpriteBatch spriteBatch)
+			{
+				base.DrawSelf(spriteBatch);
+
+				CalculatedStyle d = GetDimensions();
+				Augment chip = getChip();
+				if (chip == null) return;
+
+				Color c = GetRarityColor(chip.Rarity);
+
+				// Draw chip icon
+				Texture2D icon = AugmentSlotElement.GetClassIcon(chip.Class);
+				if (icon != null)
+				{
+					Vector2 iconCenter = new Vector2(d.X + d.Width * 0.5f, d.Y + 70f);
+					spriteBatch.Draw(icon, iconCenter, null, c, 0f, icon.Size() * 0.5f, 1.8f, SpriteEffects.None, 0f);
+				}
+
+				// Draw cycling chip name
+				string text = chip.DisplayName;
+				Vector2 textSize = FontAssets.MouseText.Value.MeasureString(text) * 0.95f;
+				Vector2 textPos = new Vector2(d.X + (d.Width - textSize.X) * 0.5f, d.Y + 130f);
+				Utils.DrawBorderString(spriteBatch, text, textPos, c, 0.95f);
+
+				// Scanning bracket lines
+				float pulse = 0.5f + 0.5f * (float)Math.Sin(Main.timeForVisualEffects * 0.15f);
+				Color scanColor = Color.Cyan * (0.4f * pulse);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle((int)d.X + 20, (int)d.Y + 165, (int)d.Width - 40, 2), scanColor);
+			}
+		}
+
+		// Display for revealed chip icon
+		private class RevealedChipIcon : UIElement
+		{
+			private readonly Augment augment;
+
+			public RevealedChipIcon(Augment augment)
+			{
+				this.augment = augment;
+			}
+
+			protected override void DrawSelf(SpriteBatch spriteBatch)
+			{
+				CalculatedStyle d = GetDimensions();
+				Texture2D icon = AugmentSlotElement.GetClassIcon(augment.Class);
+				if (icon != null)
+				{
+					Vector2 center = new Vector2(d.X + d.Width * 0.5f, d.Y + d.Height * 0.5f);
+					Color iconColor = GetRarityColor(augment.Rarity);
+					spriteBatch.Draw(icon, center, null, iconColor, 0f, icon.Size() * 0.5f, 1.6f, SpriteEffects.None, 0f);
+				}
+			}
+		}
+
+		private class ChamberActionButton : UIPanel
 		{
 			private readonly Action onClick;
 			private readonly Color idleBg;
 			private readonly Color hoverBg;
-			private readonly Color idleBorder;
+			private readonly Color border;
 
-			public ActionCardButton(string mainText, string subText, Color idleBg, Color hoverBg, Color border, Action onClick)
+			public ChamberActionButton(string text, Color idleBg, Color hoverBg, Color border, Action onClick)
 			{
 				this.onClick = onClick;
 				this.idleBg = idleBg;
 				this.hoverBg = hoverBg;
-				this.idleBorder = border;
+				this.border = border;
 
 				SetPadding(0f);
 				BackgroundColor = idleBg;
 				BorderColor = border;
 
-				var main = new UIText(mainText, 0.90f)
+				var label = new UIText(text, 0.88f)
 				{
 					HAlign = 0.5f,
+					VAlign = 0.5f,
 					TextColor = Color.White
 				};
-				main.Top.Set(12f, 0f);
-				Append(main);
-
-				var sub = new UIText(subText, 0.72f)
-				{
-					HAlign = 0.5f,
-					TextColor = new Color(200, 220, 240)
-				};
-				sub.Top.Set(36f, 0f);
-				Append(sub);
+				Append(label);
 			}
 
 			public override void LeftClick(UIMouseEvent evt)
@@ -312,26 +634,23 @@ namespace Augments
 			}
 		}
 
-		// Clean tab switcher button
 		private class TabButton : UIPanel
 		{
 			private readonly Action onClick;
-			private readonly bool isActive;
 
-			public TabButton(string text, bool isActive, Action onClick)
+			public TabButton(string text, Action onClick)
 			{
-				this.isActive = isActive;
 				this.onClick = onClick;
 
 				SetPadding(0f);
-				BackgroundColor = isActive ? new Color(25, 38, 72) : new Color(14, 18, 34);
-				BorderColor = isActive ? new Color(0, 200, 255) : new Color(45, 60, 95);
+				BackgroundColor = new Color(20, 28, 54);
+				BorderColor = new Color(45, 75, 120);
 
 				var label = new UIText(text, 0.80f)
 				{
 					HAlign = 0.5f,
 					VAlign = 0.5f,
-					TextColor = isActive ? Color.White : new Color(140, 160, 190)
+					TextColor = new Color(180, 215, 255)
 				};
 				Append(label);
 			}
@@ -339,29 +658,20 @@ namespace Augments
 			public override void LeftClick(UIMouseEvent evt)
 			{
 				base.LeftClick(evt);
-				if (!isActive)
-				{
-					SoundEngine.PlaySound(SoundID.MenuTick);
-					onClick?.Invoke();
-				}
+				SoundEngine.PlaySound(SoundID.MenuTick);
+				onClick?.Invoke();
 			}
 
 			public override void MouseOver(UIMouseEvent evt)
 			{
 				base.MouseOver(evt);
-				if (!isActive)
-				{
-					BackgroundColor = new Color(22, 30, 56);
-				}
+				BackgroundColor = new Color(30, 42, 80);
 			}
 
 			public override void MouseOut(UIMouseEvent evt)
 			{
 				base.MouseOut(evt);
-				if (!isActive)
-				{
-					BackgroundColor = new Color(14, 18, 34);
-				}
+				BackgroundColor = new Color(20, 28, 54);
 			}
 		}
 

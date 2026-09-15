@@ -95,22 +95,16 @@ namespace Augments
 
         public override void SetChatButtons(ref string button, ref string button2)
         {
-            button = "Decrypt Chips";
-            button2 = "Chip Storage";
+            button = "Plug-in Chips";
         }
 
         public override void OnChatButtonClicked(bool firstButton, ref string shopName)
         {
-            Main.QueueMainThreadAction(Main.CloseNPCChatOrSign);
+            if (!firstButton)
+                return;
 
-            if (firstButton)
-            {
-                ModContent.GetInstance<AugmentUISystem>().ShowGacha();
-            }
-            else
-            {
-                ModContent.GetInstance<AugmentUISystem>().ShowShop();
-            }
+            Main.QueueMainThreadAction(Main.CloseNPCChatOrSign);
+            ModContent.GetInstance<AugmentUISystem>().ShowShop();
         }
     }
 }

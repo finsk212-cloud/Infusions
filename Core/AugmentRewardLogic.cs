@@ -59,7 +59,7 @@ namespace Augments
 				Main.NewText(message, 255, 100, 100);
 		}
 
-		private static IEnumerable<AugmentRarity> GetRarityFallbackOrder(AugmentRarity rolledRarity)
+		public static IEnumerable<AugmentRarity> GetRarityFallbackOrder(AugmentRarity rolledRarity)
 		{
 			yield return rolledRarity;
 
