@@ -34,6 +34,16 @@ Items: {
 		Tooltip: A pulsing power unit salvaged from machines, traded with Mistress 2B to acquire and re-forge Plug-in Chips.
 	}
 
+	SealedChipCacheItem: {
+		DisplayName: Sealed Chip Cache
+		Tooltip:
+			'''
+			Encrypted YoRHa combat salvage pod
+			Right-click to decrypt and choose 1 of 3 Plug-in Chips
+			Chip tier scales with your world's boss progression
+			'''
+	}
+
 	MediGunItem: {
 		DisplayName: Medi Gun MK I
 		Tooltip:

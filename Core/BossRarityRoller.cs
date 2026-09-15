@@ -37,7 +37,7 @@ namespace Augments
 			return AugmentRarity.Legendary;
 		}
 
-		private static RarityRollChances GetChancesForBracket(RarityBracket bracket)
+		public static RarityRollChances GetChancesForBracket(RarityBracket bracket)
 		{
 			return bracket switch
 			{

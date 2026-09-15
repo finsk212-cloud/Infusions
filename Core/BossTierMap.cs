@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Terraria;
 using Terraria.ID;
 
 namespace Augments
@@ -57,6 +58,38 @@ namespace Augments
 			if (Brackets.TryGetValue(npcType, out var bracket))
 				return bracket;
 			return RarityBracket.PreHardmode; // safe fallback for anything not yet mapped
+		}
+
+		public static RarityBracket GetCurrentWorldBracket()
+		{
+			if (NPC.downedMoonlord)
+				return RarityBracket.EarlyPostMoonLord;
+
+			if (NPC.downedPlantBoss || NPC.downedGolemBoss || NPC.downedFishron || NPC.downedEmpressOfLight || NPC.downedAncientCultist)
+				return RarityBracket.PostPlantera;
+
+			if (NPC.downedMechBoss1 || NPC.downedMechBoss2 || NPC.downedMechBoss3)
+				return RarityBracket.PostMechs;
+
+			if (Main.hardMode || NPC.downedQueenSlime)
+				return RarityBracket.EarlyHardmode;
+
+			return RarityBracket.PreHardmode;
+		}
+
+		public static string GetBracketName(RarityBracket bracket)
+		{
+			return bracket switch
+			{
+				RarityBracket.PreHardmode => "Pre-Hardmode",
+				RarityBracket.EarlyHardmode => "Early Hardmode",
+				RarityBracket.PostMechs => "Post-Mechanical",
+				RarityBracket.PostPlantera => "Post-Plantera",
+				RarityBracket.EarlyPostMoonLord => "Post-Moon Lord",
+				RarityBracket.LatePostMoonLord => "Late Endgame",
+				RarityBracket.FinalCalamity => "Final Protocol",
+				_ => "Standard"
+			};
 		}
 	}
 }
