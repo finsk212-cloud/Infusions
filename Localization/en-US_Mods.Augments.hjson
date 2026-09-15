@@ -48,8 +48,12 @@ Items: {
 		DisplayName: Medi Gun MK I
 		Tooltip:
 			'''
-			Hold to lock onto a nearby teammate and channel a healing beam
-			Heals 3 HP per second
+			Hold Left-Click to lock onto a nearby ally or town NPC and channel a healing beam
+			Heals 3 HP per second (tripled during ÜberCharge)
+			Healing builds ÜberCharge over ~35 seconds
+			Press Right-Click at 100% to pop ÜberCharge for 8 seconds:
+			- Complete invulnerability to damage and knockback for you and your patient
+			- +20% movement speed
 			Tether breaks if line of sight is obstructed or distance exceeds range
 			'''
 	}
@@ -58,8 +62,12 @@ Items: {
 		DisplayName: Medi Gun MK II
 		Tooltip:
 			'''
-			Hold to lock onto a nearby teammate and channel an advanced healing beam
-			Heals 6 HP per second with extended tether range
+			Hold Left-Click to lock onto a nearby ally or town NPC and channel an advanced healing beam
+			Heals 6 HP per second (tripled during ÜberCharge) with extended tether range
+			Healing builds ÜberCharge over ~30 seconds
+			Press Right-Click at 100% to pop Reinforced ÜberCharge for 8.5 seconds:
+			- Complete invulnerability to damage and knockback for you and your patient
+			- +25% movement speed and +10% damage
 			Tether breaks if line of sight is obstructed or distance exceeds range
 			'''
 	}
@@ -68,8 +76,12 @@ Items: {
 		DisplayName: Medi Gun MK III
 		Tooltip:
 			'''
-			Hold to lock onto a nearby teammate and channel an advanced spectral healing beam
-			Heals 10 HP per second with maximum tether range
+			Hold Left-Click to lock onto a nearby ally or town NPC and channel an advanced spectral healing beam
+			Heals 10 HP per second (tripled during ÜberCharge) with maximum tether range
+			Healing builds ÜberCharge over ~25 seconds
+			Press Right-Click at 100% to pop Prismatic Overdrive for 9 seconds:
+			- Complete invulnerability to damage, knockback, and debuffs for you and your patient
+			- +30% movement speed, +15% damage, and +15% critical strike chance
 			Tether breaks if line of sight is obstructed or distance exceeds range
 			'''
 	}
@@ -78,14 +90,23 @@ Items: {
 		DisplayName: Medi Gun MK IV
 		Tooltip:
 			'''
-			Hold to lock onto a nearby teammate and channel an ultimate celestial healing beam
-			Heals 16 HP per second with screen-wide tether range
+			Hold Left-Click to lock onto a nearby ally or town NPC and channel an ultimate celestial healing beam
+			Heals 16 HP per second (tripled during ÜberCharge) with screen-wide tether range
+			Healing builds ÜberCharge over ~20 seconds
+			Press Right-Click at 100% to pop Celestial Apotheosis for 10 seconds:
+			- Complete invulnerability to damage, knockback, and debuffs for you and your patient
+			- +35% movement speed, +25% damage, +25% critical strike chance, and unlimited flight time
 			Tether breaks if line of sight is obstructed or distance exceeds range
 			'''
 	}
 }
 
 Buffs: {
+	UberChargeBuff: {
+		DisplayName: ÜberCharge
+		Description: Completely invulnerable to damage with amplified mobility and combat stats.
+	}
+
 	SupportClassBuff: {
 		DisplayName: Support Class
 		Description: Your aura chips are active.

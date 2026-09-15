@@ -13,6 +13,8 @@ namespace Augments
 		CleanseRequest,
 		CleanseClearDebuffs,
 		MediGunHealRequest,
+		MediGunUberActivate,
+		MediGunUberBroadcast,
 		BossDamageParticipation,  // client → server: "I damaged boss type X this fight"
 		SupportHealVisual,
 		LifelineTrigger,
@@ -116,6 +118,14 @@ namespace Augments
 
 				case AugmentPacketType.MediGunHealRequest:
 					SupportEffects.HandleMediGunHealRequest(whoAmI, reader.ReadByte(), reader.ReadInt32());
+					break;
+
+				case AugmentPacketType.MediGunUberActivate:
+					SupportEffects.HandleMediGunUberActivate(whoAmI, reader.ReadByte(), reader.ReadInt16());
+					break;
+
+				case AugmentPacketType.MediGunUberBroadcast:
+					SupportEffects.HandleMediGunUberBroadcast(reader.ReadByte(), reader.ReadByte(), reader.ReadInt16());
 					break;
 
 				case AugmentPacketType.SupportHealVisual:

@@ -131,6 +131,16 @@ namespace Augments
 			);
 
 			layers.Insert(mouseTextIndex, new LegacyGameInterfaceLayer(
+				"Augments: Medi Gun HUD",
+				delegate
+				{
+					MediGunHUDOverlay.Draw(Main.spriteBatch);
+					return true;
+				},
+				InterfaceScaleType.Game)
+			);
+
+			layers.Insert(mouseTextIndex, new LegacyGameInterfaceLayer(
 				"Augments: Choice UI",
 				delegate
 				{
