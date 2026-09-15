@@ -140,9 +140,10 @@ namespace Augments.Projectiles
                     Projectile.netUpdate = true;
                 }
 
-                // 3. Clean Divine Healing Pulses and ÜberCharge building (owner only)
+                // 3. Clean Divine Healing Pulses and Overclock building (owner only)
                 var mediPlayer = player.GetModPlayer<MediGunPlayer>();
                 mediPlayer.CurrentPatientWhoAmI = targetPlayerWhoAmI;
+                mediPlayer.CurrentTargetNPCWhoAmI = targetNPCWhoAmI;
 
                 bool isLocked = targetPlayerWhoAmI >= 0 || targetNPCWhoAmI >= 0;
                 if (isLocked)
@@ -152,10 +153,6 @@ namespace Augments.Projectiles
                     {
                         Player target = Main.player[targetPlayerWhoAmI];
                         isTargetHurt = target.statLife < target.statLifeMax2;
-                        if (mediPlayer.IsUberActive)
-                        {
-                            target.AddBuff(ModContent.BuffType<UberChargeBuff>(), 10);
-                        }
                     }
                     else if (targetNPCWhoAmI >= 0)
                     {
@@ -163,16 +160,15 @@ namespace Augments.Projectiles
                         isTargetHurt = npc.life < npc.lifeMax;
                     }
 
-                    // Build ÜberCharge while actively tethered (~20s full charge)
-                    if (!mediPlayer.IsUberActive && mediPlayer.UberCharge < 100f)
+                    // Build Overclock while actively tethered (~20s full charge)
+                    if (mediPlayer.OverclockCharge < 100f)
                     {
                         float chargeGain = isTargetHurt ? (100f / (20f * 60f)) : (100f / (26f * 60f));
-                        mediPlayer.UberCharge = Math.Min(100f, mediPlayer.UberCharge + chargeGain);
+                        mediPlayer.OverclockCharge = Math.Min(100f, mediPlayer.OverclockCharge + chargeGain);
                     }
 
                     healPulseTimer++;
-                    int effectiveInterval = mediPlayer.IsUberActive ? (HealPulseInterval / 3) : HealPulseInterval;
-                    if (healPulseTimer >= effectiveInterval)
+                    if (healPulseTimer >= HealPulseInterval)
                     {
                         healPulseTimer = 0;
 
@@ -193,7 +189,7 @@ namespace Augments.Projectiles
                                     packet.Write(HealAmount);
                                     packet.Send();
                                 }
-                                SoundEngine.PlaySound(SoundID.Item29 with { Volume = mediPlayer.IsUberActive ? 0.15f : 0.08f, Pitch = mediPlayer.IsUberActive ? 1.05f : 0.95f }, target.Center);
+                                SoundEngine.PlaySound(SoundID.Item29 with { Volume = 0.08f, Pitch = 0.95f }, target.Center);
                             }
                         }
                         else if (targetNPCWhoAmI >= 0)
@@ -436,26 +432,23 @@ namespace Augments.Projectiles
                 float segLen = Math.Max(1f, segDiff.Length());
                 float segRot = (float)Math.Atan2(segDiff.Y, segDiff.X);
 
-                var mediPlayer = player.GetModPlayer<MediGunPlayer>();
-                bool isUber = mediPlayer.IsUberActive;
+                // 1. Soft Golden Healing Halo (8px)
+                Color outerHalo = isLocked
+                    ? new Color(255, 210, 80, 55) * 0.8f
+                    : new Color(240, 190, 80, 30) * 0.5f;
+                Main.EntitySpriteDraw(pixel, centerPoints[i - 1] - Main.screenPosition, new Rectangle(0, 0, (int)segLen + 1, 8), outerHalo, segRot, origin, 1f, SpriteEffects.None, 0);
 
-                // 1. Soft Golden Healing Halo
-                Color outerHalo = isUber
-                    ? new Color(255, 225, 90, 150) * 0.95f
-                    : (isLocked ? new Color(255, 210, 80, 55) * 0.8f : new Color(240, 190, 80, 30) * 0.5f);
-                Main.EntitySpriteDraw(pixel, centerPoints[i - 1] - Main.screenPosition, new Rectangle(0, 0, (int)segLen + 1, isUber ? 16 : 8), outerHalo, segRot, origin, 1f, SpriteEffects.None, 0);
+                // 2. Focused Radiant Gold Core (3px)
+                Color coreColor = isLocked
+                    ? new Color(255, 235, 140, 190)
+                    : new Color(245, 215, 120, 130);
+                Main.EntitySpriteDraw(pixel, centerPoints[i - 1] - Main.screenPosition, new Rectangle(0, 0, (int)segLen + 1, 3), coreColor, segRot, origin, 1f, SpriteEffects.None, 0);
 
-                // 2. Focused Radiant Gold Core
-                Color coreColor = isUber
-                    ? new Color(255, 250, 180, 240)
-                    : (isLocked ? new Color(255, 235, 140, 190) : new Color(245, 215, 120, 130));
-                Main.EntitySpriteDraw(pixel, centerPoints[i - 1] - Main.screenPosition, new Rectangle(0, 0, (int)segLen + 1, isUber ? 6 : 3), coreColor, segRot, origin, 1f, SpriteEffects.None, 0);
-
-                // 3. Central Pure Luminous White Filament
-                Color filament = isUber
+                // 3. Central Pure Luminous White Filament (1px)
+                Color filament = isLocked
                     ? Color.White
-                    : (isLocked ? Color.White : new Color(255, 255, 245, 200));
-                Main.EntitySpriteDraw(pixel, centerPoints[i - 1] - Main.screenPosition, new Rectangle(0, 0, (int)segLen + 1, isUber ? 3 : 1), filament, segRot, origin, 1f, SpriteEffects.None, 0);
+                    : new Color(255, 255, 245, 200);
+                Main.EntitySpriteDraw(pixel, centerPoints[i - 1] - Main.screenPosition, new Rectangle(0, 0, (int)segLen + 1, 1), filament, segRot, origin, 1f, SpriteEffects.None, 0);
             }
 
             // ==========================================

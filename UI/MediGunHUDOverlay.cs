@@ -40,9 +40,9 @@ namespace Augments
 			spriteBatch.Draw(pixel, bgRect, new Color(12, 16, 24, 210));
 
 			// Border
-			Color borderColor = mediPlayer.IsUberActive
-				? new Color(80, 240, 255, 230)
-				: (mediPlayer.UberCharge >= 100f ? new Color(255, 220, 60, 230) : new Color(35, 55, 80, 200));
+			Color borderColor = mediPlayer.OverclockCharge >= 100f
+				? new Color(255, 220, 60, 230)
+				: new Color(35, 55, 80, 200);
 
 			DrawBorder(spriteBatch, pixel, bgRect, borderColor);
 
@@ -53,30 +53,18 @@ namespace Augments
 
 			float time = (float)Main.GlobalTimeWrappedHourly;
 
-			if (mediPlayer.IsUberActive)
-			{
-				progress = mediPlayer.UberDurationMax > 0
-					? (mediPlayer.UberActiveTimer / (float)mediPlayer.UberDurationMax)
-					: 0f;
-
-				float pulse = 0.8f + 0.2f * (float)Math.Sin(time * 15f);
-				fillColor = (tier == 4 ? new Color(255, 220, 70) : new Color(60, 230, 255)) * pulse;
-
-				float remainingSec = mediPlayer.UberActiveTimer / 60f;
-				label = $"ÜBER: {remainingSec:0.0}s";
-			}
-			else if (mediPlayer.UberCharge >= 100f)
+			if (mediPlayer.OverclockCharge >= 100f)
 			{
 				progress = 1f;
 				float flash = 0.75f + 0.25f * (float)Math.Sin(time * 10f);
 				fillColor = new Color(255, 215, 60) * flash;
-				label = "ÜBER READY";
+				label = "OVERCLOCK READY";
 			}
 			else
 			{
-				progress = MathHelper.Clamp(mediPlayer.UberCharge / 100f, 0f, 1f);
+				progress = MathHelper.Clamp(mediPlayer.OverclockCharge / 100f, 0f, 1f);
 				fillColor = Color.Lerp(new Color(40, 140, 220), new Color(0, 235, 210), progress);
-				label = $"ÜBER: {(int)mediPlayer.UberCharge}%";
+				label = $"OVERCLOCK: {(int)mediPlayer.OverclockCharge}%";
 			}
 
 			int innerPadding = 2;
@@ -102,9 +90,7 @@ namespace Augments
 
 			// Text drop shadow
 			spriteBatch.DrawString(font, label, textPos + new Vector2(1f, 1f), Color.Black * 0.85f, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
-			Color textCol = mediPlayer.IsUberActive
-				? Color.White
-				: (mediPlayer.UberCharge >= 100f ? new Color(255, 255, 200) : new Color(210, 235, 255));
+			Color textCol = mediPlayer.OverclockCharge >= 100f ? new Color(255, 255, 200) : new Color(210, 235, 255);
 			spriteBatch.DrawString(font, label, textPos, textCol, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
 		}
 

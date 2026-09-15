@@ -193,81 +193,37 @@ namespace Augments
 			ServerHealPlayer(target, clampedHeal);
 		}
 
-		public static void HandleMediGunUberActivate(int senderWhoAmI, byte tier, short patientWhoAmI)
+		public static void HandleMediGunOverclockActivate(int senderWhoAmI, byte tier, byte targetPlayerIndex)
 		{
-			if (Main.netMode != NetmodeID.Server || senderWhoAmI < 0 || senderWhoAmI >= Main.maxPlayers)
+			if (Main.netMode != NetmodeID.Server || senderWhoAmI < 0 || senderWhoAmI >= Main.maxPlayers || targetPlayerIndex >= Main.maxPlayers)
 				return;
 
 			Player sender = Main.player[senderWhoAmI];
-			if (!sender.active || sender.dead)
+			Player target = Main.player[targetPlayerIndex];
+
+			if (!sender.active || sender.dead || !target.active || target.dead || !AreAllies(sender, target))
 				return;
 
-			var mediPlayer = sender.GetModPlayer<MediGunPlayer>();
-			int duration = tier switch
+			int healAmount = tier switch
 			{
-				1 => 480,
-				2 => 510,
-				3 => 540,
-				4 => 600,
-				_ => 480
-			};
-			mediPlayer.UberTier = tier;
-			mediPlayer.UberDurationMax = duration;
-			mediPlayer.UberActiveTimer = duration;
-			mediPlayer.CurrentPatientWhoAmI = patientWhoAmI;
-			sender.AddBuff(ModContent.BuffType<UberChargeBuff>(), duration);
-
-			if (patientWhoAmI >= 0 && patientWhoAmI < Main.maxPlayers)
-			{
-				Player patient = Main.player[patientWhoAmI];
-				if (patient.active && !patient.dead && AreAllies(sender, patient))
-				{
-					patient.AddBuff(ModContent.BuffType<UberChargeBuff>(), duration);
-				}
-			}
-
-			// Broadcast to all other clients
-			ModPacket packet = ModContent.GetInstance<Augments>().GetPacket();
-			packet.Write((byte)AugmentPacketType.MediGunUberBroadcast);
-			packet.Write((byte)senderWhoAmI);
-			packet.Write(tier);
-			packet.Write(patientWhoAmI);
-			packet.Send(-1, senderWhoAmI);
-		}
-
-		public static void HandleMediGunUberBroadcast(byte senderWhoAmI, byte tier, short patientWhoAmI)
-		{
-			if (senderWhoAmI >= Main.maxPlayers)
-				return;
-
-			Player sender = Main.player[senderWhoAmI];
-			if (!sender.active || sender.dead)
-				return;
-
-			int duration = tier switch
-			{
-				1 => 480,
-				2 => 510,
-				3 => 540,
-				4 => 600,
-				_ => 480
+				1 => 30,
+				2 => 50,
+				3 => 75,
+				4 => 110,
+				_ => 30
 			};
 
-			var mediPlayer = sender.GetModPlayer<MediGunPlayer>();
-			mediPlayer.UberTier = tier;
-			mediPlayer.UberDurationMax = duration;
-			mediPlayer.UberActiveTimer = duration;
-			mediPlayer.CurrentPatientWhoAmI = patientWhoAmI;
-			sender.AddBuff(ModContent.BuffType<UberChargeBuff>(), duration);
-
-			if (patientWhoAmI >= 0 && patientWhoAmI < Main.maxPlayers)
+			int buffDuration = tier switch
 			{
-				Player patient = Main.player[patientWhoAmI];
-				if (patient.active && !patient.dead)
-				{
-					patient.AddBuff(ModContent.BuffType<UberChargeBuff>(), duration);
-				}
-			}
+				1 => 360,
+				2 => 390,
+				3 => 420,
+				4 => 480,
+				_ => 360
+			};
+
+			ServerHealPlayer(target, healAmount);
+			target.AddBuff(ModContent.BuffType<OverclockBuff>(), buffDuration);
 		}
 
 		public static void HandleLifelineRequest(int whoAmI)
