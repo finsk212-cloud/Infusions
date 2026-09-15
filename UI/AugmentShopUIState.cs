@@ -66,20 +66,9 @@ namespace Augments
 			backPanel.BackgroundColor = new Color(20, 28, 54);
 			backPanel.BorderColor = new Color(38, 52, 98);
 
-			// Navigation Tabs
-			var decryptTab = new GlowTabButton("[c/4CA8D8:★]  [c/EAD8B0:Decrypt Chips]  [c/4CA8D8:★]", () => ModContent.GetInstance<AugmentUISystem>().ShowGacha());
-			decryptTab.Left.Set(14f, 0f);
-			decryptTab.Top.Set(10f, 0f);
-			decryptTab.Width.Set(156f, 0f);
-			decryptTab.Height.Set(26f, 0f);
-			backPanel.Append(decryptTab);
-
-			var storageTab = new TabButton("Chip Storage", true, null);
-			storageTab.Left.Set(176f, 0f);
-			storageTab.Top.Set(10f, 0f);
-			storageTab.Width.Set(120f, 0f);
-			storageTab.Height.Set(26f, 0f);
-			backPanel.Append(storageTab);
+			// Navigation Tabs (Disabled for now - Decryption Chamber preserved in code)
+			// var decryptTab = new GlowTabButton("[c/4CA8D8:★]  [c/EAD8B0:Decrypt Chips]  [c/4CA8D8:★]", () => ModContent.GetInstance<AugmentUISystem>().ShowGacha());
+			// backPanel.Append(decryptTab);
 
 			// Close Button in top-right corner
 			var closeButton = new CloseButton();
