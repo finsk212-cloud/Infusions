@@ -41,14 +41,14 @@ namespace Augments
 		{
 			return bracket switch
 			{
-				RarityBracket.PreHardmode => new RarityRollChances(85, 15, 0, 0),
-				RarityBracket.EarlyHardmode => new RarityRollChances(55, 40, 5, 0),
-				RarityBracket.PostMechs => new RarityRollChances(35, 40, 20, 5),
-				RarityBracket.PostPlantera => new RarityRollChances(25, 35, 25, 15),
-				RarityBracket.EarlyPostMoonLord => new RarityRollChances(20, 35, 30, 15),
-				RarityBracket.LatePostMoonLord => new RarityRollChances(15, 25, 35, 25),
-				RarityBracket.FinalCalamity => new RarityRollChances(10, 20, 30, 40),
-				_ => new RarityRollChances(85, 15, 0, 0)
+				RarityBracket.PreHardmode => new RarityRollChances(80, 15, 5, 0),
+				RarityBracket.EarlyHardmode => new RarityRollChances(50, 38, 10, 2),
+				RarityBracket.PostMechs => new RarityRollChances(34, 30, 30, 6),
+				RarityBracket.PostPlantera => new RarityRollChances(25, 25, 35, 15),
+				RarityBracket.EarlyPostMoonLord => new RarityRollChances(15, 20, 40, 25),
+				RarityBracket.LatePostMoonLord => new RarityRollChances(10, 15, 40, 35),
+				RarityBracket.FinalCalamity => new RarityRollChances(5, 10, 35, 50),
+				_ => new RarityRollChances(80, 15, 5, 0)
 			};
 		}
 	}
