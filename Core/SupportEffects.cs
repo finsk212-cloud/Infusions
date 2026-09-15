@@ -204,23 +204,9 @@ namespace Augments
 			if (!sender.active || sender.dead || !target.active || target.dead || !AreAllies(sender, target))
 				return;
 
-			int healAmount = tier switch
-			{
-				1 => 30,
-				2 => 50,
-				3 => 75,
-				4 => 110,
-				_ => 30
-			};
-
-			int buffDuration = tier switch
-			{
-				1 => 360,
-				2 => 390,
-				3 => 420,
-				4 => 480,
-				_ => 360
-			};
+			// MK1 Overclock: 30 HP heal and 6s OverclockBuff (+20% speed) to ally
+			int healAmount = 30;
+			int buffDuration = 360; // 6s
 
 			ServerHealPlayer(target, healAmount);
 			target.AddBuff(ModContent.BuffType<OverclockBuff>(), buffDuration);

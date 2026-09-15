@@ -143,33 +143,10 @@ namespace Augments.Projectiles
                     Projectile.netUpdate = true;
                 }
 
-                // 3. Healing pulses and Overclock building (owner only)
-                var mediPlayer = player.GetModPlayer<MediGunPlayer>();
-                mediPlayer.CurrentPatientWhoAmI = targetPlayerWhoAmI;
-                mediPlayer.CurrentTargetNPCWhoAmI = targetNPCWhoAmI;
-
+                // 3. Healing pulses (owner only)
                 bool isLocked = targetPlayerWhoAmI >= 0 || targetNPCWhoAmI >= 0;
                 if (isLocked)
                 {
-                    bool isTargetHurt = false;
-                    if (targetPlayerWhoAmI >= 0)
-                    {
-                        Player target = Main.player[targetPlayerWhoAmI];
-                        isTargetHurt = target.statLife < target.statLifeMax2;
-                    }
-                    else if (targetNPCWhoAmI >= 0)
-                    {
-                        NPC npc = Main.npc[targetNPCWhoAmI];
-                        isTargetHurt = npc.life < npc.lifeMax;
-                    }
-
-                    // Build Overclock while actively tethered (~30s full charge)
-                    if (mediPlayer.OverclockCharge < 100f)
-                    {
-                        float chargeGain = isTargetHurt ? (100f / (30f * 60f)) : (100f / (38f * 60f));
-                        mediPlayer.OverclockCharge = Math.Min(100f, mediPlayer.OverclockCharge + chargeGain);
-                    }
-
                     healPulseTimer++;
                     if (healPulseTimer >= HealPulseInterval)
                     {

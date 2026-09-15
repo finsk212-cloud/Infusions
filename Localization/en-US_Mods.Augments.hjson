@@ -65,11 +65,6 @@ Items: {
 			'''
 			Hold Left-Click to lock onto a nearby ally or town NPC and channel an advanced healing beam
 			Heals 6 HP per second with extended tether range
-			Healing builds Overclock charge over ~30 seconds
-			Press Right-Click at 100% to activate Overclock:
-			- Instantly restores 50 HP to the tethered ally
-			- Grants the ally +25% movement speed for 6.5 seconds
-			- Grants no buffs to the medic
 			Tether breaks if line of sight is obstructed or distance exceeds range
 			'''
 	}
@@ -80,11 +75,6 @@ Items: {
 			'''
 			Hold Left-Click to lock onto a nearby ally or town NPC and channel an advanced spectral healing beam
 			Heals 10 HP per second with maximum tether range
-			Healing builds Overclock charge over ~25 seconds
-			Press Right-Click at 100% to activate Overclock:
-			- Instantly restores 75 HP to the tethered ally
-			- Grants the ally +30% movement speed for 7 seconds
-			- Grants no buffs to the medic
 			Tether breaks if line of sight is obstructed or distance exceeds range
 			'''
 	}
@@ -95,11 +85,6 @@ Items: {
 			'''
 			Hold Left-Click to lock onto a nearby ally or town NPC and channel an ultimate celestial healing beam
 			Heals 16 HP per second with screen-wide tether range
-			Healing builds Overclock charge over ~20 seconds
-			Press Right-Click at 100% to activate Overclock:
-			- Instantly restores 110 HP to the tethered ally
-			- Grants the ally +35% movement speed for 8 seconds
-			- Grants no buffs to the medic
 			Tether breaks if line of sight is obstructed or distance exceeds range
 			'''
 	}
