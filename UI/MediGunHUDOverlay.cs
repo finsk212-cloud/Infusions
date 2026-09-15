@@ -70,7 +70,7 @@ namespace Augments
 				progress = 1f;
 				float flash = 0.75f + 0.25f * (float)Math.Sin(time * 10f);
 				fillColor = new Color(255, 215, 60) * flash;
-				label = "READY [R-CLICK]";
+				label = "ÜBER READY";
 			}
 			else
 			{
