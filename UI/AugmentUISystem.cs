@@ -22,6 +22,10 @@ namespace Augments
 		private UserInterface shopInterface;
 		private AugmentShopUIState shopState;
 
+		// --- Vendor gacha decryption panel ---
+		private UserInterface gachaInterface;
+		private AugmentGachaUIState gachaState;
+
 		private GameTime lastUpdateUiGameTime;
 
 		public override void Load()
@@ -40,6 +44,10 @@ namespace Augments
 			shopInterface = new UserInterface();
 			shopState = new AugmentShopUIState();
 			shopState.Activate();
+
+			gachaInterface = new UserInterface();
+			gachaState = new AugmentGachaUIState();
+			gachaState.Activate();
 		}
 
 		// Called every frame - keeps both panels' buttons/hover states responsive.
@@ -55,6 +63,9 @@ namespace Augments
 
 			if (shopInterface?.CurrentState != null)
 				shopInterface.Update(gameTime);
+
+			if (gachaInterface?.CurrentState != null)
+				gachaInterface.Update(gameTime);
 		}
 
 		// Slots both panels into Terraria's actual draw order.
@@ -131,6 +142,17 @@ namespace Augments
 			);
 
 			layers.Insert(mouseTextIndex, new LegacyGameInterfaceLayer(
+				"Augments: Gacha UI",
+				delegate
+				{
+					if (lastUpdateUiGameTime != null && gachaInterface?.CurrentState != null)
+						gachaInterface.Draw(Main.spriteBatch, lastUpdateUiGameTime);
+					return true;
+				},
+				InterfaceScaleType.UI)
+			);
+
+			layers.Insert(mouseTextIndex, new LegacyGameInterfaceLayer(
 				"Augments: Shop UI",
 				delegate
 				{
@@ -188,6 +210,8 @@ namespace Augments
 				listState.Refresh();
 			if (IsShopOpen)
 				shopState.Refresh();
+			if (IsGachaOpen)
+				gachaState.Refresh();
 		}
 
 		// --- "Your Augments" list controls ---
@@ -219,6 +243,9 @@ namespace Augments
 		{
 			if (shopState == null)
 				return;
+
+			if (IsGachaOpen)
+				HideGacha();
 
 			int essenceType = ModContent.ItemType<AugmentEssenceItem>();
 			for (int i = 0; i < Main.maxItems; i++)
@@ -252,5 +279,48 @@ namespace Augments
 		}
 
 		public bool IsShopOpen => shopInterface?.CurrentState != null;
+
+		// --- Vendor gacha decryption panel controls ---
+
+		public void ShowGacha()
+		{
+			if (gachaState == null)
+				return;
+
+			if (IsShopOpen)
+				HideShop();
+
+			int essenceType = ModContent.ItemType<AugmentEssenceItem>();
+			for (int i = 0; i < Main.maxItems; i++)
+			{
+				Item it = Main.item[i];
+				if (it.active && it.type == essenceType && Vector2.Distance(it.Center, Main.LocalPlayer.Center) < 600f)
+				{
+					Main.LocalPlayer.QuickSpawnItem(Main.LocalPlayer.GetSource_FromThis(), essenceType, it.stack);
+					it.active = false;
+					it.type = ItemID.None;
+					if (Main.netMode == NetmodeID.Server)
+						NetMessage.SendData(MessageID.SyncItem, -1, -1, null, i);
+				}
+			}
+
+			gachaState.Refresh();
+			gachaInterface?.SetState(gachaState);
+		}
+
+		public void HideGacha()
+		{
+			gachaInterface?.SetState(null);
+		}
+
+		public void ToggleGacha()
+		{
+			if (IsGachaOpen)
+				HideGacha();
+			else
+				ShowGacha();
+		}
+
+		public bool IsGachaOpen => gachaInterface?.CurrentState != null;
 	}
 }

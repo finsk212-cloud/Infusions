@@ -95,25 +95,22 @@ namespace Augments
 
         public override void SetChatButtons(ref string button, ref string button2)
         {
-            button = "Plug-in Chips";
+            button = "Decrypt Chips";
+            button2 = "Chip Storage";
         }
 
         public override void OnChatButtonClicked(bool firstButton, ref string shopName)
         {
-            if (!firstButton)
-                return;
-
-            // Leave shopName untouched so vanilla's own shop UI doesn't also
-            // open. Closing the chat window has to be deferred a frame:
-            // vanilla's own GUIChatDrawInner calls this hook and then
-            // immediately re-indexes npc[player[myPlayer].talkNPC] afterward
-            // (to check vanilla NPC types for its own shop dispatch) - if we
-            // reset talkNPC synchronously here, that re-index reads npc[-1]
-            // and throws IndexOutOfRangeException. QueueMainThreadAction runs
-            // this at the start of the next Update, after that vanilla call
-            // has already finished.
             Main.QueueMainThreadAction(Main.CloseNPCChatOrSign);
-            ModContent.GetInstance<AugmentUISystem>().ShowShop();
+
+            if (firstButton)
+            {
+                ModContent.GetInstance<AugmentUISystem>().ShowGacha();
+            }
+            else
+            {
+                ModContent.GetInstance<AugmentUISystem>().ShowShop();
+            }
         }
     }
 }

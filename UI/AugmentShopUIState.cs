@@ -11,6 +11,7 @@ using Terraria.UI;
 
 namespace Augments
 {
+	// The vendor's dedicated chip storage panel: "Buy Back" and "Dismantle".
 	public class AugmentShopUIState : UIState
 	{
 		private ShopBackPanel backPanel;
@@ -19,18 +20,9 @@ namespace Augments
 		private UIList buyBackList;
 		private UIList removeList;
 
-		// YoRHa Gacha Decryption Terminal elements
-		private DecryptionTerminalPanel decryptionTerminal;
-		private UIText protocolText;
-		private UIText oddsText;
-		private GachaButton decryptNowButton;
-		private GachaButton buyCacheButton;
-
-		private const float PanelWidth = 840f;
-		private const float PanelHeight = 630f;
-		private const float TerminalTop = 52f;
-		private const float TerminalHeight = 104f;
-		private const float ListsTop = 208f;
+		private const float PanelWidth = 800f;
+		private const float PanelHeight = 520f;
+		private const float ListsTop = 142f;
 
 		public override void Update(GameTime gameTime)
 		{
@@ -52,23 +44,20 @@ namespace Augments
 			backPanel.BackgroundColor = new Color(20, 28, 54);
 			backPanel.BorderColor = new Color(38, 52, 98);
 
-			// Title Header
-			UIText title = new UIText("YoRHa Tactical Terminal", 1.15f)
-			{
-				HAlign = 0.5f,
-				TextColor = new Color(255, 235, 175)
-			};
-			title.Top.Set(10f, 0f);
-			backPanel.Append(title);
+			// Navigation Tabs
+			var decryptTab = new TabButton("Decrypt Chips", false, () => ModContent.GetInstance<AugmentUISystem>().ShowGacha());
+			decryptTab.Left.Set(14f, 0f);
+			decryptTab.Top.Set(10f, 0f);
+			decryptTab.Width.Set(120f, 0f);
+			decryptTab.Height.Set(26f, 0f);
+			backPanel.Append(decryptTab);
 
-			// Subtitle
-			UIText subtitle = new UIText("Mistress 2B's Console — Data Decryption, Chip Archive & Neural Frame Maintenance", 0.74f)
-			{
-				HAlign = 0.5f,
-				TextColor = new Color(155, 170, 200)
-			};
-			subtitle.Top.Set(32f, 0f);
-			backPanel.Append(subtitle);
+			var storageTab = new TabButton("Chip Storage", true, null);
+			storageTab.Left.Set(140f, 0f);
+			storageTab.Top.Set(10f, 0f);
+			storageTab.Width.Set(120f, 0f);
+			storageTab.Height.Set(26f, 0f);
+			backPanel.Append(storageTab);
 
 			// Close Button in top-right corner
 			var closeButton = new CloseButton();
@@ -80,11 +69,11 @@ namespace Augments
 			closeButton.Clicked += () => ModContent.GetInstance<AugmentUISystem>().HideShop();
 			backPanel.Append(closeButton);
 
-			// Currency Badge pill in top-left
+			// Currency Badge pill in top right
 			UIPanel essenceBadge = new UIPanel();
-			essenceBadge.Width.Set(210f, 0f);
+			essenceBadge.Width.Set(190f, 0f);
 			essenceBadge.Height.Set(26f, 0f);
-			essenceBadge.Left.Set(14f, 0f);
+			essenceBadge.Left.Set(-240f, 1f);
 			essenceBadge.Top.Set(10f, 0f);
 			essenceBadge.SetPadding(0f);
 			essenceBadge.BackgroundColor = new Color(15, 22, 42) * 0.95f;
@@ -99,72 +88,29 @@ namespace Augments
 			essenceBadge.Append(essenceText);
 			backPanel.Append(essenceBadge);
 
-			// --- YoRHa Gacha Decryption Terminal ---
-			decryptionTerminal = new DecryptionTerminalPanel();
-			decryptionTerminal.Width.Set(-28f, 1f);
-			decryptionTerminal.Height.Set(TerminalHeight, 0f);
-			decryptionTerminal.Left.Set(14f, 0f);
-			decryptionTerminal.Top.Set(TerminalTop, 0f);
-			decryptionTerminal.BackgroundColor = new Color(10, 16, 32) * 0.95f;
-			decryptionTerminal.BorderColor = new Color(0, 190, 255) * 0.8f;
-
-			var termTitle = new UIText("YORHA DATA DECRYPTION PROTOCOL", 0.90f)
+			// Title Header
+			UIText title = new UIText("Plug-in Chips Storage", 1.15f)
 			{
-				TextColor = new Color(100, 225, 255)
+				HAlign = 0.5f,
+				TextColor = new Color(255, 235, 175)
 			};
-			termTitle.Left.Set(74f, 0f);
-			termTitle.Top.Set(8f, 0f);
-			decryptionTerminal.Append(termTitle);
+			title.Top.Set(44f, 0f);
+			backPanel.Append(title);
 
-			protocolText = new UIText("Active Protocol: Pre-Hardmode Protocol", 0.80f)
+			// Subtitle
+			UIText subtitle = new UIText("Mistress 2B's Archive — Re-acquire archived chips or dismantle equipped chips", 0.76f)
 			{
-				TextColor = new Color(255, 225, 140)
+				HAlign = 0.5f,
+				TextColor = new Color(155, 170, 200)
 			};
-			protocolText.Left.Set(74f, 0f);
-			protocolText.Top.Set(30f, 0f);
-			decryptionTerminal.Append(protocolText);
-
-			oddsText = new UIText("Odds: Common: 80% | Rare: 15% | Epic: 5% | Leg: 0%", 0.75f)
-			{
-				TextColor = new Color(175, 195, 225)
-			};
-			oddsText.Left.Set(74f, 0f);
-			oddsText.Top.Set(52f, 0f);
-			decryptionTerminal.Append(oddsText);
-
-			var costNotice = new UIText("Cost: 3 Machine Cores  --  Decryption offers 3 unowned chips", 0.72f)
-			{
-				TextColor = new Color(130, 215, 180)
-			};
-			costNotice.Left.Set(74f, 0f);
-			costNotice.Top.Set(74f, 0f);
-			decryptionTerminal.Append(costNotice);
-
-			// Decrypt Now Button
-			decryptNowButton = new GachaButton("DECRYPT NOW (3 Cores)", new Color(18, 55, 85), new Color(28, 90, 140), new Color(40, 210, 255) * 0.8f, new Color(100, 240, 255));
-			decryptNowButton.Width.Set(210f, 0f);
-			decryptNowButton.Height.Set(38f, 0f);
-			decryptNowButton.Left.Set(-224f, 1f);
-			decryptNowButton.Top.Set(10f, 0f);
-			decryptNowButton.Clicked += PerformDecryptNow;
-			decryptionTerminal.Append(decryptNowButton);
-
-			// Buy Cache Item Button
-			buyCacheButton = new GachaButton("BUY CACHE ITEM (3 Cores)", new Color(55, 42, 18), new Color(90, 70, 25), new Color(240, 180, 50) * 0.8f, new Color(255, 220, 90), 0.76f);
-			buyCacheButton.Width.Set(210f, 0f);
-			buyCacheButton.Height.Set(34f, 0f);
-			buyCacheButton.Left.Set(-224f, 1f);
-			buyCacheButton.Top.Set(56f, 0f);
-			buyCacheButton.Clicked += PerformBuyCacheItem;
-			decryptionTerminal.Append(buyCacheButton);
-
-			backPanel.Append(decryptionTerminal);
+			subtitle.Top.Set(68f, 0f);
+			backPanel.Append(subtitle);
 
 			// Optional Undo Reforge Bar
 			undoReforgeBar = new UndoReforgeBar(TryUndoReforge);
 			undoReforgeBar.Width.Set(-28f, 1f);
 			undoReforgeBar.HAlign = 0.5f;
-			undoReforgeBar.Top.Set(166f, 0f);
+			undoReforgeBar.Top.Set(90f, 0f);
 			undoReforgeBar.Height.Set(26f, 0f);
 
 			// Column Headers
@@ -174,7 +120,7 @@ namespace Augments
 				TextColor = new Color(150, 225, 255)
 			};
 			buyBackHeader.Left.Set(14f, 0f);
-			buyBackHeader.Top.Set(184f, 0f);
+			buyBackHeader.Top.Set(118f, 0f);
 			backPanel.Append(buyBackHeader);
 
 			UIText removeHeader = new UIText("Equipped (Dismantle)", 0.85f)
@@ -183,7 +129,7 @@ namespace Augments
 				TextColor = new Color(255, 185, 160)
 			};
 			removeHeader.Left.Set(18f, 0.5f);
-			removeHeader.Top.Set(184f, 0f);
+			removeHeader.Top.Set(118f, 0f);
 			backPanel.Append(removeHeader);
 
 			// Left List: Buy Back
@@ -289,76 +235,7 @@ namespace Augments
 			}
 
 			RefreshEssenceText();
-			RefreshGachaTerminal();
 			RefreshUndoReforgeBar();
-		}
-
-		private void RefreshGachaTerminal()
-		{
-			RarityBracket bracket = BossTierMap.GetCurrentWorldBracket();
-			string bracketName = BossTierMap.GetBracketName(bracket);
-			protocolText.SetText($"Active Protocol: {bracketName} Protocol");
-
-			RarityRollChances chances = BossRarityRoller.GetChancesForBracket(bracket);
-			oddsText.SetText($"Odds: [Common: {chances.Common}%]  [Rare: {chances.Rare}%]  [Epic: {chances.Epic}%]  [Legendary: {chances.Legendary}%]");
-		}
-
-		private void PerformDecryptNow()
-		{
-			var player = Main.LocalPlayer;
-			int coreType = ModContent.ItemType<AugmentEssenceItem>();
-			int coreCount = player.CountItem(coreType);
-			if (coreCount < 3)
-			{
-				Main.NewText("Requires 3 Machine Cores to decrypt.", 255, 90, 90);
-				SoundEngine.PlaySound(SoundID.MenuClose);
-				return;
-			}
-
-			// Consume 3 Machine Cores
-			for (int i = 0; i < 3; i++)
-				player.ConsumeItem(coreType);
-
-			// Decryption Audio and FX
-			SoundEngine.PlaySound(SoundID.Research with { Volume = 0.95f, Pitch = 0.1f }, player.Center);
-			for (int i = 0; i < 25; i++)
-			{
-				Dust d = Dust.NewDustDirect(player.position, player.width, player.height, DustID.Electric, Main.rand.NextFloat(-3f, 3f), Main.rand.NextFloat(-3f, 3f), 0, default, 1.3f);
-				d.noGravity = true;
-			}
-			for (int i = 0; i < 15; i++)
-			{
-				Dust d = Dust.NewDustDirect(player.position, player.width, player.height, DustID.GoldFlame, Main.rand.NextFloat(-2f, 2f), Main.rand.NextFloat(-2f, 2f), 0, default, 1.1f);
-				d.noGravity = true;
-			}
-
-			// Close shop and launch 3-Card Decryption modal
-			ModContent.GetInstance<AugmentUISystem>().HideShop();
-			RarityBracket currentBracket = BossTierMap.GetCurrentWorldBracket();
-			AugmentRewardLogic.GrantReward(player, currentBracket);
-		}
-
-		private void PerformBuyCacheItem()
-		{
-			var player = Main.LocalPlayer;
-			int coreType = ModContent.ItemType<AugmentEssenceItem>();
-			int coreCount = player.CountItem(coreType);
-			if (coreCount < 3)
-			{
-				Main.NewText("Requires 3 Machine Cores to purchase.", 255, 90, 90);
-				SoundEngine.PlaySound(SoundID.MenuClose);
-				return;
-			}
-
-			// Consume 3 Machine Cores
-			for (int i = 0; i < 3; i++)
-				player.ConsumeItem(coreType);
-
-			// Award 1 SealedChipCacheItem
-			player.QuickSpawnItem(player.GetSource_FromThis(), ModContent.ItemType<SealedChipCacheItem>());
-			SoundEngine.PlaySound(SoundID.Grab);
-			Main.NewText("Acquired Sealed Chip Cache!", 100, 225, 255);
-			Refresh();
 		}
 
 		private void RefreshUndoReforgeBar()
@@ -437,103 +314,67 @@ namespace Augments
 
 				CalculatedStyle dims = GetDimensions();
 
-				// Header horizontal divider below gacha terminal
-				int divY = (int)dims.Y + 164;
+				// Header horizontal divider
+				int divY = (int)dims.Y + 104;
 				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle((int)dims.X + 14, divY, (int)dims.Width - 28, 1), new Color(45, 62, 105) * 0.7f);
 
 				// Center vertical divider between columns
 				int midX = (int)dims.X + (int)(dims.Width * 0.5f);
-				int listStartY = divY + 16;
-				int listHeight = (int)dims.Height - 195;
+				int listStartY = divY + 8;
+				int listHeight = (int)dims.Height - 128;
 				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(midX, listStartY, 1, listHeight), new Color(45, 62, 105) * 0.7f);
 			}
 		}
 
-		// Animated YoRHa Decryption Terminal display panel
-		private class DecryptionTerminalPanel : UIPanel
+		private class TabButton : UIPanel
 		{
-			protected override void DrawSelf(SpriteBatch spriteBatch)
+			private readonly Action onClick;
+			private readonly bool isActive;
+
+			public TabButton(string text, bool isActive, Action onClick)
 			{
-				base.DrawSelf(spriteBatch);
-
-				CalculatedStyle d = GetDimensions();
-
-				// Draw animated floating Sealed Chip Cache pod sprite
-				if (ModContent.RequestIfExists<Texture2D>("Augments/Items/SealedChipCacheItem", out var cacheAsset))
-				{
-					Texture2D cacheTex = cacheAsset.Value;
-					if (cacheTex != null)
-					{
-						float time = (float)Main.timeForVisualEffects * 0.05f;
-						float bob = (float)Math.Sin(time) * 3f;
-						float pulse = 0.6f + 0.4f * (float)Math.Sin(time * 1.5f);
-						Vector2 podCenter = new Vector2(d.X + 38f, d.Y + d.Height * 0.5f + bob);
-
-						// Cyan ambient glow
-						Texture2D pixel = TextureAssets.MagicPixel.Value;
-						int glowRadius = (int)(22f * pulse);
-						Rectangle glowRect = new Rectangle((int)podCenter.X - glowRadius, (int)podCenter.Y - glowRadius, glowRadius * 2, glowRadius * 2);
-						spriteBatch.Draw(pixel, glowRect, new Color(0, 180, 255) * 0.22f);
-
-						// Draw pod at 1.75x scale
-						Vector2 origin = cacheTex.Size() * 0.5f;
-						spriteBatch.Draw(cacheTex, podCenter, null, Color.White, 0f, origin, 1.75f, SpriteEffects.None, 0f);
-					}
-				}
-			}
-		}
-
-		// Styled Gacha Button
-		private class GachaButton : UIPanel
-		{
-			public event Action Clicked;
-			private readonly UIText label;
-			private readonly Color idleBg;
-			private readonly Color hoverBg;
-			private readonly Color idleBorder;
-			private readonly Color hoverBorder;
-
-			public GachaButton(string text, Color idleBg, Color hoverBg, Color idleBorder, Color hoverBorder, float textScale = 0.82f)
-			{
-				this.idleBg = idleBg;
-				this.hoverBg = hoverBg;
-				this.idleBorder = idleBorder;
-				this.hoverBorder = hoverBorder;
+				this.isActive = isActive;
+				this.onClick = onClick;
 
 				SetPadding(0f);
-				BackgroundColor = idleBg;
-				BorderColor = idleBorder;
+				BackgroundColor = isActive ? new Color(25, 38, 72) : new Color(14, 18, 34);
+				BorderColor = isActive ? new Color(0, 200, 255) : new Color(45, 60, 95);
 
-				label = new UIText(text, textScale)
+				var label = new UIText(text, 0.80f)
 				{
 					HAlign = 0.5f,
 					VAlign = 0.5f,
-					TextColor = Color.White
+					TextColor = isActive ? Color.White : new Color(140, 160, 190)
 				};
 				Append(label);
 			}
 
-			public void SetText(string text) => label.SetText(text);
-
 			public override void LeftClick(UIMouseEvent evt)
 			{
 				base.LeftClick(evt);
-				Clicked?.Invoke();
+				if (!isActive)
+				{
+					SoundEngine.PlaySound(SoundID.MenuTick);
+					onClick?.Invoke();
+				}
 			}
 
 			public override void MouseOver(UIMouseEvent evt)
 			{
 				base.MouseOver(evt);
-				BackgroundColor = hoverBg;
-				BorderColor = hoverBorder;
-				SoundEngine.PlaySound(SoundID.MenuTick);
+				if (!isActive)
+				{
+					BackgroundColor = new Color(22, 30, 56);
+				}
 			}
 
 			public override void MouseOut(UIMouseEvent evt)
 			{
 				base.MouseOut(evt);
-				BackgroundColor = idleBg;
-				BorderColor = idleBorder;
+				if (!isActive)
+				{
+					BackgroundColor = new Color(14, 18, 34);
+				}
 			}
 		}
 
@@ -663,9 +504,6 @@ namespace Augments
 
 			public override void MouseOver(UIMouseEvent evt)
 			{
-				if (!owns)
-					return;
-
 				base.MouseOver(evt);
 				if (enabled)
 				{
@@ -676,9 +514,6 @@ namespace Augments
 
 			public override void MouseOut(UIMouseEvent evt)
 			{
-				if (!owns)
-					return;
-
 				base.MouseOut(evt);
 				BackgroundColor = enabled ? IdleColor : DisabledColor;
 			}
