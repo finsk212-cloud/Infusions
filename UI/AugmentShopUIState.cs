@@ -67,7 +67,7 @@ namespace Augments
 			backPanel.BorderColor = new Color(38, 52, 98);
 
 			// Navigation Tabs
-			var decryptTab = new GlowTabButton("[c/00FFFF:★] [c/FFE066:Decrypt Chips] [c/00FFFF:★]", () => ModContent.GetInstance<AugmentUISystem>().ShowGacha());
+			var decryptTab = new GlowTabButton("[c/4CA8D8:★]  [c/EAD8B0:Decrypt Chips]  [c/4CA8D8:★]", () => ModContent.GetInstance<AugmentUISystem>().ShowGacha());
 			decryptTab.Left.Set(14f, 0f);
 			decryptTab.Top.Set(10f, 0f);
 			decryptTab.Width.Set(156f, 0f);
@@ -101,7 +101,7 @@ namespace Augments
 			essenceBadge.BackgroundColor = new Color(15, 22, 42) * 0.95f;
 			essenceBadge.BorderColor = new Color(80, 180, 255) * 0.7f;
 
-			essenceLabel = new ColoredLabel("[c/FFE080:Machine Cores:] [c/00FFFF:0]", 0.82f);
+			essenceLabel = new ColoredLabel("[c/D4B872:Machine Cores:] [c/68C2D8:0]", 0.82f);
 			essenceBadge.Append(essenceLabel);
 			backPanel.Append(essenceBadge);
 
@@ -285,7 +285,7 @@ namespace Augments
 		private void RefreshEssenceText()
 		{
 			int count = Main.LocalPlayer.CountItem(ModContent.ItemType<AugmentEssenceItem>());
-			essenceLabel?.SetText($"[c/FFE080:Machine Cores:] [c/00FFFF:{count}]");
+			essenceLabel?.SetText($"[c/D4B872:Machine Cores:] [c/68C2D8:{count:N0}]");
 		}
 
 		private void BuyBack(Augment augment)
@@ -381,10 +381,10 @@ namespace Augments
 
 				float pulse = 0.6f + 0.4f * (float)Math.Sin(Main.timeForVisualEffects * 0.12f);
 				Color borderCol = isHovered
-					? new Color(0, 255, 255)
-					: Color.Lerp(new Color(0, 200, 255), new Color(255, 215, 80), pulse);
+					? new Color(88, 164, 208)
+					: Color.Lerp(new Color(46, 72, 108), new Color(212, 184, 114), pulse * 0.5f);
 
-				Color bgCol = isHovered ? new Color(26, 44, 82) : new Color(16, 24, 48);
+				Color bgCol = isHovered ? new Color(22, 32, 54) : new Color(14, 18, 34);
 
 				Rectangle rect = new Rectangle((int)d.X, (int)d.Y, (int)d.Width, (int)d.Height);
 				spriteBatch.Draw(pixel, rect, bgCol * 0.95f);
