@@ -24,10 +24,14 @@ namespace Augments
 				return false;
 
 			int type = Player.HeldItem.type;
-			// Only MK1 currently has Overclock active
 			if (type == ModContent.ItemType<Items.MediGunItem>())
 			{
 				tier = 1;
+				return true;
+			}
+			if (type == ModContent.ItemType<Items.MediGunMK2Item>())
+			{
+				tier = 2;
 				return true;
 			}
 
@@ -84,8 +88,8 @@ namespace Augments
 			OverclockCharge = 0f;
 			playedReadySound = false;
 
-			int healAmount = 30;
-			int buffDuration = 360; // 6 seconds (+20% move speed to ally)
+			int healAmount = tier == 2 ? 50 : 30;
+			int buffDuration = 360; // 6 seconds
 
 			// Target player heal & buff (NO BUFFS TO MEDIC)
 			if (CurrentPatientWhoAmI >= 0 && CurrentPatientWhoAmI < Main.maxPlayers)
@@ -96,7 +100,14 @@ namespace Augments
 					if (Main.netMode == NetmodeID.SinglePlayer)
 					{
 						SupportEffects.ServerHealPlayer(patient, healAmount);
-						patient.AddBuff(ModContent.BuffType<OverclockBuff>(), buffDuration);
+						if (tier == 2)
+						{
+							patient.AddBuff(ModContent.BuffType<OverclockMK2Buff>(), buffDuration);
+						}
+						else
+						{
+							patient.AddBuff(ModContent.BuffType<OverclockBuff>(), buffDuration);
+						}
 					}
 					else if (Main.netMode == NetmodeID.MultiplayerClient)
 					{

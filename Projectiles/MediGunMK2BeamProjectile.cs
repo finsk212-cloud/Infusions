@@ -143,10 +143,33 @@ namespace Augments.Projectiles
                     Projectile.netUpdate = true;
                 }
 
-                // 3. Healing pulses (owner only)
+                // 3. Healing pulses and Overclock building (owner only)
+                var mediPlayer = player.GetModPlayer<MediGunPlayer>();
+                mediPlayer.CurrentPatientWhoAmI = targetPlayerWhoAmI;
+                mediPlayer.CurrentTargetNPCWhoAmI = targetNPCWhoAmI;
+
                 bool isLocked = targetPlayerWhoAmI >= 0 || targetNPCWhoAmI >= 0;
                 if (isLocked)
                 {
+                    bool isTargetHurt = false;
+                    if (targetPlayerWhoAmI >= 0)
+                    {
+                        Player target = Main.player[targetPlayerWhoAmI];
+                        isTargetHurt = target.statLife < target.statLifeMax2;
+                    }
+                    else if (targetNPCWhoAmI >= 0)
+                    {
+                        NPC npc = Main.npc[targetNPCWhoAmI];
+                        isTargetHurt = npc.life < npc.lifeMax;
+                    }
+
+                    // Build Overclock while actively tethered (~35s full charge)
+                    if (mediPlayer.OverclockCharge < 100f)
+                    {
+                        float chargeGain = isTargetHurt ? (100f / (35f * 60f)) : (100f / (45f * 60f));
+                        mediPlayer.OverclockCharge = Math.Min(100f, mediPlayer.OverclockCharge + chargeGain);
+                    }
+
                     healPulseTimer++;
                     if (healPulseTimer >= HealPulseInterval)
                     {
@@ -535,6 +558,16 @@ namespace Augments.Projectiles
             }
 
             return false;
+        }
+
+        public override void OnKill(int timeLeft)
+        {
+            if (Projectile.owner == Main.myPlayer)
+            {
+                var mediPlayer = Main.player[Projectile.owner].GetModPlayer<MediGunPlayer>();
+                mediPlayer.CurrentPatientWhoAmI = -1;
+                mediPlayer.CurrentTargetNPCWhoAmI = -1;
+            }
         }
     }
 }

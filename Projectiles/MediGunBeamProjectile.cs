@@ -556,5 +556,15 @@ namespace Augments.Projectiles
 
             return false;
         }
+
+        public override void OnKill(int timeLeft)
+        {
+            if (Projectile.owner == Main.myPlayer)
+            {
+                var mediPlayer = Main.player[Projectile.owner].GetModPlayer<MediGunPlayer>();
+                mediPlayer.CurrentPatientWhoAmI = -1;
+                mediPlayer.CurrentTargetNPCWhoAmI = -1;
+            }
+        }
     }
 }

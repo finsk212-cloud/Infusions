@@ -63,7 +63,11 @@ Items: {
 		Tooltip:
 			'''
 			Hold Left-Click to lock onto a nearby ally or town NPC and channel an advanced healing beam
-			Heals 6 HP per second with extended tether range
+			Heals [c/4ADE80:6 HP] per second with extended tether range
+			Healing builds Overclock charge over ~35 seconds
+			Press Right-Click at 100% to activate Overclock:
+			- Instantly restores [c/4ADE80:50 HP] to the tethered ally
+			- Grants the ally [c/2DD4BF:+20% movement speed] and [c/FB923C:+10% attack speed] for 6 seconds
 			Tether breaks if line of sight is obstructed or distance exceeds range
 			'''
 	}
@@ -93,6 +97,11 @@ Buffs: {
 	OverclockBuff: {
 		DisplayName: Overclocked
 		Description: Movement speed increased.
+	}
+
+	OverclockMK2Buff: {
+		DisplayName: Overclocked MK II
+		Description: Movement speed and attack speed increased.
 	}
 
 	SupportClassBuff: {

@@ -204,12 +204,18 @@ namespace Augments
 			if (!sender.active || sender.dead || !target.active || target.dead || !AreAllies(sender, target))
 				return;
 
-			// MK1 Overclock: 30 HP heal and 6s OverclockBuff (+20% speed) to ally
-			int healAmount = 30;
+			int healAmount = tier == 2 ? 50 : 30;
 			int buffDuration = 360; // 6s
 
 			ServerHealPlayer(target, healAmount);
-			target.AddBuff(ModContent.BuffType<OverclockBuff>(), buffDuration);
+			if (tier == 2)
+			{
+				target.AddBuff(ModContent.BuffType<OverclockMK2Buff>(), buffDuration);
+			}
+			else
+			{
+				target.AddBuff(ModContent.BuffType<OverclockBuff>(), buffDuration);
+			}
 		}
 
 		public static void HandleLifelineRequest(int whoAmI)
