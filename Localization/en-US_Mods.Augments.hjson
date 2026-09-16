@@ -124,7 +124,37 @@ Buffs: {
 
 	BandOfRegenBuff: {
 		DisplayName: Band of Regeneration
-		Description: Slowly regenerates life.
+		Description: Rapidly regenerates life.
+	}
+
+	BandOfStarpowerBuff: {
+		DisplayName: Band of Starpower
+		Description: Increases maximum mana and rapidly regenerates mana.
+	}
+
+	AnkletOfTheWindBuff: {
+		DisplayName: Anklet of the Wind
+		Description: Increases movement speed by 15%.
+	}
+
+	CobaltShieldBuff: {
+		DisplayName: Cobalt Shield
+		Description: Grants knockback immunity and increases defense by 4.
+	}
+
+	BezoarWardBuff: {
+		DisplayName: Bezoar Ward
+		Description: Immune to Poison and Venom; toxins purged.
+	}
+
+	SharkToothNecklaceBuff: {
+		DisplayName: Shark Tooth Necklace
+		Description: Increases armor penetration by 8.
+	}
+
+	PhilosophersStoneBuff: {
+		DisplayName: Philosopher's Stone
+		Description: Potion sickness cooldown reduced by 20 seconds.
 	}
 
 	SupportClassBuff: {

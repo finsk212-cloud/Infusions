@@ -218,6 +218,120 @@ namespace Augments
 			}
 		}
 
+		public static void ApplyTetherSocketEffects(Player medic, int targetPlayerWhoAmI, int targetNPCWhoAmI, int socketed)
+		{
+			if (socketed <= 0)
+				return;
+
+			if (targetPlayerWhoAmI >= 0 && targetPlayerWhoAmI < Main.maxPlayers)
+			{
+				Player target = Main.player[targetPlayerWhoAmI];
+				if (target.active && !target.dead)
+				{
+					if (socketed == ItemID.BandofRegeneration)
+					{
+						target.AddBuff(ModContent.BuffType<BandOfRegenBuff>(), 10);
+					}
+					else if (socketed == ItemID.BandofStarpower)
+					{
+						target.AddBuff(ModContent.BuffType<BandOfStarpowerBuff>(), 10);
+					}
+					else if (socketed == ItemID.AnkletoftheWind)
+					{
+						target.AddBuff(ModContent.BuffType<AnkletOfTheWindBuff>(), 10);
+					}
+					else if (socketed == ItemID.CobaltShield)
+					{
+						target.AddBuff(ModContent.BuffType<CobaltShieldBuff>(), 10);
+					}
+					else if (socketed == ItemID.Bezoar)
+					{
+						target.AddBuff(ModContent.BuffType<BezoarWardBuff>(), 10);
+						target.buffImmune[BuffID.Poisoned] = true;
+						target.buffImmune[BuffID.Venom] = true;
+						target.ClearBuff(BuffID.Poisoned);
+						target.ClearBuff(BuffID.Venom);
+					}
+					else if (socketed == ItemID.SharkToothNecklace)
+					{
+						target.AddBuff(ModContent.BuffType<SharkToothNecklaceBuff>(), 10);
+					}
+					else if (socketed == ItemID.PhilosophersStone)
+					{
+						target.AddBuff(ModContent.BuffType<PhilosophersStoneBuff>(), 10);
+						if (medic != null && medic.active && !medic.dead)
+						{
+							var mgPlayer = medic.GetModPlayer<MediGunPlayer>();
+							if (target.potionDelay > 38 * 60 && target.potionDelay <= 40 * 60 && mgPlayer.PhilosopherHealCooldown <= 0)
+							{
+								mgPlayer.PhilosopherHealCooldown = 30 * 60;
+								ServerHealPlayer(medic, 25);
+								CombatText.NewText(medic.getRect(), new Color(130, 240, 180), "+25 HP Potion Echo!");
+								SoundEngine.PlaySound(SoundID.Item4, medic.Center);
+							}
+						}
+					}
+				}
+			}
+			else if (targetNPCWhoAmI >= 0 && targetNPCWhoAmI < Main.maxNPCs)
+			{
+				NPC npc = Main.npc[targetNPCWhoAmI];
+				if (npc.active)
+				{
+					if (socketed == ItemID.BandofRegeneration)
+					{
+						npc.lifeRegen += 3;
+					}
+				}
+			}
+		}
+
+		public static void ProcessSocketHealPulse(Player medic, Player targetPlayer, NPC targetNPC, int healAmount, int socketed)
+		{
+			if (socketed <= 0 || healAmount <= 0)
+				return;
+
+			if (socketed == ItemID.BandofRegeneration)
+			{
+				ProcessBandOfRegenFeedback(medic, healAmount);
+			}
+			else if (socketed == ItemID.BandofStarpower)
+			{
+				if (targetPlayer != null && targetPlayer.active && !targetPlayer.dead)
+				{
+					if (targetPlayer.statMana < targetPlayer.statManaMax2)
+					{
+						targetPlayer.statMana = Math.Min(targetPlayer.statManaMax2, targetPlayer.statMana + 3);
+						targetPlayer.ManaEffect(3);
+					}
+				}
+			}
+			else if (socketed == ItemID.Bezoar)
+			{
+				int currentLife = targetPlayer != null ? targetPlayer.statLife : (targetNPC != null ? targetNPC.life : 100);
+				int maxLife = targetPlayer != null ? targetPlayer.statLifeMax2 : (targetNPC != null ? targetNPC.lifeMax : 100);
+				if (currentLife < maxLife / 2)
+				{
+					int bonusHeal = Math.Max(1, (int)(healAmount * 0.10f));
+					if (targetPlayer != null)
+					{
+						ServerHealPlayer(targetPlayer, bonusHeal);
+					}
+					else if (targetNPC != null)
+					{
+						targetNPC.life = Math.Min(targetNPC.lifeMax, targetNPC.life + bonusHeal);
+					}
+				}
+			}
+			else if (socketed == ItemID.SharkToothNecklace)
+			{
+				if (medic != null && medic.active && !medic.dead && medic.statLife < medic.statLifeMax2)
+				{
+					medic.statLife = Math.Min(medic.statLifeMax2, medic.statLife + 2);
+				}
+			}
+		}
+
 		public static void HandleMediGunOverclockActivate(int senderWhoAmI, byte tier, byte targetPlayerIndex)
 		{
 			if (Main.netMode != NetmodeID.Server || senderWhoAmI < 0 || senderWhoAmI >= Main.maxPlayers || targetPlayerIndex >= Main.maxPlayers)

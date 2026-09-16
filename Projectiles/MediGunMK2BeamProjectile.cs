@@ -170,19 +170,8 @@ namespace Augments.Projectiles
                         mediPlayer.OverclockCharge = Math.Min(100f, mediPlayer.OverclockCharge + chargeGain);
                     }
 
-                    // Band of Regeneration: ally gains the Band of Regeneration passive (+2 life regen) while tethered
                     int socketed = player.HeldItem?.TryGetGlobalItem<Items.MediGunGlobalItem>(out var mediGun) == true ? mediGun.SocketedAccessoryType : 0;
-                    if (socketed == ItemID.BandofRegeneration)
-                    {
-                        if (targetPlayerWhoAmI >= 0 && targetPlayerWhoAmI < Main.maxPlayers)
-                        {
-                            Main.player[targetPlayerWhoAmI].AddBuff(ModContent.BuffType<BandOfRegenBuff>(), 10);
-                        }
-                        else if (targetNPCWhoAmI >= 0 && targetNPCWhoAmI < Main.maxNPCs)
-                        {
-                            Main.npc[targetNPCWhoAmI].lifeRegen += 2;
-                        }
-                    }
+                    SupportEffects.ApplyTetherSocketEffects(player, targetPlayerWhoAmI, targetNPCWhoAmI, socketed);
 
                     healPulseTimer++;
                     if (healPulseTimer >= HealPulseInterval)
@@ -208,12 +197,8 @@ namespace Augments.Projectiles
                                     packet.Send();
                                 }
                                 SoundEngine.PlaySound(SoundID.Item29 with { Volume = 0.08f, Pitch = 0.85f }, target.Center);
-
-                                if (socketed == ItemID.BandofRegeneration)
-                                {
-                                    SupportEffects.ProcessBandOfRegenFeedback(player, HealAmount);
-                                }
                             }
+                            SupportEffects.ProcessSocketHealPulse(player, target, null, HealAmount, socketed);
                         }
                         else if (targetNPCWhoAmI >= 0)
                         {
@@ -227,12 +212,8 @@ namespace Augments.Projectiles
                                     NetMessage.SendData(MessageID.SyncNPC, -1, -1, null, npc.whoAmI);
                                 }
                                 SoundEngine.PlaySound(SoundID.Item29 with { Volume = 0.08f, Pitch = 0.85f }, npc.Center);
-
-                                if (socketed == ItemID.BandofRegeneration)
-                                {
-                                    SupportEffects.ProcessBandOfRegenFeedback(player, HealAmount);
-                                }
                             }
+                            SupportEffects.ProcessSocketHealPulse(player, null, npc, HealAmount, socketed);
                         }
                     }
                 }

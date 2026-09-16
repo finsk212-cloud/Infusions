@@ -1,14 +1,12 @@
-using Terraria;
+﻿using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
 
 namespace Augments
 {
-	// Applied while tethered to a Medic with a socketed Band of Regeneration.
-	// Replicates the exact Band of Regeneration accessory passive (+2 life regen).
-	public class BandOfRegenBuff : ModBuff
+	public class BezoarWardBuff : ModBuff
 	{
-		public override string Texture => "Terraria/Images/Buff_2";
+		public override string Texture => "Terraria/Images/Buff_113";
 
 		public override void SetStaticDefaults()
 		{
@@ -19,7 +17,10 @@ namespace Augments
 
 		public override void Update(Player player, ref int buffIndex)
 		{
-			player.lifeRegen += 3;
+			player.buffImmune[BuffID.Poisoned] = true;
+			player.buffImmune[BuffID.Venom] = true;
+			player.ClearBuff(BuffID.Poisoned);
+			player.ClearBuff(BuffID.Venom);
 		}
 	}
 }

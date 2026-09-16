@@ -26,7 +26,21 @@ namespace Augments.Items
 
 		public static bool IsSupportedAccessory(int itemType)
 		{
-			return itemType == ItemID.BandofRegeneration;
+			return itemType == ItemID.BandofRegeneration
+				|| itemType == ItemID.BandofStarpower
+				|| itemType == ItemID.AnkletoftheWind
+				|| itemType == ItemID.CobaltShield
+				|| itemType == ItemID.Bezoar
+				|| itemType == ItemID.SharkToothNecklace
+				|| itemType == ItemID.PhilosophersStone;
+		}
+
+		public override void ModifyManaCost(Item item, Player player, ref float reduce, ref float mult)
+		{
+			if (SocketedAccessoryType == ItemID.BandofStarpower)
+			{
+				mult *= 0.75f;
+			}
 		}
 
 		public override void SaveData(Item item, TagCompound tag)
@@ -100,20 +114,91 @@ namespace Augments.Items
 
 		public override void ModifyTooltips(Item item, List<TooltipLine> tooltips)
 		{
-			if (SocketedAccessoryType == ItemID.BandofRegeneration)
+			if (SocketedAccessoryType > 0)
 			{
 				tooltips.Add(new TooltipLine(Mod, "SocketHeader", $"[c/FFC83B:Attached Accessory: {Lang.GetItemNameValue(SocketedAccessoryType)}]")
 				{
 					OverrideColor = new Color(255, 200, 59)
 				});
-				tooltips.Add(new TooltipLine(Mod, "SocketEffect1", "• 50% of beam healing is returned to the medic")
+
+				if (SocketedAccessoryType == ItemID.BandofRegeneration)
 				{
-					OverrideColor = new Color(74, 222, 128)
-				});
-				tooltips.Add(new TooltipLine(Mod, "SocketEffect2", "• Tethered ally gains the Band of Regeneration passive")
+					tooltips.Add(new TooltipLine(Mod, "SocketEffect1", "• 50% of beam healing is returned to the medic")
+					{
+						OverrideColor = new Color(74, 222, 128)
+					});
+					tooltips.Add(new TooltipLine(Mod, "SocketEffect2", "• Tethered ally gains amplified Rapid Healing (+3 life regen)")
+					{
+						OverrideColor = new Color(74, 222, 128)
+					});
+				}
+				else if (SocketedAccessoryType == ItemID.BandofStarpower)
 				{
-					OverrideColor = new Color(74, 222, 128)
-				});
+					tooltips.Add(new TooltipLine(Mod, "SocketEffect1", "• Reduces Medi Gun mana cost by 25%")
+					{
+						OverrideColor = new Color(74, 222, 128)
+					});
+					tooltips.Add(new TooltipLine(Mod, "SocketEffect2", "• Tethered ally gains +40 maximum mana and rapid mana recovery")
+					{
+						OverrideColor = new Color(74, 222, 128)
+					});
+				}
+				else if (SocketedAccessoryType == ItemID.AnkletoftheWind)
+				{
+					tooltips.Add(new TooltipLine(Mod, "SocketEffect1", "• Grants the medic +12% movement speed while tethered")
+					{
+						OverrideColor = new Color(74, 222, 128)
+					});
+					tooltips.Add(new TooltipLine(Mod, "SocketEffect2", "• Tethered ally gains +15% movement speed and acceleration")
+					{
+						OverrideColor = new Color(74, 222, 128)
+					});
+				}
+				else if (SocketedAccessoryType == ItemID.CobaltShield)
+				{
+					tooltips.Add(new TooltipLine(Mod, "SocketEffect1", "• Grants the medic knockback immunity while tethered")
+					{
+						OverrideColor = new Color(74, 222, 128)
+					});
+					tooltips.Add(new TooltipLine(Mod, "SocketEffect2", "• Tethered ally gains knockback immunity and +4 defense")
+					{
+						OverrideColor = new Color(74, 222, 128)
+					});
+				}
+				else if (SocketedAccessoryType == ItemID.Bezoar)
+				{
+					tooltips.Add(new TooltipLine(Mod, "SocketEffect1", "• Grants the medic immunity to poison and +10% healing to allies under 50% HP")
+					{
+						OverrideColor = new Color(74, 222, 128)
+					});
+					tooltips.Add(new TooltipLine(Mod, "SocketEffect2", "• Tethered ally becomes immune to Poison and Venom, instantly purging active toxins")
+					{
+						OverrideColor = new Color(74, 222, 128)
+					});
+				}
+				else if (SocketedAccessoryType == ItemID.SharkToothNecklace)
+				{
+					tooltips.Add(new TooltipLine(Mod, "SocketEffect1", "• Grants the medic +3 armor penetration and restorative life sparks on beam pulses")
+					{
+						OverrideColor = new Color(74, 222, 128)
+					});
+					tooltips.Add(new TooltipLine(Mod, "SocketEffect2", "• Tethered ally gains +8 armor penetration")
+					{
+						OverrideColor = new Color(74, 222, 128)
+					});
+				}
+				else if (SocketedAccessoryType == ItemID.PhilosophersStone)
+				{
+					tooltips.Add(new TooltipLine(Mod, "SocketEffect1", "• When the tethered ally drinks a potion, the medic restores 25 HP")
+					{
+						OverrideColor = new Color(74, 222, 128)
+					});
+					tooltips.Add(new TooltipLine(Mod, "SocketEffect2", "• Tethered ally potion sickness is reduced by 20 seconds (down to 40s)")
+					{
+						OverrideColor = new Color(74, 222, 128)
+					});
+				}
+
 				tooltips.Add(new TooltipLine(Mod, "SocketPrompt", "Right-Click with empty hand to detach into hand")
 				{
 					OverrideColor = new Color(148, 163, 184)

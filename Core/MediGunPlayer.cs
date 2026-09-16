@@ -15,6 +15,7 @@ namespace Augments
 		public float OverclockCharge { get; set; } = 0f;
 		public int CurrentPatientWhoAmI { get; set; } = -1;
 		public int CurrentTargetNPCWhoAmI { get; set; } = -1;
+		public int PhilosopherHealCooldown { get; set; } = 0;
 
 		private bool rightClickReleased = true;
 		private bool playedReadySound = false;
@@ -50,8 +51,36 @@ namespace Augments
 			return false;
 		}
 
+		public override void PostUpdateEquips()
+		{
+			if (IsHoldingMediGun(out _) && Player.HeldItem?.TryGetGlobalItem<MediGunGlobalItem>(out var mg) == true)
+			{
+				bool isTethered = CurrentPatientWhoAmI >= 0 || CurrentTargetNPCWhoAmI >= 0;
+
+				if (mg.SocketedAccessoryType == ItemID.AnkletoftheWind && isTethered)
+				{
+					Player.moveSpeed += 0.12f;
+				}
+				else if (mg.SocketedAccessoryType == ItemID.CobaltShield && isTethered)
+				{
+					Player.noKnockback = true;
+				}
+				else if (mg.SocketedAccessoryType == ItemID.Bezoar)
+				{
+					Player.buffImmune[BuffID.Poisoned] = true;
+				}
+				else if (mg.SocketedAccessoryType == ItemID.SharkToothNecklace)
+				{
+					Player.GetArmorPenetration(DamageClass.Generic) += 3;
+				}
+			}
+		}
+
 		public override void PostUpdate()
 		{
+			if (PhilosopherHealCooldown > 0)
+				PhilosopherHealCooldown--;
+
 			// Only local player processes input
 			if (Player.whoAmI != Main.myPlayer)
 				return;
@@ -174,6 +203,7 @@ namespace Augments
 			CurrentPatientWhoAmI = -1;
 			CurrentTargetNPCWhoAmI = -1;
 			playedReadySound = false;
+			PhilosopherHealCooldown = 0;
 		}
 
 		public override bool HoverSlot(Item[] inventory, int context, int slot)
