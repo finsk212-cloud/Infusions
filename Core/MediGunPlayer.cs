@@ -17,6 +17,18 @@ namespace Augments
 		public int CurrentTargetNPCWhoAmI { get; set; } = -1;
 		public int PhilosopherHealCooldown { get; set; } = 0;
 
+		public float OverclockChargeRateMultiplier
+		{
+			get
+			{
+				if (Player.HeldItem?.TryGetGlobalItem<MediGunGlobalItem>(out var mg) == true && mg.SocketedAccessoryType == ItemID.BandofStarpower)
+				{
+					return 1.25f;
+				}
+				return 1.0f;
+			}
+		}
+
 		private bool rightClickReleased = true;
 		private bool playedReadySound = false;
 

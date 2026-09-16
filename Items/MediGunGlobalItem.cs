@@ -35,14 +35,6 @@ namespace Augments.Items
 				|| itemType == ItemID.PhilosophersStone;
 		}
 
-		public override void ModifyManaCost(Item item, Player player, ref float reduce, ref float mult)
-		{
-			if (SocketedAccessoryType == ItemID.BandofStarpower)
-			{
-				mult *= 0.75f;
-			}
-		}
-
 		public override void SaveData(Item item, TagCompound tag)
 		{
 			if (SocketedAccessoryType > 0)
@@ -134,7 +126,7 @@ namespace Augments.Items
 				}
 				else if (SocketedAccessoryType == ItemID.BandofStarpower)
 				{
-					tooltips.Add(new TooltipLine(Mod, "SocketEffect1", "• Reduces Medi Gun mana cost by 25%")
+					tooltips.Add(new TooltipLine(Mod, "SocketEffect1", "• Overclock charges 25% faster while tethered")
 					{
 						OverrideColor = new Color(74, 222, 128)
 					});
@@ -167,7 +159,7 @@ namespace Augments.Items
 				}
 				else if (SocketedAccessoryType == ItemID.Bezoar)
 				{
-					tooltips.Add(new TooltipLine(Mod, "SocketEffect1", "• Grants the medic immunity to poison and +10% healing to allies under 50% HP")
+					tooltips.Add(new TooltipLine(Mod, "SocketEffect1", "• Grants the medic immunity to Poison and +10% healing to allies under 50% HP")
 					{
 						OverrideColor = new Color(74, 222, 128)
 					});
