@@ -39,6 +39,11 @@ namespace Augments
 				tier = 3;
 				return true;
 			}
+			if (type == ModContent.ItemType<Items.MediGunMK4Item>())
+			{
+				tier = 4;
+				return true;
+			}
 
 			return false;
 		}
@@ -93,7 +98,7 @@ namespace Augments
 			OverclockCharge = 0f;
 			playedReadySound = false;
 
-			int healAmount = tier == 3 ? 75 : (tier == 2 ? 50 : 30);
+			int healAmount = tier == 4 ? 100 : (tier == 3 ? 75 : (tier == 2 ? 50 : 30));
 			int buffDuration = 360; // 6 seconds
 
 			// Target player heal & buff (NO BUFFS TO MEDIC)
@@ -105,7 +110,11 @@ namespace Augments
 					if (Main.netMode == NetmodeID.SinglePlayer)
 					{
 						SupportEffects.ServerHealPlayer(patient, healAmount);
-						if (tier == 3)
+						if (tier == 4)
+						{
+							patient.AddBuff(ModContent.BuffType<OverclockMK4Buff>(), buffDuration);
+						}
+						else if (tier == 3)
 						{
 							patient.AddBuff(ModContent.BuffType<OverclockMK3Buff>(), buffDuration);
 						}

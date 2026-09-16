@@ -91,7 +91,11 @@ Items: {
 		Tooltip:
 			'''
 			Hold Left-Click to lock onto a nearby ally or town NPC and channel an ultimate celestial healing beam
-			Heals 16 HP per second with screen-wide tether range
+			Heals [c/4ADE80:16 HP] per second with screen-wide tether range
+			Healing builds Overclock charge over ~35 seconds
+			Press Right-Click at 100% to activate Overclock:
+			- Instantly restores [c/4ADE80:100 HP] to the tethered ally
+			- Grants the ally [c/2DD4BF:+30% movement speed], [c/FB923C:+20% attack speed], [c/FFC83B:+12% critical strike chance], and [c/FF5C5C:+15% all damage] for 6 seconds
 			Tether breaks if line of sight is obstructed or distance exceeds range
 			'''
 	}
@@ -111,6 +115,11 @@ Buffs: {
 	OverclockMK3Buff: {
 		DisplayName: Overclocked MK III
 		Description: Movement speed, attack speed, and critical strike chance increased.
+	}
+
+	OverclockMK4Buff: {
+		DisplayName: Overclocked MK IV
+		Description: Movement speed, attack speed, critical strike chance, and damage increased.
 	}
 
 	SupportClassBuff: {
