@@ -5,6 +5,8 @@ using Terraria.Audio;
 using Terraria.DataStructures;
 using Terraria.ID;
 using Terraria.ModLoader;
+using Terraria.UI;
+using Augments.Items;
 
 namespace Augments
 {
@@ -66,8 +68,8 @@ namespace Augments
 						CombatText.NewText(Player.getRect(), new Color(255, 215, 64), "OVERCLOCK READY!");
 					}
 
-					// Right-click activates Overclock on current tethered target
-					if (Main.mouseRight && rightClickReleased)
+					// Right-click activates Overclock on current tethered target (only when inventory is closed)
+					if (Main.mouseRight && rightClickReleased && !Main.playerInventory)
 					{
 						rightClickReleased = false;
 
@@ -172,6 +174,81 @@ namespace Augments
 			CurrentPatientWhoAmI = -1;
 			CurrentTargetNPCWhoAmI = -1;
 			playedReadySound = false;
+		}
+
+		public override bool HoverSlot(Item[] inventory, int context, int slot)
+		{
+			if (inventory == null || slot < 0 || slot >= inventory.Length)
+				return false;
+
+			Item targetItem = inventory[slot];
+			if (targetItem == null || targetItem.IsAir || !targetItem.TryGetGlobalItem<MediGunGlobalItem>(out var mediGun))
+				return false;
+
+			if (context != ItemSlot.Context.InventoryItem &&
+				context != ItemSlot.Context.ChestItem &&
+				context != ItemSlot.Context.BankItem &&
+				context != ItemSlot.Context.VoidItem)
+			{
+				return false;
+			}
+
+			if (Main.mouseRight && Main.mouseRightRelease)
+			{
+				// 1. Holding a supported accessory on cursor -> socket/swap it
+				if (Main.mouseItem != null && !Main.mouseItem.IsAir && MediGunGlobalItem.IsSupportedAccessory(Main.mouseItem.type))
+				{
+					int oldType = mediGun.SocketedAccessoryType;
+					mediGun.SocketedAccessoryType = Main.mouseItem.type;
+
+					if (oldType > 0)
+					{
+						Main.mouseItem.SetDefaults(oldType);
+					}
+					else
+					{
+						Main.mouseItem.stack--;
+						if (Main.mouseItem.stack <= 0)
+							Main.mouseItem.TurnToAir();
+					}
+
+					SoundEngine.PlaySound(SoundID.Item37, Player.Center);
+					CombatText.NewText(Player.getRect(), new Color(74, 222, 128), $"Socketed: {Lang.GetItemNameValue(mediGun.SocketedAccessoryType)}");
+
+					if (Main.netMode == NetmodeID.MultiplayerClient && context == ItemSlot.Context.ChestItem && Player.chest >= 0)
+					{
+						NetMessage.SendData(MessageID.SyncChestItem, -1, -1, null, Player.chest, slot);
+					}
+
+					Main.mouseRightRelease = false;
+					Recipe.FindRecipes();
+					return true;
+				}
+
+				// 2. Empty cursor hand -> detach attached accessory directly into hand
+				if ((Main.mouseItem == null || Main.mouseItem.IsAir) && mediGun.SocketedAccessoryType > 0)
+				{
+					int detachedType = mediGun.SocketedAccessoryType;
+					mediGun.SocketedAccessoryType = 0;
+
+					Main.mouseItem = new Item();
+					Main.mouseItem.SetDefaults(detachedType);
+
+					SoundEngine.PlaySound(SoundID.Grab, Player.Center);
+					CombatText.NewText(Player.getRect(), new Color(255, 200, 80), $"Detached: {Lang.GetItemNameValue(detachedType)}");
+
+					if (Main.netMode == NetmodeID.MultiplayerClient && context == ItemSlot.Context.ChestItem && Player.chest >= 0)
+					{
+						NetMessage.SendData(MessageID.SyncChestItem, -1, -1, null, Player.chest, slot);
+					}
+
+					Main.mouseRightRelease = false;
+					Recipe.FindRecipes();
+					return true;
+				}
+			}
+
+			return false;
 		}
 	}
 }

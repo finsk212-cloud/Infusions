@@ -69,7 +69,7 @@ namespace Augments.Items
 
 		public override bool CanRightClick(Item item)
 		{
-			return true;
+			return SocketedAccessoryType > 0;
 		}
 
 		public override bool ConsumeItem(Item item, Player player)
@@ -81,48 +81,20 @@ namespace Augments.Items
 		{
 			if (SocketedAccessoryType > 0)
 			{
-				// Detach existing accessory
+				// Detach existing accessory directly into hand
 				int detachedType = SocketedAccessoryType;
 				SocketedAccessoryType = 0;
-				player.QuickSpawnItem(player.GetSource_ItemUse(item), detachedType, 1);
+				if (Main.mouseItem == null || Main.mouseItem.IsAir)
+				{
+					Main.mouseItem = new Item();
+					Main.mouseItem.SetDefaults(detachedType);
+				}
+				else
+				{
+					player.QuickSpawnItem(player.GetSource_ItemUse(item), detachedType, 1);
+				}
 				SoundEngine.PlaySound(SoundID.Grab, player.Center);
 				CombatText.NewText(player.getRect(), new Color(255, 200, 80), $"Detached: {Lang.GetItemNameValue(detachedType)}");
-			}
-			else
-			{
-				// Check cursor first, then inventory
-				Item candidate = null;
-				if (Main.mouseItem != null && !Main.mouseItem.IsAir && IsSupportedAccessory(Main.mouseItem.type))
-				{
-					candidate = Main.mouseItem;
-				}
-				else
-				{
-					for (int i = 0; i < 50; i++)
-					{
-						Item invItem = player.inventory[i];
-						if (invItem != null && !invItem.IsAir && IsSupportedAccessory(invItem.type))
-						{
-							candidate = invItem;
-							break;
-						}
-					}
-				}
-
-				if (candidate != null)
-				{
-					SocketedAccessoryType = candidate.type;
-					candidate.stack--;
-					if (candidate.stack <= 0)
-						candidate.TurnToAir();
-
-					SoundEngine.PlaySound(SoundID.Item37, player.Center);
-					CombatText.NewText(player.getRect(), new Color(74, 222, 128), $"Socketed: {Lang.GetItemNameValue(SocketedAccessoryType)}");
-				}
-				else
-				{
-					CombatText.NewText(player.getRect(), new Color(200, 200, 200), "No compatible accessory in inventory!");
-				}
 			}
 		}
 
@@ -142,7 +114,7 @@ namespace Augments.Items
 				{
 					OverrideColor = new Color(74, 222, 128)
 				});
-				tooltips.Add(new TooltipLine(Mod, "SocketPrompt", "Right-Click in inventory to detach accessory")
+				tooltips.Add(new TooltipLine(Mod, "SocketPrompt", "Right-Click with empty hand to detach into hand")
 				{
 					OverrideColor = new Color(148, 163, 184)
 				});
@@ -153,7 +125,7 @@ namespace Augments.Items
 				{
 					OverrideColor = new Color(148, 163, 184)
 				});
-				tooltips.Add(new TooltipLine(Mod, "EmptySocketHint", "Right-Click in inventory with Band of Regeneration to socket")
+				tooltips.Add(new TooltipLine(Mod, "EmptySocketHint", "Pick up an accessory and right-click to socket")
 				{
 					OverrideColor = new Color(140, 230, 160)
 				});
