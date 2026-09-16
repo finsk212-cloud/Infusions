@@ -270,14 +270,11 @@ namespace Augments.Projectiles
 
             Projectile.Center = muzzlePos + aimDir * 36f;
 
-            // 5. Dynamic Lighting & Dust along the beam (Prismatic / Spectral theme)
-            float beamLightIntensity = targetActive ? 0.55f : 0.28f;
-            Lighting.AddLight(Projectile.Center, 0.7f * beamLightIntensity, 0.3f * beamLightIntensity, 0.95f * beamLightIntensity);
+            // 5. Dust along the beam (Accessories emit signature lighting)
             MediGunVisuals.SpawnSocketBeamDust(player, Projectile.Center, aimTarget, socketed, targetActive);
 
             if (targetActive)
             {
-                Lighting.AddLight(aimTarget, 0.6f, 0.35f, 0.95f);
 
                 // Stream particles forward from gun towards ally (Enchanted Pink & Dungeon Spirit)
                 if (Main.rand.NextBool(2))

@@ -25,8 +25,8 @@ namespace Augments
 
 			// Positioned directly below the player's feet for immediate combat readability
 			Vector2 playerScreenPos = player.MountedCenter - Main.screenPosition;
-			float barWidth = 120f;
-			float barHeight = 12f;
+			float barWidth = 124f;
+			float barHeight = 16f;
 			float x = playerScreenPos.X - barWidth / 2f;
 			float y = playerScreenPos.Y + player.height / 2f + 14f;
 
@@ -80,16 +80,16 @@ namespace Augments
 				spriteBatch.Draw(pixel, fillRect, fillColor);
 			}
 
-			// 3. Compact Centered Label Text
-			float scale = 0.55f;
+			// 3. Perfectly Centered Label Text
+			float scale = 0.5f;
 			Vector2 textSize = font.MeasureString(label) * scale;
 			Vector2 textPos = new Vector2(
-				x + (barWidth - textSize.X) / 2f,
-				y + (barHeight - textSize.Y) / 2f - 1f
+				(float)Math.Floor(x + (barWidth - textSize.X) / 2f),
+				(float)Math.Floor(y + (barHeight - textSize.Y) / 2f + 1.5f)
 			);
 
 			// Text drop shadow
-			spriteBatch.DrawString(font, label, textPos + new Vector2(1f, 1f), Color.Black * 0.85f, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
+			spriteBatch.DrawString(font, label, textPos + new Vector2(1f, 1f), Color.Black * 0.9f, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
 			Color textCol = mediPlayer.OverclockCharge >= 100f ? new Color(255, 255, 200) : new Color(210, 235, 255);
 			spriteBatch.DrawString(font, label, textPos, textCol, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
 		}

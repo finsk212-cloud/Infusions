@@ -123,7 +123,6 @@ namespace Augments
 					{
 						playedReadySound = true;
 						SoundEngine.PlaySound(SoundID.MaxMana, Player.Center);
-						CombatText.NewText(Player.getRect(), new Color(255, 215, 64), "OVERCLOCK READY!");
 					}
 
 					// Right-click activates Overclock on current tethered target (only when inventory is closed)
@@ -199,7 +198,6 @@ namespace Augments
 					// Audio & visual burst on ally
 					SoundEngine.PlaySound(SoundID.Item93 with { Volume = 0.85f, Pitch = 0.2f }, patient.Center);
 					SoundEngine.PlaySound(SoundID.Item29 with { Volume = 0.95f, Pitch = 0.4f }, patient.Center);
-					CombatText.NewText(patient.getRect(), new Color(80, 240, 255), $"+{healAmount} HP OVERCLOCK!");
 
 					// Kinetic burst dusts around the ally
 					for (int i = 0; i < 20; i++)
@@ -221,7 +219,6 @@ namespace Augments
 						NetMessage.SendData(MessageID.SyncNPC, -1, -1, null, npc.whoAmI);
 					}
 					SoundEngine.PlaySound(SoundID.Item93 with { Volume = 0.85f, Pitch = 0.2f }, npc.Center);
-					CombatText.NewText(npc.getRect(), new Color(80, 240, 255), $"+{healAmount} HP OVERCLOCK!");
 				}
 			}
 		}

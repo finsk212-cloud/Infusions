@@ -266,14 +266,11 @@ namespace Augments.Projectiles
 
             Projectile.Center = muzzlePos + aimDir * 36f;
 
-            // 5. Clean, Warm Divine Light & Healing Sparkles (Holy Gold & Diamond Light)
-            float beamLightIntensity = targetActive ? 0.55f : 0.28f;
-            Lighting.AddLight(Projectile.Center, 0.95f * beamLightIntensity, 0.85f * beamLightIntensity, 0.5f * beamLightIntensity);
+            // 5. Dust along the beam (Accessories emit signature lighting)
             MediGunVisuals.SpawnSocketBeamDust(player, Projectile.Center, aimTarget, socketed, targetActive);
 
             if (targetActive)
             {
-                Lighting.AddLight(aimTarget, 0.9f, 0.8f, 0.55f);
 
                 // Pure golden healing flecks streaming forward towards ally
                 if (Main.rand.NextBool(2))

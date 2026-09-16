@@ -271,14 +271,11 @@ namespace Augments.Projectiles
 
             Projectile.Center = muzzlePos + aimDir * 34f;
 
-            // 5. Dynamic Lighting & Dust along the beam (Radiant Gold / Cyan theme)
-            float beamLightIntensity = targetActive ? 0.45f : 0.22f;
-            Lighting.AddLight(Projectile.Center, 0.3f * beamLightIntensity, 0.85f * beamLightIntensity, 0.95f * beamLightIntensity);
+            // 5. Dust along the beam (Accessories emit signature lighting)
             MediGunVisuals.SpawnSocketBeamDust(player, Projectile.Center, aimTarget, socketed, targetActive);
 
             if (targetActive)
             {
-                Lighting.AddLight(aimTarget, 0.4f, 0.8f, 0.95f);
 
                 // Stream particles forward from gun towards ally (Gold Flame & Cyan Diamond)
                 if (Main.rand.NextBool(2))

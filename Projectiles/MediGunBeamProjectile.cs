@@ -271,14 +271,11 @@ namespace Augments.Projectiles
 
             Projectile.Center = muzzlePos + aimDir * 32f;
 
-            // 5. Dynamic Lighting & Dust along the beam
-            float beamLightIntensity = targetActive ? 0.35f : 0.18f;
-            Lighting.AddLight(Projectile.Center, 0.1f * beamLightIntensity, 0.9f * beamLightIntensity, 0.6f * beamLightIntensity);
+            // 5. Dust along the beam (Accessories emit signature lighting)
             MediGunVisuals.SpawnSocketBeamDust(player, Projectile.Center, aimTarget, socketed, targetActive);
 
             if (targetActive)
             {
-                Lighting.AddLight(aimTarget, 0.15f, 0.8f, 0.5f);
 
                 // Stream particles forward from gun towards ally
                 if (Main.rand.NextBool(2))
