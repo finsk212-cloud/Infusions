@@ -163,10 +163,10 @@ namespace Augments.Projectiles
                         isTargetHurt = npc.life < npc.lifeMax;
                     }
 
-                    // Build Overclock while actively tethered (~35s full charge)
+                    // Build Overclock while actively tethered (~25s full charge)
                     if (mediPlayer.OverclockCharge < 100f)
                     {
-                        float chargeGain = isTargetHurt ? (100f / (35f * 60f)) : (100f / (45f * 60f));
+                        float chargeGain = isTargetHurt ? (100f / (25f * 60f)) : (100f / (35f * 60f));
                         mediPlayer.OverclockCharge = Math.Min(100f, mediPlayer.OverclockCharge + chargeGain);
                     }
 
