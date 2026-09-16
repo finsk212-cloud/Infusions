@@ -49,12 +49,11 @@ Items: {
 		Tooltip:
 			'''
 			Hold Left-Click to lock onto a nearby ally or town NPC and channel a healing beam
-			Heals 3 HP per second
+			Heals [c/4ADE80:3 HP] per second
 			Healing builds Overclock charge over ~35 seconds
 			Press Right-Click at 100% to activate Overclock:
-			- Instantly restores 30 HP to the tethered ally
-			- Grants the ally +20% movement speed for 6 seconds
-			- Grants no buffs to the medic
+			- Instantly restores [c/4ADE80:30 HP] to the tethered ally
+			- Grants the ally [c/2DD4BF:+20% movement speed] for 6 seconds
 			Tether breaks if line of sight is obstructed or distance exceeds range
 			'''
 	}
