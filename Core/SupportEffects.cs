@@ -193,6 +193,31 @@ namespace Augments
 			ServerHealPlayer(target, clampedHeal);
 		}
 
+		public static void ProcessBandOfRegenFeedback(Player medic, int healAmount)
+		{
+			if (medic == null || !medic.active || medic.dead || healAmount <= 0)
+				return;
+
+			int selfHeal = Math.Max(1, healAmount / 2);
+			if (medic.statLife < medic.statLifeMax2)
+			{
+				if (Main.netMode == NetmodeID.SinglePlayer)
+				{
+					ServerHealPlayer(medic, selfHeal);
+				}
+				else if (Main.netMode == NetmodeID.MultiplayerClient)
+				{
+					ModPacket packet = ModContent.GetInstance<Augments>().GetPacket();
+					packet.Write((byte)AugmentPacketType.MediGunHealRequest);
+					packet.Write((byte)medic.whoAmI);
+					packet.Write(selfHeal);
+					packet.Send();
+				}
+				Dust d = Dust.NewDustDirect(medic.position, medic.width, medic.height, DustID.GreenFairy, 0f, -1f, 100, default, 0.9f);
+				d.noGravity = true;
+			}
+		}
+
 		public static void HandleMediGunOverclockActivate(int senderWhoAmI, byte tier, byte targetPlayerIndex)
 		{
 			if (Main.netMode != NetmodeID.Server || senderWhoAmI < 0 || senderWhoAmI >= Main.maxPlayers || targetPlayerIndex >= Main.maxPlayers)

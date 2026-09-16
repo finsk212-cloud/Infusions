@@ -50,10 +50,10 @@ Items: {
 			'''
 			Hold Left-Click to lock onto a nearby ally or town NPC and channel a healing beam
 			Heals [c/4ADE80:3 HP] per second
-			Healing builds Overclock charge over ~35 seconds
+			Healing builds Overclock charge over [c/A5C8E8:35 seconds]
 			Press Right-Click at 100% to activate Overclock:
 			- Instantly restores [c/4ADE80:30 HP] to the tethered ally
-			- Grants the ally [c/2DD4BF:+20% movement speed] for 6 seconds
+			- Grants the ally [c/2DD4BF:+20% movement speed] for [c/A5C8E8:6 seconds]
 			Tether breaks if line of sight is obstructed or distance exceeds range
 			'''
 	}
@@ -64,10 +64,10 @@ Items: {
 			'''
 			Hold Left-Click to lock onto a nearby ally or town NPC and channel an advanced healing beam
 			Heals [c/4ADE80:6 HP] per second with extended tether range
-			Healing builds Overclock charge over ~30 seconds
+			Healing builds Overclock charge over [c/A5C8E8:30 seconds]
 			Press Right-Click at 100% to activate Overclock:
 			- Instantly restores [c/4ADE80:50 HP] to the tethered ally
-			- Grants the ally [c/2DD4BF:+20% movement speed] and [c/FB923C:+10% attack speed] for 6 seconds
+			- Grants the ally [c/2DD4BF:+20% movement speed] and [c/FB923C:+10% attack speed] for [c/A5C8E8:6 seconds]
 			Tether breaks if line of sight is obstructed or distance exceeds range
 			'''
 	}
@@ -78,10 +78,10 @@ Items: {
 			'''
 			Hold Left-Click to lock onto a nearby ally or town NPC and channel an advanced spectral healing beam
 			Heals [c/4ADE80:10 HP] per second with maximum tether range
-			Healing builds Overclock charge over ~25 seconds
+			Healing builds Overclock charge over [c/A5C8E8:25 seconds]
 			Press Right-Click at 100% to activate Overclock:
 			- Instantly restores [c/4ADE80:75 HP] to the tethered ally
-			- Grants the ally [c/2DD4BF:+25% movement speed], [c/FB923C:+15% attack speed], and [c/FFC83B:+8% critical strike chance] for 6 seconds
+			- Grants the ally [c/2DD4BF:+25% movement speed], [c/FB923C:+15% attack speed], and [c/FFC83B:+8% critical strike chance] for [c/A5C8E8:6 seconds]
 			Tether breaks if line of sight is obstructed or distance exceeds range
 			'''
 	}
@@ -92,10 +92,10 @@ Items: {
 			'''
 			Hold Left-Click to lock onto a nearby ally or town NPC and channel an ultimate celestial healing beam
 			Heals [c/4ADE80:16 HP] per second with screen-wide tether range
-			Healing builds Overclock charge over ~20 seconds
+			Healing builds Overclock charge over [c/A5C8E8:20 seconds]
 			Press Right-Click at 100% to activate Overclock:
 			- Instantly restores [c/4ADE80:100 HP] to the tethered ally
-			- Grants the ally [c/2DD4BF:+30% movement speed], [c/FB923C:+20% attack speed], [c/FFC83B:+12% critical strike chance], and [c/FF5C5C:+15% all damage] for 6 seconds
+			- Grants the ally [c/2DD4BF:+30% movement speed], [c/FB923C:+20% attack speed], [c/FFC83B:+12% critical strike chance], and [c/FF5C5C:+15% all damage] for [c/A5C8E8:6 seconds]
 			Tether breaks if line of sight is obstructed or distance exceeds range
 			'''
 	}
