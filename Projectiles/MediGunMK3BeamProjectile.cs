@@ -6,6 +6,7 @@ using Terraria.Audio;
 using Terraria.GameContent;
 using Terraria.ID;
 using Terraria.ModLoader;
+using Augments.Core;
 
 namespace Augments.Projectiles
 {
@@ -60,6 +61,7 @@ namespace Augments.Projectiles
             Projectile.timeLeft = 2;
 
             Vector2 muzzlePos = player.MountedCenter;
+            int socketed = player.HeldItem?.TryGetGlobalItem<Items.MediGunGlobalItem>(out var mediGun) == true ? mediGun.SocketedAccessoryType : 0;
 
             // ONLY the local owner determines targeting and sends healing requests
             if (Projectile.owner == Main.myPlayer)
@@ -170,7 +172,6 @@ namespace Augments.Projectiles
                         mediPlayer.OverclockCharge = Math.Min(100f, mediPlayer.OverclockCharge + chargeGain);
                     }
 
-                    int socketed = player.HeldItem?.TryGetGlobalItem<Items.MediGunGlobalItem>(out var mediGun) == true ? mediGun.SocketedAccessoryType : 0;
                     SupportEffects.ApplyTetherSocketEffects(player, targetPlayerWhoAmI, targetNPCWhoAmI, socketed);
 
                     healPulseTimer++;
@@ -272,6 +273,7 @@ namespace Augments.Projectiles
             // 5. Dynamic Lighting & Dust along the beam (Prismatic / Spectral theme)
             float beamLightIntensity = targetActive ? 0.55f : 0.28f;
             Lighting.AddLight(Projectile.Center, 0.7f * beamLightIntensity, 0.3f * beamLightIntensity, 0.95f * beamLightIntensity);
+            MediGunVisuals.SpawnSocketBeamDust(player, Projectile.Center, aimTarget, socketed, targetActive);
 
             if (targetActive)
             {
