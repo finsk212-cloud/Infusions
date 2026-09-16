@@ -124,7 +124,7 @@ Buffs: {
 
 	BandOfRegenBuff: {
 		DisplayName: Band of Regeneration
-		Description: Slowly regenerates life (+2 life regen).
+		Description: Slowly regenerates life.
 	}
 
 	SupportClassBuff: {
