@@ -66,22 +66,10 @@ namespace Augments
 			return false;
 		}
 
-		private Item dummyPrefixItem = new Item();
-
 		public override void PostUpdateEquips()
 		{
 			if (IsHoldingMediGun(out _) && Player.HeldItem?.TryGetGlobalItem<MediGunGlobalItem>(out var mg) == true)
 			{
-				if (mg.SocketedAccessoryType > 0 && mg.SocketedAccessoryPrefix > 0)
-				{
-					if (dummyPrefixItem.type != mg.SocketedAccessoryType || dummyPrefixItem.prefix != mg.SocketedAccessoryPrefix)
-					{
-						dummyPrefixItem.SetDefaults(mg.SocketedAccessoryType);
-						dummyPrefixItem.prefix = (byte)mg.SocketedAccessoryPrefix;
-					}
-					Player.GrantPrefixBenefits(dummyPrefixItem);
-				}
-
 				bool isTethered = CurrentPatientWhoAmI >= 0 || CurrentTargetNPCWhoAmI >= 0;
 
 				if (mg.SocketedAccessoryType == ItemID.AnkletoftheWind && isTethered)
