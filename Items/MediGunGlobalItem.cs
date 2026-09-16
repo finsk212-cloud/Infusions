@@ -138,7 +138,7 @@ namespace Augments.Items
 				{
 					OverrideColor = new Color(74, 222, 128)
 				});
-				tooltips.Add(new TooltipLine(Mod, "SocketEffect2", "• Tethered ally gains Rapid Healing")
+				tooltips.Add(new TooltipLine(Mod, "SocketEffect2", "• Tethered ally gains the Band of Regeneration passive (+2 life regen)")
 				{
 					OverrideColor = new Color(74, 222, 128)
 				});

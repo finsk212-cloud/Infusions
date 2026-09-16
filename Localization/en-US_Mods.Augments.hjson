@@ -122,6 +122,11 @@ Buffs: {
 		Description: Movement speed, attack speed, critical strike chance, and damage increased.
 	}
 
+	BandOfRegenBuff: {
+		DisplayName: Band of Regeneration
+		Description: Slowly regenerates life (+2 life regen).
+	}
+
 	SupportClassBuff: {
 		DisplayName: Support Class
 		Description: Your aura chips are active.

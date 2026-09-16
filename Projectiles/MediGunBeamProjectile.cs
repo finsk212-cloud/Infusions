@@ -170,11 +170,18 @@ namespace Augments.Projectiles
                         mediPlayer.OverclockCharge = Math.Min(100f, mediPlayer.OverclockCharge + chargeGain);
                     }
 
-                    // Band of Regeneration: ally gains Rapid Healing while tethered
+                    // Band of Regeneration: ally gains the Band of Regeneration passive (+2 life regen) while tethered
                     int socketed = player.HeldItem?.TryGetGlobalItem<Items.MediGunGlobalItem>(out var mediGun) == true ? mediGun.SocketedAccessoryType : 0;
-                    if (socketed == ItemID.BandofRegeneration && targetPlayerWhoAmI >= 0 && targetPlayerWhoAmI < Main.maxPlayers)
+                    if (socketed == ItemID.BandofRegeneration)
                     {
-                        Main.player[targetPlayerWhoAmI].AddBuff(BuffID.RapidHealing, 120);
+                        if (targetPlayerWhoAmI >= 0 && targetPlayerWhoAmI < Main.maxPlayers)
+                        {
+                            Main.player[targetPlayerWhoAmI].AddBuff(ModContent.BuffType<BandOfRegenBuff>(), 10);
+                        }
+                        else if (targetNPCWhoAmI >= 0 && targetNPCWhoAmI < Main.maxNPCs)
+                        {
+                            Main.npc[targetNPCWhoAmI].lifeRegen += 2;
+                        }
                     }
 
                     healPulseTimer++;
