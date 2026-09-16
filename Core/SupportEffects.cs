@@ -204,11 +204,15 @@ namespace Augments
 			if (!sender.active || sender.dead || !target.active || target.dead || !AreAllies(sender, target))
 				return;
 
-			int healAmount = tier == 2 ? 50 : 30;
+			int healAmount = tier == 3 ? 75 : (tier == 2 ? 50 : 30);
 			int buffDuration = 360; // 6s
 
 			ServerHealPlayer(target, healAmount);
-			if (tier == 2)
+			if (tier == 3)
+			{
+				target.AddBuff(ModContent.BuffType<OverclockMK3Buff>(), buffDuration);
+			}
+			else if (tier == 2)
 			{
 				target.AddBuff(ModContent.BuffType<OverclockMK2Buff>(), buffDuration);
 			}

@@ -77,7 +77,11 @@ Items: {
 		Tooltip:
 			'''
 			Hold Left-Click to lock onto a nearby ally or town NPC and channel an advanced spectral healing beam
-			Heals 10 HP per second with maximum tether range
+			Heals [c/4ADE80:10 HP] per second with maximum tether range
+			Healing builds Overclock charge over ~35 seconds
+			Press Right-Click at 100% to activate Overclock:
+			- Instantly restores [c/4ADE80:75 HP] to the tethered ally
+			- Grants the ally [c/2DD4BF:+25% movement speed], [c/FB923C:+15% attack speed], and [c/FFC83B:+8% critical strike chance] for 6 seconds
 			Tether breaks if line of sight is obstructed or distance exceeds range
 			'''
 	}
@@ -102,6 +106,11 @@ Buffs: {
 	OverclockMK2Buff: {
 		DisplayName: Overclocked MK II
 		Description: Movement speed and attack speed increased.
+	}
+
+	OverclockMK3Buff: {
+		DisplayName: Overclocked MK III
+		Description: Movement speed, attack speed, and critical strike chance increased.
 	}
 
 	SupportClassBuff: {
