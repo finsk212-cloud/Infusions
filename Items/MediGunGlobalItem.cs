@@ -32,7 +32,11 @@ namespace Augments.Items
 				|| itemType == ItemID.CobaltShield
 				|| itemType == ItemID.Bezoar
 				|| itemType == ItemID.SharkToothNecklace
-				|| itemType == ItemID.PhilosophersStone;
+				|| itemType == ItemID.PhilosophersStone
+				|| itemType == ItemID.Aglet
+				|| itemType == ItemID.HandWarmer
+				|| itemType == ItemID.FeralClaws
+				|| itemType == ItemID.Shackle;
 		}
 
 		public override void SaveData(Item item, TagCompound tag)
@@ -186,6 +190,50 @@ namespace Augments.Items
 						OverrideColor = new Color(74, 222, 128)
 					});
 					tooltips.Add(new TooltipLine(Mod, "SocketEffect2", "• Tethered ally potion sickness is reduced by 20 seconds (down to 40s)")
+					{
+						OverrideColor = new Color(74, 222, 128)
+					});
+				}
+				else if (SocketedAccessoryType == ItemID.Aglet)
+				{
+					tooltips.Add(new TooltipLine(Mod, "SocketEffect1", "• Grants the medic +6% movement speed while tethered")
+					{
+						OverrideColor = new Color(74, 222, 128)
+					});
+					tooltips.Add(new TooltipLine(Mod, "SocketEffect2", "• Tethered ally gains +8% movement speed and acceleration")
+					{
+						OverrideColor = new Color(74, 222, 128)
+					});
+				}
+				else if (SocketedAccessoryType == ItemID.HandWarmer)
+				{
+					tooltips.Add(new TooltipLine(Mod, "SocketEffect1", "• Grants the medic immunity to Chilled and Frozen")
+					{
+						OverrideColor = new Color(74, 222, 128)
+					});
+					tooltips.Add(new TooltipLine(Mod, "SocketEffect2", "• Tethered ally becomes immune to Chilled and Frozen, purging active frost")
+					{
+						OverrideColor = new Color(74, 222, 128)
+					});
+				}
+				else if (SocketedAccessoryType == ItemID.FeralClaws)
+				{
+					tooltips.Add(new TooltipLine(Mod, "SocketEffect1", "• Overclock charges 15% faster while tethered")
+					{
+						OverrideColor = new Color(74, 222, 128)
+					});
+					tooltips.Add(new TooltipLine(Mod, "SocketEffect2", "• Tethered ally gains +15% melee and whip attack speed with auto-swing")
+					{
+						OverrideColor = new Color(74, 222, 128)
+					});
+				}
+				else if (SocketedAccessoryType == ItemID.Shackle)
+				{
+					tooltips.Add(new TooltipLine(Mod, "SocketEffect1", "• Grants the medic +2 defense while tethered")
+					{
+						OverrideColor = new Color(74, 222, 128)
+					});
+					tooltips.Add(new TooltipLine(Mod, "SocketEffect2", "• Tethered ally gains +3 defense")
 					{
 						OverrideColor = new Color(74, 222, 128)
 					});

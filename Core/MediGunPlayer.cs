@@ -21,9 +21,12 @@ namespace Augments
 		{
 			get
 			{
-				if (Player.HeldItem?.TryGetGlobalItem<MediGunGlobalItem>(out var mg) == true && mg.SocketedAccessoryType == ItemID.BandofStarpower)
+				if (Player.HeldItem?.TryGetGlobalItem<MediGunGlobalItem>(out var mg) == true)
 				{
-					return 1.25f;
+					if (mg.SocketedAccessoryType == ItemID.BandofStarpower)
+						return 1.25f;
+					if (mg.SocketedAccessoryType == ItemID.FeralClaws)
+						return 1.15f;
 				}
 				return 1.0f;
 			}
@@ -73,6 +76,10 @@ namespace Augments
 				{
 					Player.moveSpeed += 0.12f;
 				}
+				else if (mg.SocketedAccessoryType == ItemID.Aglet && isTethered)
+				{
+					Player.moveSpeed += 0.06f;
+				}
 				else if (mg.SocketedAccessoryType == ItemID.CobaltShield && isTethered)
 				{
 					Player.noKnockback = true;
@@ -81,9 +88,19 @@ namespace Augments
 				{
 					Player.buffImmune[BuffID.Poisoned] = true;
 				}
+				else if (mg.SocketedAccessoryType == ItemID.HandWarmer)
+				{
+					Player.buffImmune[BuffID.Chilled] = true;
+					Player.buffImmune[BuffID.Frozen] = true;
+					Player.resistCold = true;
+				}
 				else if (mg.SocketedAccessoryType == ItemID.SharkToothNecklace)
 				{
 					Player.GetArmorPenetration(DamageClass.Generic) += 3;
+				}
+				else if (mg.SocketedAccessoryType == ItemID.Shackle && isTethered)
+				{
+					Player.statDefense += 2;
 				}
 			}
 		}

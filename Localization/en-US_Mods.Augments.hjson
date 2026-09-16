@@ -157,6 +157,26 @@ Buffs: {
 		Description: Potion sickness cooldown reduced by 20 seconds.
 	}
 
+	AgletBuff: {
+		DisplayName: Aglet
+		Description: Increases movement speed by 8%.
+	}
+
+	HandWarmerBuff: {
+		DisplayName: Hand Warmer
+		Description: Immune to Chilled and Frozen; cold resistance increased.
+	}
+
+	FeralClawsBuff: {
+		DisplayName: Feral Claws
+		Description: Increases melee and whip attack speed by 15% with auto-swing.
+	}
+
+	ShackleBuff: {
+		DisplayName: Shackle
+		Description: Increases defense by 3.
+	}
+
 	SupportClassBuff: {
 		DisplayName: Support Class
 		Description: Your aura chips are active.

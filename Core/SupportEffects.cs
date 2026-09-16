@@ -271,6 +271,27 @@ namespace Augments
 							}
 						}
 					}
+					else if (socketed == ItemID.Aglet)
+					{
+						target.AddBuff(ModContent.BuffType<AgletBuff>(), 10);
+					}
+					else if (socketed == ItemID.HandWarmer)
+					{
+						target.AddBuff(ModContent.BuffType<HandWarmerBuff>(), 10);
+						target.buffImmune[BuffID.Chilled] = true;
+						target.buffImmune[BuffID.Frozen] = true;
+						target.ClearBuff(BuffID.Chilled);
+						target.ClearBuff(BuffID.Frozen);
+						Lighting.AddLight(target.Center, 0.7f, 0.35f, 0.15f);
+					}
+					else if (socketed == ItemID.FeralClaws)
+					{
+						target.AddBuff(ModContent.BuffType<FeralClawsBuff>(), 10);
+					}
+					else if (socketed == ItemID.Shackle)
+					{
+						target.AddBuff(ModContent.BuffType<ShackleBuff>(), 10);
+					}
 				}
 			}
 			else if (targetNPCWhoAmI >= 0 && targetNPCWhoAmI < Main.maxNPCs)
@@ -281,6 +302,10 @@ namespace Augments
 					if (socketed == ItemID.BandofRegeneration)
 					{
 						npc.lifeRegen += 3;
+					}
+					else if (socketed == ItemID.Shackle)
+					{
+						npc.defense += 3;
 					}
 				}
 			}
