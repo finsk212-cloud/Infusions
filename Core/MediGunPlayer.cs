@@ -66,10 +66,22 @@ namespace Augments
 			return false;
 		}
 
+		private Item dummyPrefixItem = new Item();
+
 		public override void PostUpdateEquips()
 		{
 			if (IsHoldingMediGun(out _) && Player.HeldItem?.TryGetGlobalItem<MediGunGlobalItem>(out var mg) == true)
 			{
+				if (mg.SocketedAccessoryType > 0 && mg.SocketedAccessoryPrefix > 0)
+				{
+					if (dummyPrefixItem.type != mg.SocketedAccessoryType || dummyPrefixItem.prefix != mg.SocketedAccessoryPrefix)
+					{
+						dummyPrefixItem.SetDefaults(mg.SocketedAccessoryType);
+						dummyPrefixItem.prefix = (byte)mg.SocketedAccessoryPrefix;
+					}
+					Player.GrantPrefixBenefits(dummyPrefixItem);
+				}
+
 				bool isTethered = CurrentPatientWhoAmI >= 0 || CurrentTargetNPCWhoAmI >= 0;
 
 				if (mg.SocketedAccessoryType == ItemID.AnkletoftheWind && isTethered)
@@ -258,11 +270,18 @@ namespace Augments
 				if (Main.mouseItem != null && !Main.mouseItem.IsAir && MediGunGlobalItem.IsSupportedAccessory(Main.mouseItem.type))
 				{
 					int oldType = mediGun.SocketedAccessoryType;
+					int oldPrefix = mediGun.SocketedAccessoryPrefix;
+
 					mediGun.SocketedAccessoryType = Main.mouseItem.type;
+					mediGun.SocketedAccessoryPrefix = Main.mouseItem.prefix;
 
 					if (oldType > 0)
 					{
 						Main.mouseItem.SetDefaults(oldType);
+						if (oldPrefix > 0)
+						{
+							Main.mouseItem.Prefix(oldPrefix);
+						}
 					}
 					else
 					{
@@ -272,7 +291,9 @@ namespace Augments
 					}
 
 					SoundEngine.PlaySound(SoundID.Item37, Player.Center);
-					CombatText.NewText(Player.getRect(), new Color(74, 222, 128), $"Socketed: {Lang.GetItemNameValue(mediGun.SocketedAccessoryType)}");
+					string prefixName = mediGun.SocketedAccessoryPrefix > 0 && mediGun.SocketedAccessoryPrefix < Lang.prefix.Length ? Lang.prefix[mediGun.SocketedAccessoryPrefix].Value : "";
+					string fullTitle = string.IsNullOrEmpty(prefixName) ? Lang.GetItemNameValue(mediGun.SocketedAccessoryType) : $"{prefixName} {Lang.GetItemNameValue(mediGun.SocketedAccessoryType)}";
+					CombatText.NewText(Player.getRect(), new Color(74, 222, 128), $"Socketed: {fullTitle}");
 
 					if (Main.netMode == NetmodeID.MultiplayerClient && context == ItemSlot.Context.ChestItem && Player.chest >= 0)
 					{
@@ -288,13 +309,22 @@ namespace Augments
 				if ((Main.mouseItem == null || Main.mouseItem.IsAir) && mediGun.SocketedAccessoryType > 0)
 				{
 					int detachedType = mediGun.SocketedAccessoryType;
+					int detachedPrefix = mediGun.SocketedAccessoryPrefix;
+
 					mediGun.SocketedAccessoryType = 0;
+					mediGun.SocketedAccessoryPrefix = 0;
 
 					Main.mouseItem = new Item();
 					Main.mouseItem.SetDefaults(detachedType);
+					if (detachedPrefix > 0)
+					{
+						Main.mouseItem.Prefix(detachedPrefix);
+					}
 
 					SoundEngine.PlaySound(SoundID.Grab, Player.Center);
-					CombatText.NewText(Player.getRect(), new Color(255, 200, 80), $"Detached: {Lang.GetItemNameValue(detachedType)}");
+					string prefixName = detachedPrefix > 0 && detachedPrefix < Lang.prefix.Length ? Lang.prefix[detachedPrefix].Value : "";
+					string fullTitle = string.IsNullOrEmpty(prefixName) ? Lang.GetItemNameValue(detachedType) : $"{prefixName} {Lang.GetItemNameValue(detachedType)}";
+					CombatText.NewText(Player.getRect(), new Color(255, 200, 80), $"Detached: {fullTitle}");
 
 					if (Main.netMode == NetmodeID.MultiplayerClient && context == ItemSlot.Context.ChestItem && Player.chest >= 0)
 					{

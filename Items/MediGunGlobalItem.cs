@@ -15,6 +15,7 @@ namespace Augments.Items
 		public override bool InstancePerEntity => true;
 
 		public int SocketedAccessoryType { get; set; } = 0;
+		public int SocketedAccessoryPrefix { get; set; } = 0;
 
 		public override bool AppliesToEntity(Item item, bool lateInstantiation)
 		{
@@ -44,22 +45,29 @@ namespace Augments.Items
 			if (SocketedAccessoryType > 0)
 			{
 				tag["SocketedAccessoryType"] = SocketedAccessoryType;
+				if (SocketedAccessoryPrefix > 0)
+				{
+					tag["SocketedAccessoryPrefix"] = SocketedAccessoryPrefix;
+				}
 			}
 		}
 
 		public override void LoadData(Item item, TagCompound tag)
 		{
 			SocketedAccessoryType = tag.GetInt("SocketedAccessoryType");
+			SocketedAccessoryPrefix = tag.GetInt("SocketedAccessoryPrefix");
 		}
 
 		public override void NetSend(Item item, System.IO.BinaryWriter writer)
 		{
 			writer.Write(SocketedAccessoryType);
+			writer.Write(SocketedAccessoryPrefix);
 		}
 
 		public override void NetReceive(Item item, System.IO.BinaryReader reader)
 		{
 			SocketedAccessoryType = reader.ReadInt32();
+			SocketedAccessoryPrefix = reader.ReadInt32();
 		}
 
 		public override void OnCreated(Item item, ItemCreationContext context)
@@ -71,6 +79,7 @@ namespace Augments.Items
 					if (consumed.TryGetGlobalItem<MediGunGlobalItem>(out var consumedMedi) && consumedMedi.SocketedAccessoryType > 0)
 					{
 						SocketedAccessoryType = consumedMedi.SocketedAccessoryType;
+						SocketedAccessoryPrefix = consumedMedi.SocketedAccessoryPrefix;
 						break;
 					}
 				}
@@ -93,29 +102,83 @@ namespace Augments.Items
 			{
 				// Detach existing accessory directly into hand
 				int detachedType = SocketedAccessoryType;
+				int detachedPrefix = SocketedAccessoryPrefix;
 				SocketedAccessoryType = 0;
+				SocketedAccessoryPrefix = 0;
+
 				if (Main.mouseItem == null || Main.mouseItem.IsAir)
 				{
 					Main.mouseItem = new Item();
 					Main.mouseItem.SetDefaults(detachedType);
+					if (detachedPrefix > 0)
+					{
+						Main.mouseItem.Prefix(detachedPrefix);
+					}
 				}
 				else
 				{
-					player.QuickSpawnItem(player.GetSource_ItemUse(item), detachedType, 1);
+					Item dropped = player.QuickSpawnItemDirect(player.GetSource_ItemUse(item), detachedType, 1);
+					if (detachedPrefix > 0)
+					{
+						dropped.Prefix(detachedPrefix);
+					}
 				}
 				SoundEngine.PlaySound(SoundID.Grab, player.Center);
 				CombatText.NewText(player.getRect(), new Color(255, 200, 80), $"Detached: {Lang.GetItemNameValue(detachedType)}");
 			}
 		}
 
+		public static string GetPrefixDescription(int prefixId)
+		{
+			return prefixId switch
+			{
+				PrefixID.Hard => "+1 defense",
+				PrefixID.Guarding => "+2 defense",
+				PrefixID.Armored => "+3 defense",
+				PrefixID.Warding => "+4 defense",
+				PrefixID.Arcane => "+20 max mana",
+				PrefixID.Precise => "+2% critical strike chance",
+				PrefixID.Lucky => "+4% critical strike chance",
+				PrefixID.Jagged => "+1% damage",
+				PrefixID.Spiked => "+2% damage",
+				PrefixID.Angry => "+3% damage",
+				PrefixID.Menacing => "+4% damage",
+				PrefixID.Brisk => "+1% movement speed",
+				PrefixID.Fleeting => "+2% movement speed",
+				PrefixID.Hasty2 => "+3% movement speed",
+				PrefixID.Quick2 => "+4% movement speed",
+				PrefixID.Wild => "+1% attack speed",
+				PrefixID.Rash => "+2% attack speed",
+				PrefixID.Intrepid => "+3% attack speed",
+				PrefixID.Violent => "+4% attack speed",
+				_ => null
+			};
+		}
+
 		public override void ModifyTooltips(Item item, List<TooltipLine> tooltips)
 		{
 			if (SocketedAccessoryType > 0)
 			{
-				tooltips.Add(new TooltipLine(Mod, "SocketHeader", $"[c/FFC83B:Attached Accessory: {Lang.GetItemNameValue(SocketedAccessoryType)}]")
+				string accName = Lang.GetItemNameValue(SocketedAccessoryType);
+				string prefixName = SocketedAccessoryPrefix > 0 && SocketedAccessoryPrefix < Lang.prefix.Length ? Lang.prefix[SocketedAccessoryPrefix].Value : "";
+				string title = string.IsNullOrEmpty(prefixName) ? accName : $"{prefixName} {accName}";
+
+				tooltips.Add(new TooltipLine(Mod, "SocketHeader", $"[c/FFC83B:Attached Accessory: {title}]")
 				{
 					OverrideColor = new Color(255, 200, 59)
 				});
+
+				if (SocketedAccessoryPrefix > 0)
+				{
+					string reforgeDesc = GetPrefixDescription(SocketedAccessoryPrefix);
+					if (!string.IsNullOrEmpty(reforgeDesc))
+					{
+						tooltips.Add(new TooltipLine(Mod, "SocketPrefix", $"• Reforge Bonus: {reforgeDesc}")
+						{
+							OverrideColor = new Color(135, 206, 250)
+						});
+					}
+				}
 
 				if (SocketedAccessoryType == ItemID.BandofRegeneration)
 				{
