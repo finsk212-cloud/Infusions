@@ -76,7 +76,7 @@ namespace Augments
 
 						int hitDirection = dir.X >= 0f ? 1 : -1;
 						npc.SimpleStrikeNPC(shockwaveDamage, hitDirection, false, 6.5f, DamageClass.Summon, false);
-						Augments.Core.AugmentDamageTracker.RecordProtocolHit(Augments.Core.AugmentFamilyRegistry.LasherId, "Lasher Protocol: Sonic Crack", shockwaveDamage, false);
+						AugmentDamageTracker.RecordProtocolHit(AugmentFamilyRegistry.LasherId, "Lasher Protocol: Sonic Crack", shockwaveDamage, false);
 					}
 				}
 			}

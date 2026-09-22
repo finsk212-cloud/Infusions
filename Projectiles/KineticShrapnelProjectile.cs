@@ -6,6 +6,7 @@ using Terraria.Audio;
 using Terraria.GameContent;
 using Terraria.ID;
 using Terraria.ModLoader;
+using Augments.Core;
 
 namespace Augments
 {
@@ -23,7 +24,7 @@ namespace Augments
 		{
 			AugmentProjectileTag tag = Projectile.GetGlobalProjectile<AugmentProjectileTag>();
 			tag.IsAugmentProcDamage = true;
-			tag.SourceProtocolId = Augments.Core.AugmentFamilyRegistry.MarksmanId;
+			tag.SourceProtocolId = AugmentFamilyRegistry.MarksmanId;
 			tag.CanTriggerOnHitAugments = false;
 			tag.PreventEchoChamberCopy = true;
 			tag.PreventRicochetEngineCopy = true;

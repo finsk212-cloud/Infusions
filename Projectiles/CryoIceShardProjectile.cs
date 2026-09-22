@@ -7,6 +7,7 @@ using Terraria.Audio;
 using Terraria.GameContent;
 using Terraria.ID;
 using Terraria.ModLoader;
+using Augments.Core;
 
 namespace Augments
 {
@@ -27,7 +28,7 @@ namespace Augments
         {
             var tag = Projectile.GetGlobalProjectile<AugmentProjectileTag>();
             tag.IsAugmentProcDamage = true;
-            tag.SourceProtocolId = Augments.Core.AugmentFamilyRegistry.CryoId;
+            tag.SourceProtocolId = AugmentFamilyRegistry.CryoId;
             Projectile.width = 8;
             Projectile.height = 8;
             Projectile.scale = 0.85f;
