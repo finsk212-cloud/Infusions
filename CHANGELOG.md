@@ -133,3 +133,23 @@
 - **TCP Stream Desync Protection**: Fixed an issue where incoming effect/damage packets with invalid NPC targets returned early without draining payload bytes, permanently corrupting the packet stream for connected clients.
 - **Remote Max HP Synchronization**: Fixed vanilla Terraria bug where remote players' max HP defaulted to 100 on connected clients; added live synchronization across multiplayer.
 - **Medi Gun Tether Reliability**: Fixed ally health checks so tether healing no longer locks out on unsynced clients; added instant client-side HP prediction on heal.
+
+---
+
+### 6. New Feature: Chip Combat Analytics & Live DPS Monitor
+- **Real-Time Combat Telemetry**:
+  - Monitors all outgoing damage dealt by the player, breaking down contributions between primary weapon hits, individual plug-in chips, and active protocol procs.
+  - **Live DPS & Sliding Window**: Real-time sliding 3-second window calculating continuous live DPS, updated dynamically on every frame.
+  - **Dual View Modes**:
+    - **[LAST 10M]**: Rolling 10-minute queue tracking recent performance during boss encounters or mob clearing.
+    - **[TOTAL]**: Full session accumulation tracking overall chip impact across the entire play session.
+  - **Owned Chip Breakdown**: Automatically lists every currently installed plug-in chip (even with 0 damage dealt), making it easy to spot underperforming or inactive chips.
+  - **Interactive Controls & Draggable UI**:
+    - Toggleable via hotkey (default: **L**, configurable in Terraria Controls) or via the docked **[DPS]** button directly above the Protocol HUD.
+    - **Draggable Window**: High-tech cybernetic header allows moving the analytics window freely across the screen.
+    - **[PAUSE]**: Freezes the display for post-combat review without losing accumulated data.
+    - **[RESET]**: Clears the active damage queue and resets metrics to zero with a single click.
+    - **Scrollable List**: Smooth mouse wheel scrolling with dynamic scroll thumb indicator.
+    - **Visual Percentage Bars**: Color-coded progress bars reflect each chip's percentage of total damage output using chip rarity palette colors.
+    - **Detailed Tooltips**: Hovering over any record displays total hits, critical strike count, crit rate percentage, and maximum single hit damage.
+

@@ -60,6 +60,10 @@ namespace Augments
             var ap = player.GetModPlayer<AugmentPlayer>();
             ap.RecordOnHitDamage(BaseOnHitDamage);
             Strike(player, target, BaseOnHitDamage);
+            if (player.whoAmI == Main.myPlayer)
+            {
+                AugmentDamageTracker.RecordChipHit(AugmentDatabase.GetById("chain_lightning"), BaseOnHitDamage, false);
+            }
         }
 
         private static void Strike(Player player, NPC target, int damage)
@@ -136,6 +140,10 @@ namespace Augments
                 };
 
                 chainTarget.StrikeNPC(chainHit);
+                if (player.whoAmI == Main.myPlayer)
+                {
+                    AugmentDamageTracker.RecordChipHit(AugmentDatabase.GetById("chain_lightning"), chainDamage, hit.Crit);
+                }
                 if (Main.netMode != NetmodeID.SinglePlayer)
                     NetMessage.SendStrikeNPC(chainTarget, in chainHit);
 

@@ -24,11 +24,24 @@ namespace Augments
         public int SourceMinionProjectileType = -1;
         public int SourceMinionProjectileIdentity = -1;
 
+        public string SourceAugmentId;
+        public string SourceProtocolId;
+
         public override void SendExtraAI(Projectile projectile, BitWriter bitWriter, BinaryWriter binaryWriter)
         {
             bitWriter.WriteBit(IsAugmentProcDamage);
             bool hasMinionSource = SourceMinionProjectileType >= 0;
             bitWriter.WriteBit(hasMinionSource);
+
+            bool hasAugmentId = !string.IsNullOrEmpty(SourceAugmentId);
+            bitWriter.WriteBit(hasAugmentId);
+            if (hasAugmentId)
+                binaryWriter.Write(SourceAugmentId);
+
+            bool hasProtocolId = !string.IsNullOrEmpty(SourceProtocolId);
+            bitWriter.WriteBit(hasProtocolId);
+            if (hasProtocolId)
+                binaryWriter.Write(SourceProtocolId);
 
             if (IsAugmentProcDamage)
             {
@@ -54,6 +67,13 @@ namespace Augments
         {
             IsAugmentProcDamage = bitReader.ReadBit();
             bool hasMinionSource = bitReader.ReadBit();
+
+            bool hasAugmentId = bitReader.ReadBit();
+            SourceAugmentId = hasAugmentId ? binaryReader.ReadString() : null;
+
+            bool hasProtocolId = bitReader.ReadBit();
+            SourceProtocolId = hasProtocolId ? binaryReader.ReadString() : null;
+
             if (!IsAugmentProcDamage)
             {
                 CanTriggerOnHitAugments = false;

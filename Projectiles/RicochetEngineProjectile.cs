@@ -30,6 +30,7 @@ namespace Augments
             tag.CanTriggerOnHitAugments = true;
             tag.OnHitEffectiveness = 0.5f;
             tag.PreventRicochetEngineCopy = true;
+            tag.SourceAugmentId = "ricochet_engine";
 
             Projectile.width = 8;
             Projectile.height = 8;

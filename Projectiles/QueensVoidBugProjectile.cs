@@ -15,7 +15,9 @@ namespace Augments
 
         public override void SetDefaults()
         {
-            Projectile.GetGlobalProjectile<AugmentProjectileTag>().IsAugmentProcDamage = true;
+            var tag = Projectile.GetGlobalProjectile<AugmentProjectileTag>();
+            tag.IsAugmentProcDamage = true;
+            tag.SourceAugmentId = "queens_swarm";
             Projectile.width = 14;
             Projectile.height = 14;
             Projectile.friendly = true;

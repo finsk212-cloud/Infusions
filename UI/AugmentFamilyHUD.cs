@@ -50,6 +50,13 @@ namespace Augments
 			float iconX = Main.screenWidth - IconWidth - RightMargin;
 			float currentY = StartY;
 
+			Rectangle analyticsBtn = new Rectangle((int)iconX, (int)StartY - 24, (int)IconWidth, 18);
+			if (analyticsBtn.Contains(mouse) && Main.mouseLeft && Main.mouseLeftRelease)
+			{
+				AugmentAnalyticsHUD.Toggle();
+				Main.mouseLeftRelease = false;
+			}
+
 			foreach (var kv in AugmentFamilyRegistry.Families)
 			{
 				string id = kv.Key;
@@ -117,6 +124,28 @@ namespace Augments
 			var font = FontAssets.MouseText.Value;
 			float iconX = Main.screenWidth - IconWidth - RightMargin;
 			float currentY = StartY;
+
+			Point mouse = new Point(Main.mouseX, Main.mouseY);
+			Rectangle analyticsBtn = new Rectangle((int)iconX, (int)StartY - 24, (int)IconWidth, 18);
+			bool btnHover = analyticsBtn.Contains(mouse);
+			Color btnTheme = AugmentAnalyticsHUD.Visible ? new Color(74, 222, 128) : new Color(56, 189, 248);
+
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, analyticsBtn, new Color(8, 12, 20, 240));
+			if (btnHover)
+			{
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, analyticsBtn, btnTheme * 0.25f);
+			}
+			DrawHighTechBorder(spriteBatch, analyticsBtn, btnHover ? btnTheme : btnTheme * 0.65f);
+
+			string label = "DPS";
+			Vector2 lSz = ChatManager.GetStringSize(font, label, new Vector2(0.60f));
+			Vector2 lPos = new Vector2(analyticsBtn.X + (analyticsBtn.Width - lSz.X) * 0.5f, analyticsBtn.Y + (analyticsBtn.Height - lSz.Y) * 0.5f);
+			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, label, lPos, btnHover ? Color.White : btnTheme, 0f, Vector2.Zero, new Vector2(0.60f));
+
+			if (btnHover)
+			{
+				Main.instance.MouseText("Combat Analytics & DPS (Press L)");
+			}
 
 			foreach (var kv in AugmentFamilyRegistry.Families)
 			{

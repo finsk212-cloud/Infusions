@@ -68,6 +68,7 @@ namespace Augments
 				gachaInterface.Update(gameTime);
 
 			AugmentFamilyHUD.Update(gameTime);
+			AugmentAnalyticsHUD.Update(gameTime);
 		}
 
 		// Slots both panels into Terraria's actual draw order.
@@ -107,6 +108,16 @@ namespace Augments
 				delegate
 				{
 					AugmentTooltipDrawer.DrawIfHovering(Main.spriteBatch);
+					return true;
+				},
+				InterfaceScaleType.UI)
+			);
+
+			layers.Insert(mouseTextIndex, new LegacyGameInterfaceLayer(
+				"Augments: Combat Analytics HUD",
+				delegate
+				{
+					AugmentAnalyticsHUD.Draw(Main.spriteBatch);
 					return true;
 				},
 				InterfaceScaleType.UI)

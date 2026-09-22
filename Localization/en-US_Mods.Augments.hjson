@@ -6,6 +6,7 @@ Keybinds: {
 	Cleanse.DisplayName: Cleanse
 	UndoReforge.DisplayName: Undo Reforge
 	ResetCooldowns.DisplayName: Reset Plug-in Chip Cooldowns (Dev)
+	ToggleCombatAnalytics.DisplayName: Toggle Combat Analytics
 }
 
 NPCs: {

@@ -23,6 +23,7 @@ namespace Augments
 		{
 			AugmentProjectileTag tag = Projectile.GetGlobalProjectile<AugmentProjectileTag>();
 			tag.IsAugmentProcDamage = true;
+			tag.SourceProtocolId = Augments.Core.AugmentFamilyRegistry.MarksmanId;
 			tag.CanTriggerOnHitAugments = false;
 			tag.PreventEchoChamberCopy = true;
 			tag.PreventRicochetEngineCopy = true;

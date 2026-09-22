@@ -18,7 +18,9 @@ namespace Augments
 
         public override void SetDefaults()
         {
-            Projectile.GetGlobalProjectile<AugmentProjectileTag>().IsAugmentProcDamage = true;
+            var tag = Projectile.GetGlobalProjectile<AugmentProjectileTag>();
+            tag.IsAugmentProcDamage = true;
+            tag.SourceAugmentId = "godslayer_blade";
             Projectile.width = 36;
             Projectile.height = 64;
             Projectile.friendly = true;

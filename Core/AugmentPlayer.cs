@@ -581,6 +581,11 @@ namespace Augments
 				}
 			}
 
+			if (Player.whoAmI == Main.myPlayer)
+			{
+				AugmentDamageTracker.Update(1f / 60f);
+			}
+
 			foreach (var a in Owned)
 				a.OnUpdate(Player);
 
@@ -1225,6 +1230,9 @@ namespace Augments
 			if (Augments.OpenAugmentListKeybind.JustPressed)
 				ModContent.GetInstance<AugmentUISystem>().ToggleList();
 
+			if (Augments.ToggleCombatAnalyticsKeybind?.JustPressed == true)
+				AugmentAnalyticsHUD.Toggle();
+
 			if (HasAugment("cleanse") && CleanseCooldown == 0 && Augments.CleanseKeybind?.JustPressed == true)
 			{
 				CleanseCooldown = 1800;
@@ -1358,6 +1366,11 @@ namespace Augments
 		{
 			TryRegisterBossDamage(target);
 
+			if (Player.whoAmI == Main.myPlayer)
+			{
+				AugmentDamageTracker.RecordWeaponHit(item.Name, damageDone, hit.Crit);
+			}
+
 			if (item.CountsAsClass(DamageClass.Melee))
 			{
 				TryTriggerKineticShockwave(target, item.damage);
@@ -1399,6 +1412,36 @@ namespace Augments
 			TryRegisterBossDamage(target);
 
 			AugmentProjectileTag tag = proj.GetGlobalProjectile<AugmentProjectileTag>();
+
+			if (Player.whoAmI == Main.myPlayer)
+			{
+				if (tag.IsAugmentProcDamage)
+				{
+					if (!string.IsNullOrEmpty(tag.SourceProtocolId))
+					{
+						string protoName = AugmentFamilyRegistry.Families.TryGetValue(tag.SourceProtocolId, out var f) ? f.DisplayName : tag.SourceProtocolId;
+						AugmentDamageTracker.RecordProtocolHit(tag.SourceProtocolId, protoName, damageDone, hit.Crit);
+					}
+					else if (!string.IsNullOrEmpty(tag.SourceAugmentId))
+					{
+						Augment aug = AugmentDatabase.GetById(tag.SourceAugmentId);
+						if (aug != null)
+							AugmentDamageTracker.RecordChipHit(aug, damageDone, hit.Crit);
+						else
+							AugmentDamageTracker.RecordHit(tag.SourceAugmentId, tag.SourceAugmentId, damageDone, hit.Crit, Color.White);
+					}
+					else
+					{
+						AugmentDamageTracker.RecordHit("augment_proc", proj.Name, damageDone, hit.Crit, new Color(255, 62, 165));
+					}
+				}
+				else
+				{
+					string weaponName = Player.HeldItem != null && !Player.HeldItem.IsAir ? Player.HeldItem.Name : proj.Name;
+					AugmentDamageTracker.RecordWeaponHit(weaponName, damageDone, hit.Crit);
+				}
+			}
+
 			if (tag.IsAugmentProcDamage && !tag.CanTriggerOnHitAugments)
 				return;
 
@@ -1476,6 +1519,7 @@ namespace Augments
 				Vector2 dir = npc.Center - target.Center;
 				int hitDir = dir.X >= 0f ? 1 : -1;
 				npc.SimpleStrikeNPC(coinBurstDamage, hitDir, false, 4f, DamageClass.Generic, false);
+				AugmentDamageTracker.RecordProtocolHit(AugmentFamilyRegistry.FortuneId, "Fortune Protocol: House Edge", coinBurstDamage, false);
 			}
 		}
 
@@ -1533,6 +1577,7 @@ namespace Augments
 
 				int hitDirection = knockbackDir.X >= 0f ? 1 : -1;
 				npc.SimpleStrikeNPC(shockwaveDamage, hitDirection, false, 5f, DamageClass.Melee, false);
+				AugmentDamageTracker.RecordProtocolHit(AugmentFamilyRegistry.KineticId, "Kinetic Protocol: Shockwave", shockwaveDamage, false);
 			}
 		}
 
@@ -1594,6 +1639,7 @@ namespace Augments
 				HideCombatText = false
 			};
 			secondary.StrikeNPC(hitInfo);
+			AugmentDamageTracker.RecordProtocolHit(AugmentFamilyRegistry.VoltId, "Volt Protocol: Superconductor", arcDamage, false);
 			if (Main.netMode != NetmodeID.SinglePlayer)
 				NetMessage.SendStrikeNPC(secondary, in hitInfo);
 		}
@@ -1868,6 +1914,7 @@ namespace Augments
 
 				int hitDirection = knockbackDir.X >= 0f ? 1 : -1;
 				npc.SimpleStrikeNPC(novaDamage, hitDirection, false, 4.5f, DamageClass.Magic, false);
+				AugmentDamageTracker.RecordProtocolHit(AugmentFamilyRegistry.ArcaneSurgeId, "Arcane Surge: Nova", novaDamage, false);
 			}
 		}
 

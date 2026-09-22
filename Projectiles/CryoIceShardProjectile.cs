@@ -25,7 +25,9 @@ namespace Augments
 
         public override void SetDefaults()
         {
-            Projectile.GetGlobalProjectile<AugmentProjectileTag>().IsAugmentProcDamage = true;
+            var tag = Projectile.GetGlobalProjectile<AugmentProjectileTag>();
+            tag.IsAugmentProcDamage = true;
+            tag.SourceProtocolId = Augments.Core.AugmentFamilyRegistry.CryoId;
             Projectile.width = 8;
             Projectile.height = 8;
             Projectile.scale = 0.85f;
