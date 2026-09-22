@@ -33,8 +33,15 @@ namespace Augments
 		private static Rectangle pauseButtonRect;
 		private static Rectangle closeButtonRect;
 
+		private static uint lastToggleFrame = 0;
+		private static bool oldLState = false;
+
 		public static void Toggle()
 		{
+			if (Main.GameUpdateCount == lastToggleFrame)
+				return;
+			lastToggleFrame = Main.GameUpdateCount;
+
 			Visible = !Visible;
 			SoundEngine.PlaySound(Visible ? SoundID.MenuOpen : SoundID.MenuClose);
 		}
@@ -43,6 +50,30 @@ namespace Augments
 		{
 			if (Main.dedServ || Main.gameMenu)
 				return;
+
+			// Global hotkey check (works even when inventory is open or if unbound in custom profile)
+			if (!Main.drawingPlayerChat && !Main.editSign && !Main.editChest)
+			{
+				bool triggered = false;
+				if (Augments.ToggleCombatAnalyticsKeybind != null && Augments.ToggleCombatAnalyticsKeybind.JustPressed)
+				{
+					triggered = true;
+				}
+				else if (Augments.ToggleCombatAnalyticsKeybind == null || Augments.ToggleCombatAnalyticsKeybind.GetAssignedKeys().Count == 0)
+				{
+					bool isDown = Main.keyState.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.L);
+					if (isDown && !oldLState)
+					{
+						triggered = true;
+					}
+					oldLState = isDown;
+				}
+
+				if (triggered)
+				{
+					Toggle();
+				}
+			}
 
 			if (!Visible)
 			{
@@ -219,41 +250,26 @@ namespace Augments
 			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle((int)leftX, (int)curY, (int)(PanelWidth - 20f), 1), new Color(56, 189, 248, 60));
 			curY += 6f;
 
-			// 3. Scrollable List of Records
-			RasterizerState prevRaster = spriteBatch.GraphicsDevice.RasterizerState;
-			Rectangle prevScissor = spriteBatch.GraphicsDevice.ScissorRectangle;
-
-			Rectangle clipRect = new Rectangle((int)leftX, (int)curY, (int)(PanelWidth - 20f), (int)listHeight);
-			spriteBatch.End();
-
-			Rectangle screenScissor = clipRect;
-			spriteBatch.GraphicsDevice.ScissorRectangle = Rectangle.Intersect(prevScissor, screenScissor);
-			RasterizerState scissorState = new RasterizerState { ScissorTestEnable = true, CullMode = CullMode.None };
-			spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp, DepthStencilState.None, scissorState, null, Main.UIScaleMatrix);
-
-			float rowY = curY - scrollOffset;
+			// 3. List of Records (Clean & crash-proof without scissor state disruptions)
+			int maxScrollIdx = Math.Max(0, sortedRecords.Count - (int)MaxVisibleEntries);
+			int startIndex = (int)MathHelper.Clamp((float)Math.Floor(scrollOffset / EntryHeight), 0f, (float)maxScrollIdx);
+			int countToDraw = Math.Min(sortedRecords.Count - startIndex, (int)MaxVisibleEntries);
 
 			if (sortedRecords.Count == 0)
 			{
 				string emptyText = "No combat damage recorded yet.";
 				Vector2 empSz = ChatManager.GetStringSize(font, emptyText, new Vector2(0.7f));
-				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, emptyText, new Vector2(leftX + (PanelWidth - 20f - empSz.X) * 0.5f, rowY + 16f), new Color(148, 163, 184), 0f, Vector2.Zero, new Vector2(0.7f));
+				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, emptyText, new Vector2(leftX + (PanelWidth - 20f - empSz.X) * 0.5f, curY + 16f), new Color(148, 163, 184), 0f, Vector2.Zero, new Vector2(0.7f));
 			}
 			else
 			{
-				foreach (var rec in sortedRecords)
+				for (int i = 0; i < countToDraw; i++)
 				{
-					if (rowY + EntryHeight >= curY && rowY <= curY + listHeight)
-					{
-						DrawRecordRow(spriteBatch, font, rec, leftX, rowY, PanelWidth - 20f, viewDamage, mouse);
-					}
-					rowY += EntryHeight;
+					var rec = sortedRecords[startIndex + i];
+					float rowY = curY + i * EntryHeight;
+					DrawRecordRow(spriteBatch, font, rec, leftX, rowY, PanelWidth - 20f, viewDamage, mouse);
 				}
 			}
-
-			spriteBatch.End();
-			spriteBatch.GraphicsDevice.ScissorRectangle = prevScissor;
-			spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp, DepthStencilState.None, prevRaster, null, Main.UIScaleMatrix);
 
 			// Scrollbar if needed
 			if (maxScroll > 0f)

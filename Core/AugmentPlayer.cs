@@ -1230,7 +1230,19 @@ namespace Augments
 			if (Augments.OpenAugmentListKeybind.JustPressed)
 				ModContent.GetInstance<AugmentUISystem>().ToggleList();
 
-			if (Augments.ToggleCombatAnalyticsKeybind?.JustPressed == true)
+			bool analyticsPressed = Augments.ToggleCombatAnalyticsKeybind?.JustPressed == true;
+			if (!analyticsPressed && (Augments.ToggleCombatAnalyticsKeybind == null || Augments.ToggleCombatAnalyticsKeybind.GetAssignedKeys().Count == 0))
+			{
+				if (!Main.drawingPlayerChat && !Main.editSign && !Main.editChest)
+				{
+					if (Main.keyState.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.L) && !Main.oldKeyState.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.L))
+					{
+						analyticsPressed = true;
+					}
+				}
+			}
+
+			if (analyticsPressed)
 				AugmentAnalyticsHUD.Toggle();
 
 			if (HasAugment("cleanse") && CleanseCooldown == 0 && Augments.CleanseKeybind?.JustPressed == true)
