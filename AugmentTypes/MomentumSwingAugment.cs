@@ -1,5 +1,6 @@
 using Terraria;
 using Terraria.ModLoader;
+using Augments.Core;
 
 namespace Augments
 {
@@ -14,6 +15,7 @@ namespace Augments
 
         public override AugmentRarity Rarity => AugmentRarity.Common;
         public override AugmentClass Class => AugmentClass.Melee;
+        public override string FamilyId => AugmentFamilyRegistry.KineticId;
 
         private const int ResetWindowTicks = 90;
         private const int MaxStacks = 5;

@@ -11,6 +11,7 @@ using Terraria.ID;
 using Terraria.ModLoader;
 using Terraria.UI;
 using Terraria.UI.Chat;
+using Augments.Core;
 
 namespace Augments
 {
@@ -30,13 +31,11 @@ namespace Augments
 		private static readonly Vector2 NameScale = new Vector2(0.92f);
 		private static readonly Vector2 DescScale = new Vector2(0.78f);
 
-		private const string KeystoneTagText = "◆ KEYSTONE • EXCLUSIVE ◆";
-		private const string SupportTagText = "✚ SUPPORT CLASS ✚";
-		private const string FortuneTagText = "✦ FORTUNE FAMILY ✦";
+		private const string KeystoneTagText = "CORE OVERRIDE • UNIQUE";
+		private const string SupportTagText = "SUPPORT CLASS";
 
 		private static readonly Color KeystoneTagColor = new Color(248, 113, 113);
 		private static readonly Color SupportTagColor = new Color(74, 222, 128);
-		private static readonly Color FortuneTagColor = new Color(255, 200, 59);
 
 		// Animation timings & parameters
 		private static readonly float[] PulseSpeeds = { 1.0f, 1.8f, 2.6f, 3.4f };
@@ -46,7 +45,6 @@ namespace Augments
 		private readonly List<string> descLines;
 		private readonly bool isKeystone;
 		private readonly bool isSupport;
-		private readonly bool isFortuneThemed;
 		private readonly Color baseBorderColor;
 		private readonly float pulseSpeed;
 		private float pulseTimer;
@@ -54,6 +52,7 @@ namespace Augments
 
 		// Stored bounds of the bottom tags for mouse hover check
 		private Rectangle specialTagRect;
+		private Rectangle familyTagRect;
 
 		public AugmentChoiceCard(Augment augment, float width, int cardIndex = 0)
 		{
@@ -61,7 +60,6 @@ namespace Augments
 			this.cardIndex = cardIndex;
 			isKeystone = augment.KeystoneFamily != null;
 			isSupport = augment.Class == AugmentClass.Support;
-			isFortuneThemed = augment.IsLuckyThemed;
 
 			baseBorderColor = RarityColor(augment.Rarity);
 			pulseSpeed = PulseSpeeds[(int)augment.Rarity];
@@ -204,12 +202,18 @@ namespace Augments
 			DrawInstallActionBar(spriteBatch, font, rect, borderColor);
 
 			// Tooltips for tags if mouse is hovering over them
-			if (specialTagRect.Contains(Main.MouseScreen.ToPoint()))
+			if (familyTagRect.Contains(Main.MouseScreen.ToPoint()))
+			{
+				var family = AugmentFamilyRegistry.Get(Augment.FamilyId);
+				if (family != null)
+					DrawFamilyTooltip(spriteBatch, font, family);
+			}
+			else if (specialTagRect.Contains(Main.MouseScreen.ToPoint()))
 			{
 				if (isSupport)
 					DrawSupportTooltip(spriteBatch, font);
-				else if (isFortuneThemed)
-					DrawFortuneTooltip(spriteBatch, font);
+				else if (isKeystone)
+					DrawKeystoneTooltip(spriteBatch, font);
 			}
 		}
 
@@ -432,19 +436,80 @@ namespace Augments
 		private void DrawSpecialBadges(SpriteBatch spriteBatch, DynamicSpriteFont font, Rectangle rect)
 		{
 			specialTagRect = Rectangle.Empty;
+			familyTagRect = Rectangle.Empty;
 
-			if (isKeystone)
+			bool hasSpecialTag = isKeystone || isSupport;
+			bool hasFamily = Augment.FamilyId != null;
+
+			if (hasSpecialTag && hasFamily)
 			{
-				DrawPillBadge(spriteBatch, font, rect, rect.Bottom - 60, KeystoneTagText, KeystoneTagColor, Color.Transparent);
+				int yFamily = rect.Bottom - 84;
+				int ySpecial = rect.Bottom - 58;
+
+				var fam = AugmentFamilyRegistry.Get(Augment.FamilyId);
+				if (fam != null)
+				{
+					string famText = $"{fam.DisplayName.ToUpper()} PROTOCOL";
+					familyTagRect = DrawProtocolTextBadge(spriteBatch, font, rect, yFamily, famText, fam.ThemeColor);
+				}
+
+				if (isKeystone)
+					specialTagRect = DrawPillBadge(spriteBatch, font, rect, ySpecial, KeystoneTagText, KeystoneTagColor, Color.Transparent);
+				else if (isSupport)
+					specialTagRect = DrawPillBadge(spriteBatch, font, rect, ySpecial, SupportTagText, SupportTagColor, Color.Transparent);
 			}
-			else if (isSupport)
+			else if (hasFamily)
 			{
-				specialTagRect = DrawPillBadge(spriteBatch, font, rect, rect.Bottom - 60, SupportTagText, SupportTagColor, Color.Transparent);
+				int yFamily = rect.Bottom - 54;
+				var fam = AugmentFamilyRegistry.Get(Augment.FamilyId);
+				if (fam != null)
+				{
+					string famText = $"{fam.DisplayName.ToUpper()} PROTOCOL";
+					familyTagRect = DrawProtocolTextBadge(spriteBatch, font, rect, yFamily, famText, fam.ThemeColor);
+				}
 			}
-			else if (isFortuneThemed)
+			else if (hasSpecialTag)
 			{
-				specialTagRect = DrawPillBadge(spriteBatch, font, rect, rect.Bottom - 60, FortuneTagText, FortuneTagColor, Color.Transparent);
+				int ySpecial = rect.Bottom - 60;
+				if (isKeystone)
+					specialTagRect = DrawPillBadge(spriteBatch, font, rect, ySpecial, KeystoneTagText, KeystoneTagColor, Color.Transparent);
+				else if (isSupport)
+					specialTagRect = DrawPillBadge(spriteBatch, font, rect, ySpecial, SupportTagText, SupportTagColor, Color.Transparent);
 			}
+		}
+
+		private Rectangle DrawProtocolTextBadge(SpriteBatch spriteBatch, DynamicSpriteFont font, Rectangle cardRect, int y, string text, Color themeColor)
+		{
+			Vector2 scale = new Vector2(0.66f);
+			Vector2 textSize = ChatManager.GetStringSize(font, text, scale);
+			float maxTextWidth = cardRect.Width - 24f;
+			if (textSize.X > maxTextWidth)
+			{
+				float fitFactor = maxTextWidth / textSize.X;
+				scale *= fitFactor;
+				textSize = ChatManager.GetStringSize(font, text, scale);
+			}
+
+			int textX = cardRect.X + (int)((cardRect.Width - textSize.X) * 0.5f);
+			int textY = y;
+
+			// Hitbox for mouse hover tooltip (with 8px horizontal, 4px vertical padding for easy hovering)
+			Rectangle hitRect = new Rectangle(textX - 8, textY - 2, (int)textSize.X + 16, (int)textSize.Y + 4);
+			bool isTagHovered = hitRect.Contains(Main.MouseScreen.ToPoint());
+			Color drawColor = isTagHovered ? Color.Lerp(themeColor, Color.White, 0.45f) : themeColor;
+
+			ChatManager.DrawColorCodedStringWithShadow(
+				spriteBatch,
+				font,
+				text,
+				new Vector2(textX, textY),
+				drawColor,
+				0f,
+				Vector2.Zero,
+				scale
+			);
+
+			return hitRect;
 		}
 
 		private Rectangle DrawPillBadge(SpriteBatch spriteBatch, DynamicSpriteFont font, Rectangle cardRect, int y, string text, Color accentColor, Color _)
@@ -560,6 +625,53 @@ namespace Augments
 			return y;
 		}
 
+		internal static void DrawKeystoneTooltip(SpriteBatch spriteBatch, DynamicSpriteFont font)
+		{
+			const float padding = 12f;
+			const float lineSpacing = 3f;
+
+			var lines = new (string Text, Color Color)[]
+			{
+				("CORE OVERRIDE ARCHITECTURE", KeystoneTagColor),
+				("Unique protocol that rewires chassis combat specifications.", new Color(220, 230, 245)),
+				("• Limit 1 Core Override chip per chassis.", new Color(248, 113, 113)),
+				("• Permanent installation — cannot be sold or removed.", new Color(200, 215, 235)),
+				("• Grants massive combat power with operational trade-offs.", new Color(175, 190, 215))
+			};
+
+			var scale = new Vector2(0.80f);
+			float maxWidth = 0f;
+			float totalHeight = 0f;
+			foreach (var (text, _) in lines)
+			{
+				Vector2 size = ChatManager.GetStringSize(font, text, scale);
+				if (size.X > maxWidth) maxWidth = size.X;
+				totalHeight += size.Y + lineSpacing;
+			}
+			totalHeight -= lineSpacing;
+
+			float boxWidth = maxWidth + padding * 2f;
+			float boxHeight = totalHeight + padding * 2f;
+
+			Vector2 boxPos = new Vector2(
+				Math.Clamp(Main.MouseScreen.X - 24f - boxWidth, 10f, Main.screenWidth - boxWidth - 10f),
+				Math.Clamp(Main.MouseScreen.Y - boxHeight / 2f, 10f, Main.screenHeight - boxHeight - 10f)
+			);
+
+			var boxRect = new Rectangle((int)boxPos.X, (int)boxPos.Y, (int)boxWidth, (int)boxHeight);
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, boxRect, new Color(12, 18, 34) * 0.96f);
+			DrawRectBorder(spriteBatch, boxRect, KeystoneTagColor * 0.8f, 2);
+
+			float y = boxRect.Y + padding;
+			float x = boxRect.X + padding;
+			foreach (var (text, color) in lines)
+			{
+				Vector2 size = ChatManager.GetStringSize(font, text, scale);
+				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, text, new Vector2(x, y), color, 0f, Vector2.Zero, scale);
+				y += size.Y + lineSpacing;
+			}
+		}
+
 		internal static void DrawSupportTooltip(SpriteBatch spriteBatch, DynamicSpriteFont font)
 		{
 			const float padding = 12f;
@@ -567,7 +679,7 @@ namespace Augments
 
 			var lines = new (string Text, Color Color)[]
 			{
-				("✚ SUPPORT STANCE ✚",                   SupportTagColor),
+				("SUPPORT STANCE",                        SupportTagColor),
 				("2 chips: -30% damage, +20 defense",     new Color(220, 230, 245)),
 				("3 chips: -23% damage, +30 defense",     new Color(220, 230, 245)),
 				("4 chips: -16% damage, +40 defense",     new Color(220, 230, 245)),
@@ -607,42 +719,59 @@ namespace Augments
 			}
 		}
 
-		internal static void DrawFortuneTooltip(SpriteBatch spriteBatch, DynamicSpriteFont font)
+		internal static void DrawFamilyTooltip(SpriteBatch spriteBatch, DynamicSpriteFont font, AugmentFamily family)
 		{
 			const float padding = 12f;
 			const float lineSpacing = 3f;
 
 			var player = Main.LocalPlayer;
 			var ap = player?.GetModPlayer<AugmentPlayer>();
-			float totalFortune = ap?.TotalFortune ?? 0f;
+			int ownedCount = ap != null ? AugmentFamilyRegistry.GetOwnedCount(ap, family.Id) : 0;
 
 			var lines = new List<(string Text, Color Color)>
 			{
-				("✦ FORTUNE FAMILY SYNERGY ✦", FortuneTagColor),
-				("Each Fortune chip adds to your Fortune stat.", new Color(200, 220, 245)),
-				($"Current Fortune Bonus: +{(int)MathF.Round(totalFortune * 100f)}%", totalFortune > 0 ? AugmentTextColors.Crit : new Color(150, 165, 190)),
-				("─────────────────────────────", new Color(60, 80, 120) * 0.7f),
-				("Fortune Stat Effects:", Color.White),
-				("• Boosts proc chance of all luck & crit triggers", new Color(180, 210, 245)),
-				("• Increases extra coin drops from Lucky Find", new Color(180, 210, 245)),
-				("• +40% boss reward bias to roll more Fortune chips", new Color(180, 210, 245)),
-				("• Increases character's world Luck stat", new Color(180, 210, 245)),
-				("─────────────────────────────", new Color(60, 80, 120) * 0.7f),
-				("Family Members:", Color.White)
+				($"{family.DisplayName.ToUpper()} PROTOCOL", family.ThemeColor),
+				(family.Description, new Color(200, 220, 245)),
+				($"Progress: {ownedCount}/{family.MaxMembers} Installed", ownedCount >= family.MaxMembers ? AugmentTextColors.Healing : new Color(150, 165, 190)),
 			};
 
-			foreach (var other in AugmentDatabase.All)
+			if (family.Id == AugmentFamilyRegistry.FortuneId && ap != null)
 			{
-				if (other.IsLuckyThemed)
+				lines.Add(($"Active Fortune: +{(int)System.MathF.Round(ap.TotalFortune * 100f)}%  •  World Luck: +{player.luck:0.00}", new Color(255, 220, 120)));
+			}
+
+			lines.Add(("─────────────────────────────", new Color(60, 80, 120) * 0.7f));
+			lines.Add(("Protocol Specifications:", Color.White));
+
+			foreach (var kv in family.ThresholdBonuses)
+			{
+				int threshold = kv.Key;
+				var bonus = kv.Value;
+				bool unlocked = ownedCount >= threshold;
+				string header = unlocked
+					? $"  ✓ ({threshold}) {bonus.Title} (Active)"
+					: $"  • ({threshold}) {bonus.Title} (Locked)";
+				Color headerCol = unlocked ? AugmentTextColors.Healing : new Color(160, 170, 185);
+				lines.Add((header, headerCol));
+
+				foreach (var dl in bonus.Descriptions)
 				{
-					bool owned = ap?.HasAugment(other.Id) == true;
-					int bonusPct = (int)MathF.Round(other.FortuneBonus * 100f);
-					string bonusStr = bonusPct > 0 ? $" (+{bonusPct}% Fortune)" : "";
-					if (owned)
-						lines.Add(($"  ✓ {other.DisplayName}{bonusStr} (Active)", AugmentTextColors.Healing));
-					else
-						lines.Add(($"  • {other.DisplayName}{bonusStr}", new Color(175, 190, 215)));
+					lines.Add(($"      {dl.Trim()}", unlocked ? new Color(220, 245, 230) : new Color(125, 140, 160)));
 				}
+			}
+
+			lines.Add(("─────────────────────────────", new Color(60, 80, 120) * 0.7f));
+			lines.Add(("Assigned Plug-in Chips:", Color.White));
+
+			foreach (var memberId in family.MemberIds)
+			{
+				Augment m = AugmentDatabase.GetById(memberId);
+				string name = m?.DisplayName ?? memberId;
+				bool owned = ap != null && ap.HasAugment(memberId);
+				if (owned)
+					lines.Add(($"  ✓ {name} (Installed)", AugmentTextColors.Healing));
+				else
+					lines.Add(($"  • {name}", new Color(175, 190, 215)));
 			}
 
 			var scale = new Vector2(0.80f);
@@ -666,7 +795,7 @@ namespace Augments
 
 			var boxRect = new Rectangle((int)boxPos.X, (int)boxPos.Y, (int)boxWidth, (int)boxHeight);
 			spriteBatch.Draw(TextureAssets.MagicPixel.Value, boxRect, new Color(12, 18, 34) * 0.96f);
-			DrawRectBorder(spriteBatch, boxRect, FortuneTagColor * 0.8f, 2);
+			DrawRectBorder(spriteBatch, boxRect, family.ThemeColor * 0.8f, 2);
 
 			float y = boxRect.Y + padding;
 			float x = boxRect.X + padding;

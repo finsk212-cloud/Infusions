@@ -1,3 +1,5 @@
+using Augments.Core;
+
 namespace Augments
 {
     public class FesteringWoundsAugment : Augment
@@ -9,6 +11,7 @@ namespace Augments
 
         public override AugmentRarity Rarity => AugmentRarity.Rare;
         public override AugmentClass Class => AugmentClass.Universal;
+        public override string FamilyId => AugmentFamilyRegistry.BloodhunterId;
 
         // This augment has no logic of its own - it's purely a flag read by
         // AugmentFesteringWoundsNPC.UpdateLifeRegen.

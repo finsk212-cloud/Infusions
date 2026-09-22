@@ -13,9 +13,14 @@ namespace Augments
 
 		private int taggedPlayerIndex = -1;
 
-		public void TagMagicHit(int playerIndex)
+		public void TagHit(int playerIndex)
 		{
 			taggedPlayerIndex = playerIndex;
+		}
+
+		public void TagMagicHit(int playerIndex)
+		{
+			TagHit(playerIndex);
 		}
 
 		public bool IsTaggedBy(int playerIndex)

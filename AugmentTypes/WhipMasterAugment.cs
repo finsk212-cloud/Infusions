@@ -1,5 +1,6 @@
 using Terraria;
 using Terraria.ModLoader;
+using Augments.Core;
 
 namespace Augments
 {
@@ -12,6 +13,7 @@ namespace Augments
 
 		public override AugmentRarity Rarity => AugmentRarity.Common;
 		public override AugmentClass Class => AugmentClass.Summon;
+		public override string FamilyId => AugmentFamilyRegistry.LasherId;
 
 		private const float AttackSpeedBonus = 0.15f;
 		private const float RangeMultiplierBonus = 1.2f;

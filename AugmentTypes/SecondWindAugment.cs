@@ -13,6 +13,7 @@ namespace Augments
 
         public override AugmentRarity Rarity => AugmentRarity.Common;
         public override AugmentClass Class => AugmentClass.Universal;
+        public override string FamilyId => "field_medic";
 
         private const int CooldownTicks = 3600;
         private const float TriggerThreshold = 0.25f;

@@ -1,3 +1,4 @@
+using Augments.Core;
 using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
@@ -15,6 +16,7 @@ namespace Augments
 
         public override AugmentRarity Rarity => AugmentRarity.Rare;
         public override AugmentClass Class => AugmentClass.Magic;
+        public override string FamilyId => AugmentFamilyRegistry.CryoId;
 
         private const float BonusDamagePercent = 0.25f;
 

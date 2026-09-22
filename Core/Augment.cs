@@ -105,6 +105,10 @@ namespace Augments
 		// family stays fully available.
 		public virtual string KeystoneFamily => null;
 
+		// The synergy family this augment belongs to (e.g. "field_medic").
+		// Owning multiple members of the same family unlocks threshold synergy bonuses.
+		public virtual string FamilyId => null;
+
 		// When true (owned by the player, not necessarily on this augment
 		// itself), every owned augment's OnHitNPCWithItem/OnHitNPCWithProj
 		// fires a second time on a crit - see AugmentPlayer's dispatchers.
@@ -175,6 +179,14 @@ namespace Augments
 		// but before it's finalized for the frame - the correct place to add a
 		// temporary flat defense bonus (same timing buffs/accessories use).
 		public virtual void UpdateEquips(Player player) { }
+
+		// Fires during Player.UpdateLifeRegen(), after vanilla calculations -
+		// the correct place to modify or halt player.lifeRegen.
+		public virtual void UpdateLifeRegen(Player player) { }
+
+		// Fires during Player.UpdateBadLifeRegen(), after UpdateLifeRegen -
+		// the definitive place to enforce negative regen or clamp positive regen to 0.
+		public virtual void UpdateBadLifeRegen(Player player) { }
 
 		// Fires whenever the player hits an NPC with a held weapon (melee, etc).
 		// `hit` contains the finalized damage/crit info for that swing.

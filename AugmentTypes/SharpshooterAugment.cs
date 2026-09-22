@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using Terraria;
 using Terraria.ModLoader;
+using Augments.Core;
 
 namespace Augments
 {
@@ -15,6 +16,7 @@ namespace Augments
 
         public override AugmentRarity Rarity => AugmentRarity.Rare;
         public override AugmentClass Class => AugmentClass.Ranged;
+        public override string FamilyId => AugmentFamilyRegistry.MarksmanId;
 
         private const float MaxDistance = 400f;
         private const float MaxBonusDamagePercent = 0.25f;

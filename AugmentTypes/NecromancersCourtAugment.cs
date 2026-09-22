@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using Terraria;
 using Terraria.ModLoader;
+using Augments.Core;
 
 namespace Augments
 {
@@ -11,8 +12,9 @@ namespace Augments
         public override string Description =>
             $"Summon kills raise ghost minions for {AugmentText.Duration("6s")}.";
 
-        public override AugmentRarity Rarity => AugmentRarity.Legendary;
+        public override AugmentRarity Rarity => AugmentRarity.Epic;
         public override AugmentClass Class => AugmentClass.Summon;
+        public override string FamilyId => AugmentFamilyRegistry.HivemindId;
 
         private const int GhostCount = 2;
         private const int GhostDamage = 5;

@@ -8,7 +8,7 @@ namespace Augments
         public override string Id => "critical_surge";
         public override string DisplayName => "Critical Surge";
         public override string Description =>
-            $"{AugmentText.Crit("Crits")} have a 30% chance to deal a bonus {AugmentText.Trigger("on-hit")} strike for " +
+            $"{AugmentText.Crit("Crits")} have a 30% chance to deal a bonus {AugmentText.OnHit("on-hit")} strike for " +
             $"{AugmentText.SpecialDamage("25%")} of the weapon's base damage.";
 
         public override AugmentRarity Rarity => AugmentRarity.Rare;
@@ -24,13 +24,21 @@ namespace Augments
         public override void OnHitNPCWithItem(Player player, Item item, NPC target, NPC.HitInfo hit)
         {
             if (hit.Crit && Main.rand.NextFloat() < ProcChance)
-                Strike(player, target, ScaleHitEffect((int)(item.damage * BonusDamagePercent)));
+            {
+                int dmg = ScaleHitEffect((int)(item.damage * BonusDamagePercent));
+                player.GetModPlayer<AugmentPlayer>().RecordOnHitDamage(dmg);
+                Strike(player, target, dmg);
+            }
         }
 
         public override void OnHitNPCWithProj(Player player, Projectile proj, NPC target, NPC.HitInfo hit)
         {
             if (hit.Crit && Main.rand.NextFloat() < ProcChance)
-                Strike(player, target, ScaleHitEffect((int)(proj.damage * BonusDamagePercent)));
+            {
+                int dmg = ScaleHitEffect((int)(proj.damage * BonusDamagePercent));
+                player.GetModPlayer<AugmentPlayer>().RecordOnHitDamage(dmg);
+                Strike(player, target, dmg);
+            }
         }
 
         private static void Strike(Player player, NPC target, int damage)

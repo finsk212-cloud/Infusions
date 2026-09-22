@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Terraria;
+using Terraria.Audio;
+using Terraria.ID;
 using Terraria.ModLoader;
 
 namespace Augments
@@ -11,18 +13,19 @@ namespace Augments
         public override string Id => "echo_chamber";
         public override string DisplayName => "Echo Chamber";
         public override string Description =>
-            $"Firing a ranged projectile also fires an echo shot for 30% damage. Echo shots trigger {AugmentText.Trigger("on-hit")} effects at 50% effectiveness.";
+            $"Firing a ranged projectile also fires an echo shot for {AugmentText.BonusDamage("20% damage")}. Echo shots trigger {AugmentText.OnHit("on-hit")} effects at 50% effectiveness.";
 
         public override AugmentRarity Rarity => AugmentRarity.Legendary;
         public override AugmentClass Class => AugmentClass.Ranged;
 
-        private const float EchoDamageMultiplier = 0.3f;
+        private const float EchoDamageMultiplier = 0.2f;
         private const float EchoEffectiveness = 0.5f;
         private const int EchoDelayTicks = 12;
+        private static int _lastSoundTick = -1;
 
         public override void OnShootProjectile(Player player, Item item, Projectile projectile)
         {
-            if (projectile.owner != Main.myPlayer || projectile.DamageType != DamageClass.Ranged)
+            if (projectile.owner != Main.myPlayer || !projectile.CountsAsClass(DamageClass.Ranged))
                 return;
 
             AugmentProjectileTag originalTag = projectile.GetGlobalProjectile<AugmentProjectileTag>();
@@ -79,13 +82,25 @@ namespace Augments
             echo.DamageType = pending.DamageType;
             echo.CritChance = pending.CritChance;
             echo.ArmorPenetration = pending.ArmorPenetration;
+            echo.noDropItem = true;
+            echo.usesLocalNPCImmunity = true;
+            if (echo.localNPCHitCooldown < 10 && echo.localNPCHitCooldown != -1)
+                echo.localNPCHitCooldown = 10;
+
             AugmentProjectileTag echoTag = echo.GetGlobalProjectile<AugmentProjectileTag>();
             echoTag.IsAugmentProcDamage = true;
             echoTag.CanTriggerOnHitAugments = true;
             echoTag.OnHitEffectiveness = EchoEffectiveness;
             echoTag.PreventEchoChamberCopy = true;
+            echoTag.IsEchoChamberEcho = true;
             echo.alpha = Math.Max(echo.alpha, 110);
             echo.netUpdate = true;
+
+            if (player.whoAmI == Main.myPlayer && (int)Main.GameUpdateCount != _lastSoundTick)
+            {
+                _lastSoundTick = (int)Main.GameUpdateCount;
+                SoundEngine.PlaySound(SoundID.Item8 with { Volume = 0.35f, Pitch = 0.25f }, player.Center);
+            }
         }
 
         // Queued echoes live on AugmentPlayer (per-player), since this augment

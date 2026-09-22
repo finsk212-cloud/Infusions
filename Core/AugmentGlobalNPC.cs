@@ -1,5 +1,7 @@
+using Augments.Core;
 using Microsoft.Xna.Framework;
 using Terraria;
+using Terraria.Audio;
 using Terraria.GameContent.ItemDropRules;
 using Terraria.ID;
 using Terraria.ModLoader;
@@ -98,7 +100,54 @@ namespace Augments
             if (!player.active)
                 return;
 
-            foreach (var augment in player.GetModPlayer<AugmentPlayer>().Owned)
+            var ap = player.GetModPlayer<AugmentPlayer>();
+
+            // Cryo Protocol (Absolute Zero): Slaying a chilled or Frostburned enemy shatters them into 3 homing ice shards (40 damage)
+            if (AugmentFamilyRegistry.GetOwnedCount(ap, AugmentFamilyRegistry.CryoId) >= 2 && ap.CryoShatterCooldown <= 0)
+            {
+                // Prevent multi-segment / worm spam: only the head or independent body triggers shatter
+                if (npc.realLife < 0 || npc.realLife == npc.whoAmI)
+                {
+                    bool isCold = npc.HasBuff(BuffID.Frostburn) || npc.HasBuff(BuffID.Frostburn2) || npc.GetGlobalNPC<AugmentSlowNPC>().IsActive;
+                    if (isCold)
+                    {
+                        ap.CryoShatterCooldown = 36; // ~0.60s cooldown prevents rapid cascade bursts
+
+                        SoundEngine.PlaySound(SoundID.Item27 with { Volume = 0.70f, Pitch = 0.2f }, npc.Center);
+
+                        for (int i = 0; i < 14; i++)
+                        {
+                            Vector2 dustVel = Main.rand.NextVector2Circular(4f, 4f);
+                            Dust d = Dust.NewDustPerfect(npc.Center, DustID.IceTorch, dustVel, 100, default, 1.3f);
+                            d.noGravity = true;
+                        }
+
+                        if (Main.netMode != NetmodeID.Server && player.whoAmI == Main.myPlayer)
+                        {
+                            int projType = ModContent.ProjectileType<CryoIceShardProjectile>();
+                            int damage = 40;
+                            float baseAngle = Main.rand.NextFloat(MathHelper.TwoPi);
+                            for (int i = 0; i < 3; i++)
+                            {
+                                float angle = baseAngle + MathHelper.TwoPi * i / 3f + Main.rand.NextFloat(-0.20f, 0.20f);
+                                Vector2 shootVel = angle.ToRotationVector2() * Main.rand.NextFloat(8.5f, 11f);
+                                Projectile.NewProjectile(
+                                    player.GetSource_OnHit(npc),
+                                    npc.Center,
+                                    shootVel,
+                                    projType,
+                                    damage,
+                                    2f,
+                                    player.whoAmI,
+                                    ai0: i
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+
+            foreach (var augment in ap.Owned)
                 augment.OnKillNPC(player, npc);
         }
     }

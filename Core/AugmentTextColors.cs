@@ -15,7 +15,8 @@ namespace Augments
         public const string MovementSpeedHex = "2DD4BF"; // Movement speed (Wind teal/turquoise)
 
         // Timing & Structure
-        public const string TriggerHex = "FFA733";       // on hit, on kill, charges, stacks (Trigger amber)
+        public const string OnHitHex = "FF3EA5";         // on hit, on-hit combat triggers (Vivid electric fuchsia/magenta)
+        public const string TriggerHex = "FFA733";       // on kill, charges, stacks (Trigger amber)
         public const string DurationHex = "A5C8E8";      // 2s, 3s, 5s, seconds (Soft ice slate)
         public const string CooldownHex = "94A3B8";      // cooldown, seconds cooldown (Subdued slate gray)
         public const string ActiveHex = "FDE047";        // "Active:" label on keybind-triggered augments (Bright prompt yellow)
@@ -39,6 +40,7 @@ namespace Augments
         public static readonly Color AttackSpeed = new Color(251, 146, 60);
         public static readonly Color MovementSpeed = new Color(45, 212, 191);
 
+        public static readonly Color OnHit = new Color(255, 62, 165);
         public static readonly Color Trigger = new Color(255, 167, 51);
         public static readonly Color Duration = new Color(165, 200, 232);
         public static readonly Color Cooldown = new Color(148, 163, 184);

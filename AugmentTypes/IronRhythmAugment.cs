@@ -9,7 +9,7 @@ namespace Augments
         public override string Id => "iron_rhythm";
         public override string DisplayName => "Iron Rhythm";
         public override string Description =>
-            $"Every 4th attack applies {AugmentText.SpecialDamage("15 damage")} {AugmentText.Trigger("on-hit")}.";
+            $"Every 4th attack applies {AugmentText.SpecialDamage("15 damage")} {AugmentText.OnHit("on-hit")}.";
 
         public override AugmentRarity Rarity => AugmentRarity.Common;
         public override AugmentClass Class => AugmentClass.Universal;
@@ -52,6 +52,7 @@ namespace Augments
                 ap.IronRhythmHitCounter -= HitsRequired;
                 ap.IronRhythmPendingSpecialDamage = Math.Max(1, (int)(BonusDamage * effectiveness));
                 modifiers.FlatBonusDamage += ap.IronRhythmPendingSpecialDamage;
+                ap.RecordOnHitDamage(ap.IronRhythmPendingSpecialDamage);
             }
         }
 

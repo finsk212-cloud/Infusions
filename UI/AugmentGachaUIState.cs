@@ -361,6 +361,14 @@ namespace Augments
 			AugmentRarity rolledRarity = BossRarityRoller.Roll(currentBracket);
 			var ap = player.GetModPlayer<AugmentPlayer>();
 
+			// Protocol Partner Bias (20%): If player has 1/2 of an active protocol, 20% chance to bias the reward tier towards the partner chip's rarity
+			var missingPartners = ap.GetMissingProtocolPartners();
+			if (missingPartners.Count > 0 && Main.rand.NextFloat() < 0.20f)
+			{
+				var targetPartner = missingPartners[Main.rand.Next(missingPartners.Count)];
+				rolledRarity = targetPartner.Rarity;
+			}
+
 			var choices = ap.RollChoices(1, rolledRarity, null);
 			if (choices.Count > 0)
 			{
@@ -695,7 +703,7 @@ namespace Augments
 				Append(nameText);
 
 				// Rarity & Class pill
-				string rarityLabel = augment.KeystoneFamily != null ? $"[{augment.Rarity.ToString().ToUpper()} KEYSTONE]" : $"[{augment.Rarity.ToString().ToUpper()}]";
+				string rarityLabel = augment.KeystoneFamily != null ? $"[{augment.Rarity.ToString().ToUpper()} CORE OVERRIDE]" : $"[{augment.Rarity.ToString().ToUpper()}]";
 				string rarityHex = augment.Rarity switch
 				{
 					AugmentRarity.Legendary => "E6BE44",

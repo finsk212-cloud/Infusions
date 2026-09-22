@@ -32,8 +32,9 @@ namespace Augments
 		VendorSellRequest,
 		VendorBuyBackRequest,
 		RequestVendorSpawn,
-		SyncOwnedAugments, // client → server → all: list of owned augment IDs
-		ApplyNPCEffect     // client → server: custom GlobalNPC effect (Bleed, Slow, Cracked)
+		SyncOwnedAugments, // client -> server -> all: list of owned augment IDs
+		ApplyNPCEffect,    // client -> server: custom GlobalNPC effect (Bleed, Slow, Cracked)
+		SyncPlayerLifeMax  // client -> server -> all: player effective max life sync
 	}
 
 	internal enum DebugAugmentCommandType : byte
@@ -148,15 +149,40 @@ namespace Augments
 					break;
 
 				case AugmentPacketType.BossDamageParticipation:
-					if (Main.netMode == NetmodeID.Server)
+				{
+					reader.ReadByte();
+					int bossNpcType = reader.ReadInt32();
+					if (Main.netMode == NetmodeID.Server && whoAmI >= 0 && whoAmI < Main.maxPlayers)
 					{
-						reader.ReadByte();
-						int bossNpcType = reader.ReadInt32();
 						Player p = Main.player[whoAmI];
 						if (p.active)
 							p.GetModPlayer<AugmentPlayer>().DamagedBossesThisFight.Add(bossNpcType);
 					}
 					break;
+				}
+
+				case AugmentPacketType.SyncPlayerLifeMax:
+				{
+					byte playerIndex = reader.ReadByte();
+					int maxLife2 = reader.ReadInt32();
+
+					if (playerIndex < Main.maxPlayers)
+					{
+						Player target = Main.player[playerIndex];
+						if (target.active)
+							target.statLifeMax2 = maxLife2;
+					}
+
+					if (Main.netMode == NetmodeID.Server)
+					{
+						ModPacket relay = ModContent.GetInstance<Augments>().GetPacket();
+						relay.Write((byte)AugmentPacketType.SyncPlayerLifeMax);
+						relay.Write(playerIndex);
+						relay.Write(maxLife2);
+						relay.Send(-1, whoAmI);
+					}
+					break;
+				}
 
 				case AugmentPacketType.SyncOwnedAugments:
 				{

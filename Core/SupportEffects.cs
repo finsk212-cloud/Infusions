@@ -199,7 +199,8 @@ namespace Augments
 				return;
 
 			int selfHeal = Math.Max(1, healAmount / 2);
-			if (medic.statLife < medic.statLifeMax2)
+			int medicMaxLife = Math.Max(medic.statLifeMax, medic.statLifeMax2);
+			if (medic.statLife < medicMaxLife)
 			{
 				if (Main.netMode == NetmodeID.SinglePlayer)
 				{
@@ -334,7 +335,7 @@ namespace Augments
 			else if (socketed == ItemID.Bezoar)
 			{
 				int currentLife = targetPlayer != null ? targetPlayer.statLife : (targetNPC != null ? targetNPC.life : 100);
-				int maxLife = targetPlayer != null ? targetPlayer.statLifeMax2 : (targetNPC != null ? targetNPC.lifeMax : 100);
+				int maxLife = targetPlayer != null ? Math.Max(targetPlayer.statLifeMax, targetPlayer.statLifeMax2) : (targetNPC != null ? targetNPC.lifeMax : 100);
 				if (currentLife < maxLife / 2)
 				{
 					int bonusHeal = Math.Max(1, (int)(healAmount * 0.10f));
@@ -350,9 +351,10 @@ namespace Augments
 			}
 			else if (socketed == ItemID.SharkToothNecklace)
 			{
-				if (medic != null && medic.active && !medic.dead && medic.statLife < medic.statLifeMax2)
+				int medicMaxLife = Math.Max(medic.statLifeMax, medic.statLifeMax2);
+				if (medic != null && medic.active && !medic.dead && medic.statLife < medicMaxLife)
 				{
-					medic.statLife = Math.Min(medic.statLifeMax2, medic.statLife + 2);
+					medic.statLife = Math.Min(medicMaxLife, medic.statLife + 2);
 				}
 			}
 		}
@@ -498,15 +500,17 @@ namespace Augments
 			// Floating combat text for all nearby clients
 			player.HealEffect(amount, false);
 
-			// If this client is the target being healed, we MUST update our own local statLife!
+			int maxHp = Math.Max(player.statLifeMax, player.statLifeMax2);
+			if (maxHp <= 0) maxHp = 500;
+			player.statLife = Math.Min(maxHp, player.statLife + amount);
+
+			// If this client is the target being healed, we MUST sync our own local statLife!
 			// In vanilla Terraria, a client's own statLife is client-authoritative and ignores
 			// incoming PlayerLifeMana (packet 16) from the server when whoAmI == Main.myPlayer.
-			// Without this local update, the client would report their old HP on next sync,
+			// Without this local update and sync, the client would report their old HP on next sync,
 			// causing the heal to rubberband backwards.
 			if (targetIndex == Main.myPlayer)
 			{
-				int maxHp = player.statLifeMax2 > 0 ? player.statLifeMax2 : player.statLifeMax;
-				player.statLife = Math.Min(maxHp, player.statLife + amount);
 				NetMessage.SendData(MessageID.PlayerLifeMana, -1, -1, null, Main.myPlayer);
 			}
 		}

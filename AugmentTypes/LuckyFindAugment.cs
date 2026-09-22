@@ -2,6 +2,7 @@ using Microsoft.Xna.Framework;
 using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
+using Augments.Core;
 
 namespace Augments
 {
@@ -9,12 +10,26 @@ namespace Augments
     {
         public override string Id => "lucky_find";
         public override string DisplayName => "Lucky Find";
-        public override string Description =>
-            $"Grants {AugmentText.Crit("+5% Fortune")}. Defeated enemies have a {AugmentText.Trigger("25% chance")} to drop extra coins (scales with Fortune).\n" +
-            AugmentText.Note($"(Total gained: {FormatCoins(Main.LocalPlayer?.GetModPlayer<AugmentPlayer>()?.LuckyFindCopperGained ?? 0)})");
+        public override string Description
+        {
+            get
+            {
+                var ap = Main.LocalPlayer?.GetModPlayer<AugmentPlayer>();
+                float fortune = ap?.TotalFortune ?? 0f;
+                float currentChance = DropChance * (1f + fortune) * 100f;
+                string chanceStr = fortune > 0f
+                    ? $"{AugmentText.Trigger($"{currentChance:0.#}% chance")} ({DropChance * 100f:0}% base + {currentChance - (DropChance * 100f):0.#}% Fortune)"
+                    : AugmentText.Trigger($"{DropChance * 100f:0}% chance");
+
+                return $"Grants {AugmentText.Crit("+5% Fortune")} (World Luck & lucky trigger chance). Defeated enemies have a {chanceStr} " +
+                       $"to drop extra coins.\n" +
+                       AugmentText.Note($"(Total gained: {FormatCoins(ap?.LuckyFindCopperGained ?? 0)})");
+            }
+        }
 
         public override AugmentRarity Rarity => AugmentRarity.Common;
         public override AugmentClass Class => AugmentClass.Universal;
+        public override string FamilyId => AugmentFamilyRegistry.FortuneId;
 
         public override bool IsLuckyThemed => true;
         public override float FortuneBonus => 0.05f;

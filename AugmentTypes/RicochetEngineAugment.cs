@@ -11,7 +11,7 @@ namespace Augments
         public override string DisplayName => "Ricochet Engine";
         public override string Description =>
             "Ranged hits have a chance to spawn a ricochet shot that bounces between nearby enemies. " +
-            $"Ricochet hits trigger {AugmentText.Trigger("on-hit")} effects at 50% effectiveness.";
+            $"Ricochet hits trigger {AugmentText.OnHit("on-hit")} effects at 50% effectiveness.";
 
         public override AugmentRarity Rarity => AugmentRarity.Legendary;
         public override AugmentClass Class => AugmentClass.Ranged;

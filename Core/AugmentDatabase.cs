@@ -141,6 +141,13 @@ namespace Augments
 
         public static Augment GetById(string id)
         {
+            if (id == null)
+                return null;
+
+            if (id == "avatar_of_rage") id = "type_b_berserker_protocol";
+            else if (id == "avatar_of_the_wall" || id == "type_d_bastion_protocol") id = "type_d_dreadnought_protocol";
+            else if (id == "avatar_of_balance") id = "type_s_synchronizer_protocol";
+
             if (ById.TryGetValue(id, out Augment augment))
                 return augment;
 

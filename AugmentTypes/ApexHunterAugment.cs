@@ -10,37 +10,52 @@ namespace Augments
         public override string Id => "apex_hunter";
         public override string DisplayName => "Apex Hunter";
         public override string Description =>
-            "Ranged hits against a boss build a mark; once it reaches 10 hits, the next hit triggers a " +
-            $"bonus burst dealing {AugmentText.BonusDamage("15% of the boss's max HP")}, then the mark resets.";
+            "Ranged hits against a boss build a mark; once it reaches " +
+            $"{AugmentText.Trigger("15 hits")}, the next hit triggers a bonus burst dealing " +
+            $"{AugmentText.BonusDamage("5% of the boss's max HP")}, then the mark resets. " +
+            $"{AugmentText.Cooldown("8s cooldown")}.";
 
         public override AugmentRarity Rarity => AugmentRarity.Legendary;
         public override AugmentClass Class => AugmentClass.Ranged;
+        public override int CooldownRemaining => LocalPlayerState.ApexHunterCooldown;
 
-        private const int MaxMarkStacks = 10;
-        private const float BurstPercentOfMaxHP = 0.15f;
+        private const int MaxMarkStacks = 15;
+        private const float BurstPercentOfMaxHP = 0.05f;
+        private const int CooldownTicks = 8 * 60; // 480 ticks = 8 seconds
 
         // Tracked per-player (on AugmentPlayer), not per-target - the mark only
         // ever matters against whichever single boss is currently being fought,
         // so there's no need to key it by target.whoAmI.
 
+        public override void OnUpdate(Player player)
+        {
+            var ap = player.GetModPlayer<AugmentPlayer>();
+            if (ap.ApexHunterCooldown > 0)
+                ap.ApexHunterCooldown--;
+        }
+
         public override void OnHitNPCWithItem(Player player, Item item, NPC target, NPC.HitInfo hit)
         {
-            if (target.boss && item.DamageType == DamageClass.Ranged)
+            if (target.boss && item.CountsAsClass(DamageClass.Ranged))
                 HandleMark(player, target);
         }
 
         public override void OnHitNPCWithProj(Player player, Projectile proj, NPC target, NPC.HitInfo hit)
         {
-            if (target.boss && proj.DamageType == DamageClass.Ranged)
+            if (target.boss && proj.CountsAsClass(DamageClass.Ranged))
                 HandleMark(player, target);
         }
 
         private void HandleMark(Player player, NPC target)
         {
             var ap = player.GetModPlayer<AugmentPlayer>();
+            if (ap.ApexHunterCooldown > 0)
+                return;
+
             if (ap.ApexHunterMarkStacks >= MaxMarkStacks)
             {
                 ap.ApexHunterMarkStacks = 0;
+                ap.ApexHunterCooldown = CooldownTicks;
                 Strike(player, target, HitEffectiveness);
             }
             else

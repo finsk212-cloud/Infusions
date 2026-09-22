@@ -35,6 +35,7 @@ namespace Augments
 					childTag.OnHitEffectiveness = parentTag.OnHitEffectiveness;
 					childTag.PreventEchoChamberCopy = parentTag.PreventEchoChamberCopy;
 					childTag.PreventRicochetEngineCopy = parentTag.PreventRicochetEngineCopy;
+					childTag.IsEchoChamberEcho = parentTag.IsEchoChamberEcho;
 					childTag.NecromancersCourtGhost = parentTag.NecromancersCourtGhost;
 					childTag.NecromancersCourtGhostTimeLeft = parentTag.NecromancersCourtGhostTimeLeft;
 				}

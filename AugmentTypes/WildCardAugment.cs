@@ -1,4 +1,5 @@
 using Terraria;
+using Augments.Core;
 
 namespace Augments
 {
@@ -6,14 +7,26 @@ namespace Augments
     {
         public override string Id => "wild_card";
         public override string DisplayName => "Wild Card";
-        public override string Description =>
-            $"Grants {AugmentText.Crit("+5% Fortune")}. Crits randomly trigger ONE of four effects, 25% chance each: " +
-            $"{AugmentText.Healing("heal 5 HP")}; {AugmentText.MovementSpeed("+50% movement speed")} for " +
-            $"{AugmentText.Duration("1.5s")}; {AugmentText.Duration("~1 second")} of invincibility; or an " +
-            $"immediate bonus strike for {AugmentText.BonusDamage("+20% bonus damage")} on that hit (scales with Fortune).";
+        public override string Description
+        {
+            get
+            {
+                var ap = Main.LocalPlayer?.GetModPlayer<AugmentPlayer>();
+                float fortune = ap?.TotalFortune ?? 0f;
+                string scalingNote = fortune > 0f
+                    ? $" (All outcomes boosted by +{fortune * 100f:0.#}% Fortune)"
+                    : "";
+
+                return $"Grants {AugmentText.Crit("+5% Fortune")} (World Luck & lucky trigger chance). Crits randomly trigger ONE of four effects, 25% chance each: " +
+                       $"{AugmentText.Healing("heal 5 HP")}; {AugmentText.MovementSpeed("+50% movement speed")} for " +
+                       $"{AugmentText.Duration("1.5s")}; {AugmentText.Duration("~1 second")} of invincibility; or an " +
+                       $"immediate bonus strike for {AugmentText.BonusDamage("+20% bonus damage")}.{scalingNote}";
+            }
+        }
 
         public override AugmentRarity Rarity => AugmentRarity.Rare;
         public override AugmentClass Class => AugmentClass.Universal;
+        public override string FamilyId => AugmentFamilyRegistry.FortuneId;
 
         public override bool IsLuckyThemed => true;
         public override float FortuneBonus => 0.05f;

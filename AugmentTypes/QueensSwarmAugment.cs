@@ -1,6 +1,7 @@
 using Microsoft.Xna.Framework;
 using Terraria;
 using Terraria.ModLoader;
+using Augments.Core;
 
 namespace Augments
 {
@@ -11,8 +12,9 @@ namespace Augments
         public override string Description =>
             $"Minion hits build swarm stacks on enemies. At {AugmentText.Trigger("5 stacks")}, release {AugmentText.BonusDamage("6 void bugs")} (18 damage each) to swarm nearby enemies.";
 
-        public override AugmentRarity Rarity => AugmentRarity.Legendary;
+        public override AugmentRarity Rarity => AugmentRarity.Rare;
         public override AugmentClass Class => AugmentClass.Summon;
+        public override string FamilyId => AugmentFamilyRegistry.HivemindId;
 
         private const int BugCount = 6;
         private const int BugDamage = 18;

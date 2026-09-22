@@ -15,10 +15,17 @@ namespace Augments
 		private const float KeystoneFamilyChance = 0.15f;
 
 		// Rolls a rarity for the bracket, tries that tier, falls back to
-		// adjacent tiers, and checks for Keystone family sets on Epic/Legendary.
 		public static bool TryRollRewardChoices(AugmentPlayer augmentPlayer, RarityBracket bracket, HashSet<string> excludedIds, out List<Augment> choices, out AugmentRarity finalRarity)
 		{
 			AugmentRarity rolledRarity = BossRarityRoller.Roll(bracket);
+
+			// Protocol Partner Bias (20%): If player has 1/2 of an active protocol, 20% chance to bias the reward tier towards the partner chip's rarity
+			var missingPartners = augmentPlayer.GetMissingProtocolPartners();
+			if (missingPartners.Count > 0 && Main.rand.NextFloat() < 0.20f)
+			{
+				var targetPartner = missingPartners[Main.rand.Next(missingPartners.Count)];
+				rolledRarity = targetPartner.Rarity;
+			}
 
 			if (TryRollKeystoneFamily(augmentPlayer, rolledRarity, out List<Augment> keystoneChoices))
 			{

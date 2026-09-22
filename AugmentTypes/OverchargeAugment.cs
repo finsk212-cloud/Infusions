@@ -1,5 +1,6 @@
 using Terraria;
 using Terraria.ModLoader;
+using Augments.Core;
 
 namespace Augments
 {
@@ -12,6 +13,7 @@ namespace Augments
 
         public override AugmentRarity Rarity => AugmentRarity.Rare;
         public override AugmentClass Class => AugmentClass.Magic;
+        public override string FamilyId => AugmentFamilyRegistry.ArcaneSurgeId;
 
         private const float ManaCostMultiplier = 2f;
         private const float BonusDamagePercent = 0.40f;

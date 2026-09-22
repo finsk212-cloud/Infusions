@@ -196,6 +196,16 @@ Buffs: {
 		DisplayName: Lifeline: On Cooldown
 		Description: Saved from death by a nearby Support player recently.
 	}
+
+	SynchronizerOverclockBuff: {
+		DisplayName: Type-S: Offensive Overclock
+		Description: Outgoing damage +15%, crit +10%, armor penetration +10. Natural life regeneration is halted.
+	}
+
+	SynchronizerRepairBuff: {
+		DisplayName: Type-S: Restorative Nano-Repair
+		Description: Defense +15, life regeneration +12, movement speed +15%. Outgoing damage reduced by 15%.
+	}
 }
 
 Projectiles: {
@@ -214,4 +224,6 @@ Projectiles: {
 	MediGunMK2BeamProjectile.DisplayName: Medi Gun MK II Beam
 	MediGunMK3BeamProjectile.DisplayName: Medi Gun MK III Beam
 	MediGunMK4BeamProjectile.DisplayName: Medi Gun MK IV Beam
+	CryoIceShardProjectile.DisplayName: Cryo Ice Shard Projectile
+	KineticShrapnelProjectile.DisplayName: Kinetic Shrapnel Projectile
 }

@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
+using Augments.Core;
 
 namespace Augments
 {
@@ -10,11 +11,12 @@ namespace Augments
         public override string Id => "stormcaller";
         public override string DisplayName => "Stormcaller";
         public override string Description =>
-            $"Magic kills have a 20% chance to call down a lightning strike on a random nearby enemy, " +
+            $"Melee kills have a 20% chance to call down a lightning strike on a random nearby enemy, " +
             $"dealing 15% of that enemy's {AugmentText.HP("max HP")} as damage.";
 
         public override AugmentRarity Rarity => AugmentRarity.Epic;
-        public override AugmentClass Class => AugmentClass.Magic;
+        public override AugmentClass Class => AugmentClass.Melee;
+        public override string FamilyId => AugmentFamilyRegistry.VoltId;
 
         private const float ProcChance = 0.2f;
         private const float StrikeDamagePercentOfMaxHP = 0.15f;
@@ -22,18 +24,18 @@ namespace Augments
 
         // Direct hits just tag the target - the actual proc happens on kill
         // credit (OnKillNPC below), since that's the only path that also
-        // catches kills finished off by a DoT debuff the magic hit applied
+        // catches kills finished off by a DoT debuff the melee hit applied
         // earlier (see AugmentGlobalNPC.OnKill, keyed off npc.lastInteraction).
         public override void OnHitNPCWithItem(Player player, Item item, NPC target, NPC.HitInfo hit)
         {
-            if (item.DamageType == DamageClass.Magic)
-                target.GetGlobalNPC<AugmentStormcallerNPC>().TagMagicHit(player.whoAmI);
+            if (item.CountsAsClass(DamageClass.Melee))
+                target.GetGlobalNPC<AugmentStormcallerNPC>().TagHit(player.whoAmI);
         }
 
         public override void OnHitNPCWithProj(Player player, Projectile proj, NPC target, NPC.HitInfo hit)
         {
-            if (proj.DamageType == DamageClass.Magic)
-                target.GetGlobalNPC<AugmentStormcallerNPC>().TagMagicHit(player.whoAmI);
+            if (proj.CountsAsClass(DamageClass.Melee))
+                target.GetGlobalNPC<AugmentStormcallerNPC>().TagHit(player.whoAmI);
         }
 
         public override void OnKillNPC(Player player, NPC npc)
@@ -47,10 +49,10 @@ namespace Augments
             bool success = Main.rand.NextFloat() < ProcChance;
 
             if (success)
-                StrikeRandomNearbyTarget(npc);
+                StrikeRandomNearbyTarget(npc, player);
         }
 
-        private static void StrikeRandomNearbyTarget(NPC deadNpc)
+        private static void StrikeRandomNearbyTarget(NPC deadNpc, Player player)
         {
             var nearby = new List<NPC>();
             foreach (NPC npc in Main.npc)
@@ -72,7 +74,8 @@ namespace Augments
             {
                 Damage = damage,
                 SourceDamage = damage,
-                HitDirection = target.direction
+                HitDirection = target.direction,
+                DamageType = DamageClass.Melee
             };
 
             target.StrikeNPC(hit);
@@ -82,6 +85,14 @@ namespace Augments
             // Mirror SimpleStrikeNPC and relay the strike to the server/clients.
             if (Main.netMode != NetmodeID.SinglePlayer)
                 NetMessage.SendStrikeNPC(target, in hit);
+
+            if (AugmentFamilyRegistry.GetOwnedCount(player.GetModPlayer<AugmentPlayer>(), AugmentFamilyRegistry.VoltId) >= 2)
+            {
+                target.AddBuff(BuffID.Electrified, 240);
+                if (Main.netMode != NetmodeID.SinglePlayer)
+                    NetMessage.SendData(MessageID.NPCBuffs, number: target.whoAmI);
+            }
+
             SpawnLightningEffect(target);
         }
 

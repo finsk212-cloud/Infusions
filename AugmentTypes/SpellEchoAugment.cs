@@ -1,4 +1,5 @@
 using Terraria;
+using Augments.Core;
 
 namespace Augments
 {
@@ -11,6 +12,7 @@ namespace Augments
 
         public override AugmentRarity Rarity => AugmentRarity.Rare;
         public override AugmentClass Class => AugmentClass.Magic;
+        public override string FamilyId => AugmentFamilyRegistry.ArcaneSurgeId;
 
         private const float ProcChance = 0.25f;
 

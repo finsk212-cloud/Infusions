@@ -1,6 +1,7 @@
 using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
+using Augments.Core;
 
 namespace Augments
 {
@@ -14,6 +15,7 @@ namespace Augments
 
 		public override AugmentRarity Rarity => AugmentRarity.Epic;
 		public override AugmentClass Class => AugmentClass.Melee;
+		public override string FamilyId => AugmentFamilyRegistry.KineticId;
 
 		private const float VelocitySpikeThreshold = 8f;
 		private const int DashWindowTicks = 15;

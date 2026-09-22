@@ -66,6 +66,8 @@ namespace Augments
 
 			if (gachaInterface?.CurrentState != null)
 				gachaInterface.Update(gameTime);
+
+			AugmentFamilyHUD.Update(gameTime);
 		}
 
 		// Slots both panels into Terraria's actual draw order.
@@ -78,7 +80,7 @@ namespace Augments
 			// Insertion order matters here: each Insert places its layer
 			// immediately before whatever currently sits at mouseTextIndex.
 			// So the layer inserted FIRST in code ends up drawn LAST (on top).
-			// We want: Auras (bottom) -> List UI -> Shop UI -> Choice UI -> Charges -> Cooldowns -> Tooltip (top) -> Mouse Text.
+			// We want: Auras (bottom) -> List UI -> Shop UI -> Choice UI -> Charges -> Cooldowns -> Family HUD -> Tooltip (top) -> Mouse Text.
 			// So in code: insert Tooltip first, ..., List UI, then Auras last.
 			layers.Insert(mouseTextIndex, new LegacyGameInterfaceLayer(
 				"Augments: Sanitize Mouse Text",
@@ -105,6 +107,16 @@ namespace Augments
 				delegate
 				{
 					AugmentTooltipDrawer.DrawIfHovering(Main.spriteBatch);
+					return true;
+				},
+				InterfaceScaleType.UI)
+			);
+
+			layers.Insert(mouseTextIndex, new LegacyGameInterfaceLayer(
+				"Augments: Family HUD",
+				delegate
+				{
+					AugmentFamilyHUD.Draw(Main.spriteBatch);
 					return true;
 				},
 				InterfaceScaleType.UI)

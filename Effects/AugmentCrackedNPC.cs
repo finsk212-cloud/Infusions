@@ -15,6 +15,7 @@ namespace Augments
 
 		private int ticksRemaining;
 		private int stacks;
+		public int SonicCrackCooldown;
 
 		public int Stacks => ticksRemaining > 0 ? stacks : 0;
 
@@ -33,6 +34,9 @@ namespace Augments
 
 		public override void PostAI(NPC npc)
 		{
+			if (SonicCrackCooldown > 0)
+				SonicCrackCooldown--;
+
 			if (ticksRemaining <= 0)
 				return;
 

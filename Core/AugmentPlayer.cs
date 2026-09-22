@@ -12,6 +12,7 @@ using Terraria.ID;
 using Terraria.Localization;
 using Terraria.ModLoader;
 using Terraria.ModLoader.IO;
+using Augments.Core;
 
 namespace Augments
 {
@@ -40,6 +41,8 @@ namespace Augments
 		// Session-only — resets on world enter. Used for multiplayer participation
 		// checks (skipped in singleplayer; see TODO in BossAugmentDrop).
 		public HashSet<int> DamagedBossesThisFight = new HashSet<int>();
+
+		private int lastSyncedLifeMax2 = -1;
 
 		// Keystone families with one member already chosen permanently exclude
 		// every sibling in that family from RollChoices once set.
@@ -270,7 +273,19 @@ namespace Augments
 
 		// Live-summed, not separately saved - every owned augment's
 		// FortuneBonus stacks additively into one shared Luck stat.
-		public float TotalFortune => Owned.Sum(a => a.FortuneBonus);
+		public float TotalFortune
+		{
+			get
+			{
+				float total = Owned.Sum(a => a.FortuneBonus);
+				int fortuneOwned = AugmentFamilyRegistry.GetOwnedCount(this, AugmentFamilyRegistry.FortuneId);
+				if (fortuneOwned >= 4)
+					total = (total + 0.10f) * 1.45f;
+				else if (fortuneOwned >= 2)
+					total = (total + 0.05f) * 1.20f;
+				return total;
+			}
+		}
 
 		// Live count of Support-class augments owned. Player is "in Support
 		// stance" when this is >= 2, which applies a damage penalty and defense
@@ -325,8 +340,12 @@ namespace Augments
 		public int AmbushStillTicks;
 		public bool AmbushReady;
 		public float ApexHunterMarkStacks;
+		public int ApexHunterCooldown;
 		public float ArcaneSingularityCharge;
 		public int AvatarOfRageLastLife = -1;
+		public int BastionStoredDamage;
+		public int BastionBarrierTicks;
+		public int SynchronizerTimer;
 		public int BulwarkNoDamageTicks;
 		public int DeadeyeLastTargetWhoAmI = -1;
 		public float DeadeyeHitStacks;
@@ -358,6 +377,23 @@ namespace Augments
 		public int MinionMomentumHitStacks;
 		public int MinionMomentumActiveMinionProjType = -1;
 		public int MirrorImageInvulnTicks;
+		public int KineticShockwaveCooldown;
+		public int KineticDashWindowMemoryTimer;
+		public int CryoShatterCooldown;
+		public int FortuneCoinBurstCooldown;
+		public int ChainLightningCooldown;
+		public int KineticShrapnelCooldown;
+		public int AstralMatrixManaSpent;
+		public int AstralMatrixStacks;
+		public int GunslingerContinuousFireTicks;
+		public int GunslingerLingerTimer;
+		public bool GunslingerWasAtPeak;
+		public int CurrentHitOnHitDamage;
+
+		public void RecordOnHitDamage(int damage)
+		{
+			CurrentHitOnHitDamage += damage;
+		}
 		public float MomentumCrashPreviousSpeed;
 		public int MomentumCrashDashWindowTimer;
 		public bool MomentumCrashPendingConfuse;
@@ -416,6 +452,29 @@ namespace Augments
 		// a lucky-themed pick instead of a fully random one, falling back to
 		// the normal random pick if no eligible lucky-themed augment exists.
 		private const float LuckyThemedBiasChance = 0.15f;
+		private const float ProtocolPartnerBiasChance = 0.20f;
+
+		public List<Augment> GetMissingProtocolPartners()
+		{
+			var list = new List<Augment>();
+			foreach (var fam in AugmentFamilyRegistry.Families.Values)
+			{
+				int owned = AugmentFamilyRegistry.GetOwnedCount(this, fam.Id);
+				if (owned > 0 && owned < fam.MaxMembers)
+				{
+					foreach (var memberId in fam.MemberIds)
+					{
+						if (!HasAugment(memberId) && !soldAugmentIds.Contains(memberId))
+						{
+							var aug = AugmentDatabase.GetById(memberId);
+							if (aug != null && aug.Class != AugmentClass.Support)
+								list.Add(aug);
+						}
+					}
+				}
+			}
+			return list;
+		}
 
 		public List<Augment> RollChoices(int count, AugmentRarity rarity, IReadOnlySet<string> excludedIds = null)
 		{
@@ -444,6 +503,11 @@ namespace Augments
 				available.Add(augment);
 			}
 
+			var missingPartners = GetMissingProtocolPartners();
+			var missingPartnerIds = new HashSet<string>();
+			foreach (var p in missingPartners)
+				missingPartnerIds.Add(p.Id);
+
 			bool hasFortune = TotalFortune > 0f;
 
 			var picks = new List<Augment>();
@@ -451,7 +515,22 @@ namespace Augments
 			{
 				int index = -1;
 
-				if (hasFortune && Main.rand.NextFloat() < LuckyThemedBiasChance)
+				// Protocol Completion Bias: 20% chance to prioritize offering a missing partner chip
+				// to complete an active 1/2 protocol duo
+				if (missingPartnerIds.Count > 0 && Main.rand.NextFloat() < ProtocolPartnerBiasChance)
+				{
+					var partnerIndices = new List<int>();
+					for (int i = 0; i < available.Count; i++)
+					{
+						if (missingPartnerIds.Contains(available[i].Id))
+							partnerIndices.Add(i);
+					}
+
+					if (partnerIndices.Count > 0)
+						index = partnerIndices[Main.rand.Next(partnerIndices.Count)];
+				}
+
+				if (index < 0 && hasFortune && Main.rand.NextFloat() < LuckyThemedBiasChance)
 				{
 					var luckyIndices = new List<int>();
 					for (int i = 0; i < available.Count; i++)
@@ -475,8 +554,138 @@ namespace Augments
 
 		public override void PostUpdate()
 		{
+			// Enforce statLifeMax2 >= statLifeMax for all active players on clients so health bars and checks never read stale defaults
+			if (Main.netMode != NetmodeID.Server)
+			{
+				for (int i = 0; i < Main.maxPlayers; i++)
+				{
+					Player p = Main.player[i];
+					if (p.active && p.statLifeMax2 < p.statLifeMax)
+					{
+						p.statLifeMax2 = p.statLifeMax;
+					}
+				}
+			}
+
+			// Broadcast local statLifeMax2 to server/other clients when it changes
+			if (Player.whoAmI == Main.myPlayer && Main.netMode == NetmodeID.MultiplayerClient)
+			{
+				if (Player.statLifeMax2 != lastSyncedLifeMax2)
+				{
+					lastSyncedLifeMax2 = Player.statLifeMax2;
+					ModPacket packet = ModContent.GetInstance<Augments>().GetPacket();
+					packet.Write((byte)AugmentPacketType.SyncPlayerLifeMax);
+					packet.Write((byte)Player.whoAmI);
+					packet.Write(Player.statLifeMax2);
+					packet.Send();
+				}
+			}
+
 			foreach (var a in Owned)
 				a.OnUpdate(Player);
+
+			if (KineticShockwaveCooldown > 0)
+				KineticShockwaveCooldown--;
+			if (KineticDashWindowMemoryTimer > 0)
+				KineticDashWindowMemoryTimer--;
+			if (CryoShatterCooldown > 0)
+				CryoShatterCooldown--;
+			if (FortuneCoinBurstCooldown > 0)
+				FortuneCoinBurstCooldown--;
+			if (ChainLightningCooldown > 0)
+				ChainLightningCooldown--;
+			if (KineticShrapnelCooldown > 0)
+				KineticShrapnelCooldown--;
+
+			if (AstralMatrixStacks > 0 && AugmentFamilyRegistry.GetOwnedCount(this, AugmentFamilyRegistry.ArcaneSurgeId) >= 2)
+			{
+				float baseAngle = (float)Main.timeForVisualEffects * 0.05f;
+				for (int i = 0; i < AstralMatrixStacks; i++)
+				{
+					float angle = baseAngle + (i * MathHelper.TwoPi / AstralMatrixStacks);
+					Vector2 offset = angle.ToRotationVector2() * 30f;
+					if (Main.rand.NextBool(3))
+					{
+						Dust d = Dust.NewDustPerfect(
+							Player.Center + offset,
+							DustID.DungeonSpirit,
+							Vector2.Zero,
+							120,
+							new Color(129, 140, 248),
+							0.85f
+						);
+						d.noGravity = true;
+					}
+				}
+			}
+
+			// Gunslinger Protocol (2-Piece Synergy): Track continuous ranged firing
+			if (AugmentFamilyRegistry.GetOwnedCount(this, AugmentFamilyRegistry.GunslingerId) >= 2)
+			{
+				bool isFiringRanged = (Player.itemAnimation > 0 || (Player.channel && Player.controlUseItem)) &&
+				                      Player.HeldItem != null && !Player.HeldItem.IsAir &&
+				                      Player.HeldItem.CountsAsClass(DamageClass.Ranged) &&
+				                      Player.HeldItem.damage > 0 &&
+				                      Player.HeldItem.useStyle != ItemUseStyleID.None;
+
+				if (isFiringRanged)
+				{
+					if (GunslingerContinuousFireTicks < 240)
+					{
+						GunslingerContinuousFireTicks++;
+						if (GunslingerContinuousFireTicks >= 240)
+						{
+							// Reached peak spin-up!
+							if (!GunslingerWasAtPeak)
+							{
+								GunslingerWasAtPeak = true;
+								if (Player.whoAmI == Main.myPlayer)
+								{
+									SoundEngine.PlaySound(SoundID.Item149 with { Pitch = 0.2f, Volume = 0.65f }, Player.Center);
+								}
+
+								for (int d = 0; d < 16; d++)
+								{
+									Vector2 sparkVel = Main.rand.NextVector2Circular(4f, 4f);
+									Dust dust = Dust.NewDustPerfect(Player.Center, DustID.GoldFlame, sparkVel, 0, default, 1.2f);
+									dust.noGravity = true;
+								}
+							}
+						}
+					}
+
+					GunslingerLingerTimer = 60; // 1s grace window
+
+					// Ambient muzzle heat sparks while at peak
+					if (GunslingerContinuousFireTicks >= 240 && Main.rand.NextBool(3))
+					{
+						Vector2 muzzlePos = Player.MountedCenter + new Vector2(Player.direction * 14f, -4f);
+						Dust d = Dust.NewDustPerfect(muzzlePos, DustID.GoldFlame, new Vector2(Player.direction * Main.rand.NextFloat(1f, 3f), Main.rand.NextFloat(-1f, 1f)), 0, default, 0.9f);
+						d.noGravity = true;
+					}
+				}
+				else
+				{
+					if (GunslingerLingerTimer > 0)
+					{
+						GunslingerLingerTimer--;
+						if (GunslingerLingerTimer == 0)
+						{
+							GunslingerContinuousFireTicks = 0;
+							GunslingerWasAtPeak = false;
+						}
+					}
+				}
+			}
+			else
+			{
+				GunslingerContinuousFireTicks = 0;
+				GunslingerLingerTimer = 0;
+				GunslingerWasAtPeak = false;
+			}
+
+			if (MomentumCrashDashWindowTimer > 0 || Player.dashDelay < 0)
+				KineticDashWindowMemoryTimer = 15;
 
 			UpdateSupportAuthorityState();
 
@@ -547,6 +756,15 @@ namespace Augments
 		{
 			if (TotalFortune > 0f)
 				luck += TotalFortune * 0.5f;
+
+			// Fortune Protocol Tiered Bonuses (2, 4, 5 pieces)
+			int fortuneOwned = AugmentFamilyRegistry.GetOwnedCount(this, AugmentFamilyRegistry.FortuneId);
+			if (fortuneOwned >= 5)
+				luck += 0.50f;
+			else if (fortuneOwned >= 4)
+				luck += 0.35f;
+			else if (fortuneOwned >= 2)
+				luck += 0.15f;
 		}
 
 		private void UpdateSupportAuthorityState()
@@ -876,6 +1094,42 @@ namespace Augments
 				Player.statDefense += defenseBonus;
 			}
 
+			// Field Medic (2-Piece Synergy): -20% Potion Sickness cooldown
+			if (AugmentFamilyRegistry.GetOwnedCount(this, AugmentFamilyRegistry.FieldMedicId) >= 2)
+			{
+				Player.potionDelayTime = (int)(Player.potionDelayTime * 0.80f);
+			}
+
+			// Kinetic Protocol (2-Piece Synergy): Melee attack speed scales up by +1% per 2 mph of current movement speed (up to +15%)
+			if (AugmentFamilyRegistry.GetOwnedCount(this, AugmentFamilyRegistry.KineticId) >= 2)
+			{
+				float speedMph = Player.velocity.Length() * 5.1f;
+				float kineticBonus = Math.Clamp((speedMph / 2f) * 0.01f, 0f, 0.15f);
+				if (kineticBonus > 0f)
+				{
+					Player.GetAttackSpeed(DamageClass.Melee) += kineticBonus;
+				}
+			}
+
+			// Gunslinger Protocol (2-Piece Synergy): Rotary Acceleration & Lead Storm
+			if (AugmentFamilyRegistry.GetOwnedCount(this, AugmentFamilyRegistry.GunslingerId) >= 2 && GunslingerContinuousFireTicks > 0)
+			{
+				float rampBonus = Math.Min(0.10f, GunslingerContinuousFireTicks * (0.10f / 240f));
+				Player.GetAttackSpeed(DamageClass.Ranged) += rampBonus;
+
+				// Lead Storm: +8% Crit at full spin-up
+				if (GunslingerContinuousFireTicks >= 240)
+				{
+					Player.GetCritChance(DamageClass.Ranged) += 8f;
+				}
+			}
+
+			// Type-B: Berserker Protocol: +15s Potion Sickness duration
+			if (HasAugment("type_b_berserker_protocol") || HasAugment("avatar_of_rage"))
+			{
+				Player.potionDelayTime += 900;
+			}
+
 			// Pull-based Ironclad Aura: each player checks nearby Support players
 			// for the "ironclad_aura" augment and adds the defense bonus to themselves.
 			// DESIGN FLAG: if two Support players both own this augment and both stand
@@ -928,7 +1182,7 @@ namespace Augments
 				ReceivedManaWell = true;
 			}
 
-			// Pull-based Combat Medic: +6 lifeRegen = 3 HP/sec (lifeRegen applies at
+			// Pull-based Combat Medic: +3 lifeRegen = 1.5 HP/sec (lifeRegen applies at
 			// half its value per second — same field used by vanilla regen buffs/potions).
 			for (int i = 0; i < Main.maxPlayers; i++)
 			{
@@ -938,7 +1192,7 @@ namespace Augments
 				var otherAP = other.GetModPlayer<AugmentPlayer>();
 				if (!otherAP.HasAugment("combat_medic"))
 					continue;
-				Player.lifeRegen += 6;
+				Player.lifeRegen += 3;
 				ReceivedCombatMedic = true;
 				break;
 			}
@@ -946,9 +1200,21 @@ namespace Augments
 			// Owner also benefits from their own Combat Medic.
 			if (!ReceivedCombatMedic && HasAugment("combat_medic"))
 			{
-				Player.lifeRegen += 6;
+				Player.lifeRegen += 3;
 				ReceivedCombatMedic = true;
 			}
+		}
+
+		public override void UpdateLifeRegen()
+		{
+			foreach (var a in Owned)
+				a.UpdateLifeRegen(Player);
+		}
+
+		public override void UpdateBadLifeRegen()
+		{
+			foreach (var a in Owned)
+				a.UpdateBadLifeRegen(Player);
 		}
 
 		public override void ProcessTriggers(TriggersSet triggersSet)
@@ -1092,6 +1358,18 @@ namespace Augments
 		{
 			TryRegisterBossDamage(target);
 
+			if (item.CountsAsClass(DamageClass.Melee))
+			{
+				TryTriggerKineticShockwave(target, item.damage);
+			}
+
+			if (hit.Crit)
+			{
+				TryTriggerFortuneCoinBurst(target);
+			}
+
+			TryTriggerVoltStaticArc(target);
+
 			foreach (var a in Owned)
 				a.OnHitNPCWithItem(Player, item, target, hit, AugmentHitSource.NormalAttack);
 
@@ -1104,6 +1382,13 @@ namespace Augments
 				foreach (var a in Owned)
 					a.OnHitNPCWithItem(Player, item, target, hit, AugmentHitSource.NormalAttack);
 			}
+
+			if (item.CountsAsClass(DamageClass.Melee))
+			{
+				TryTriggerChainLightning(target, hit, CurrentHitOnHitDamage);
+			}
+
+			TryTriggerArcaneNova(target, item.CountsAsClass(DamageClass.Magic) || item.DamageType == DamageClass.Magic);
 		}
 
 		// Covers projectile hits, which includes thrust-style melee weapons
@@ -1120,6 +1405,25 @@ namespace Augments
 			AugmentHitSource source = tag.IsAugmentProcDamage ? AugmentHitSource.AugmentProc : AugmentHitSource.NormalAttack;
 			float effectiveness = tag.IsAugmentProcDamage ? MathHelper.Clamp(tag.OnHitEffectiveness, 0f, 1f) : 1f;
 
+			if (source == AugmentHitSource.NormalAttack && proj.CountsAsClass(DamageClass.Melee))
+			{
+				TryTriggerKineticShockwave(target, proj.damage);
+			}
+
+			if (source == AugmentHitSource.NormalAttack && hit.Crit)
+			{
+				TryTriggerFortuneCoinBurst(target);
+			}
+
+			if (source == AugmentHitSource.NormalAttack)
+			{
+				TryTriggerVoltStaticArc(target);
+			}
+
+			TryTriggerHivemindNanites(proj, target);
+			TryTriggerMarksmanEffects(proj, target, hit, source);
+			TryTriggerArcaneNova(target, proj.CountsAsClass(DamageClass.Magic) || proj.DamageType == DamageClass.Magic);
+
 			foreach (var a in Owned)
 				a.OnHitNPCWithProj(Player, proj, target, hit, source, effectiveness);
 
@@ -1129,14 +1433,266 @@ namespace Augments
 				foreach (var a in Owned)
 					a.OnHitNPCWithProj(Player, proj, target, hit, source, effectiveness);
 			}
+
+			if (source == AugmentHitSource.NormalAttack && proj.CountsAsClass(DamageClass.Melee))
+			{
+				TryTriggerChainLightning(target, hit, CurrentHitOnHitDamage);
+			}
+		}
+
+		public void TryTriggerFortuneCoinBurst(NPC target)
+		{
+			if (FortuneCoinBurstCooldown > 0)
+				return;
+
+			if (AugmentFamilyRegistry.GetOwnedCount(this, AugmentFamilyRegistry.FortuneId) < 5)
+				return;
+
+			FortuneCoinBurstCooldown = 20;
+
+			SoundEngine.PlaySound(SoundID.CoinPickup with { Volume = 0.85f, Pitch = 0.35f }, target.Center);
+
+			for (int i = 0; i < 18; i++)
+			{
+				Vector2 vel = Main.rand.NextVector2Circular(5.5f, 5.5f);
+				Dust d = Dust.NewDustPerfect(target.Center, DustID.GoldCoin, vel, 100, Color.Gold, 1.4f);
+				d.noGravity = true;
+			}
+
+			if (Main.myPlayer != Player.whoAmI)
+				return;
+
+			const int coinBurstDamage = 50;
+			const float radius = 130f;
+
+			foreach (NPC npc in Main.npc)
+			{
+				if (!npc.active || npc.friendly || npc.townNPC || npc.dontTakeDamage)
+					continue;
+
+				if (npc.Distance(target.Center) > radius)
+					continue;
+
+				Vector2 dir = npc.Center - target.Center;
+				int hitDir = dir.X >= 0f ? 1 : -1;
+				npc.SimpleStrikeNPC(coinBurstDamage, hitDir, false, 4f, DamageClass.Generic, false);
+			}
+		}
+
+		public void TryTriggerKineticShockwave(NPC target, int baseDamage)
+		{
+			if (KineticShockwaveCooldown > 0)
+				return;
+
+			if (AugmentFamilyRegistry.GetOwnedCount(this, AugmentFamilyRegistry.KineticId) < 2)
+				return;
+
+			bool isDashing = KineticDashWindowMemoryTimer > 0 || MomentumCrashDashWindowTimer > 0 || Player.dashDelay < 0;
+			float speed = Player.velocity.Length();
+			float maxRun = Math.Max(Player.maxRunSpeed, Player.accRunSpeed);
+			bool isSprintingAtFullSpeed = (maxRun > 0f && speed >= maxRun * 0.90f) || (speed * 5.1f >= 22f);
+
+			if (!isDashing && !isSprintingAtFullSpeed)
+				return;
+
+			KineticShockwaveCooldown = 25;
+
+			SoundEngine.PlaySound(SoundID.Item14 with { Volume = 0.65f, Pitch = 0.25f }, target.Center);
+
+			for (int i = 0; i < 24; i++)
+			{
+				float angle = i * (MathHelper.TwoPi / 24f);
+				Vector2 vel = angle.ToRotationVector2() * 6.0f;
+				Dust d = Dust.NewDustPerfect(target.Center, DustID.Torch, vel, 100, new Color(249, 115, 22), 1.6f);
+				d.noGravity = true;
+			}
+			for (int i = 0; i < 12; i++)
+			{
+				Dust d = Dust.NewDustPerfect(target.Center, DustID.Smoke, Main.rand.NextVector2Circular(4f, 4f), 100, Color.DarkGray, 1.0f);
+				d.noGravity = true;
+			}
+
+			if (Main.myPlayer != Player.whoAmI)
+				return;
+
+			int shockwaveDamage = Math.Max(1, (int)(baseDamage * 0.75f));
+			const float radius = 140f;
+
+			foreach (NPC npc in Main.npc)
+			{
+				if (!npc.active || npc.friendly || npc.townNPC || npc.dontTakeDamage)
+					continue;
+
+				if (npc.Distance(target.Center) > radius)
+					continue;
+
+				Vector2 knockbackDir = npc.Center - Player.Center;
+				if (knockbackDir == Vector2.Zero)
+					knockbackDir = new Vector2(Player.direction, 0f);
+				knockbackDir.Normalize();
+
+				int hitDirection = knockbackDir.X >= 0f ? 1 : -1;
+				npc.SimpleStrikeNPC(shockwaveDamage, hitDirection, false, 5f, DamageClass.Melee, false);
+			}
+		}
+
+		public void TryTriggerVoltStaticArc(NPC target)
+		{
+			if (AugmentFamilyRegistry.GetOwnedCount(this, AugmentFamilyRegistry.VoltId) < 2)
+				return;
+
+			if (!target.HasBuff(BuffID.Electrified))
+				return;
+
+			if (Main.rand.NextFloat() >= 0.25f)
+				return;
+
+			const float arcRange = 250f;
+			const int arcDamage = 25;
+
+			NPC secondary = null;
+			float nearestDistSq = arcRange * arcRange;
+			foreach (NPC npc in Main.npc)
+			{
+				if (npc == target || !npc.active || npc.friendly || npc.townNPC || npc.dontTakeDamage)
+					continue;
+
+				float dSq = Vector2.DistanceSquared(target.Center, npc.Center);
+				if (dSq < nearestDistSq)
+				{
+					nearestDistSq = dSq;
+					secondary = npc;
+				}
+			}
+
+			if (secondary == null)
+				return;
+
+			SoundEngine.PlaySound(SoundID.Item93 with { Volume = 0.45f, Pitch = 0.35f }, target.Center);
+
+			// Visual electric arc between target and secondary
+			Vector2 diff = secondary.Center - target.Center;
+			float dist = diff.Length();
+			int dustCount = Math.Max(2, (int)(dist / 14f));
+			for (int i = 0; i <= dustCount; i++)
+			{
+				Vector2 pos = Vector2.Lerp(target.Center, secondary.Center, i / (float)dustCount);
+				Dust d = Dust.NewDustPerfect(pos + Main.rand.NextVector2Circular(3f, 3f), DustID.Electric, Vector2.Zero, 80, default, 0.9f);
+				d.noGravity = true;
+			}
+
+			if (Main.myPlayer != Player.whoAmI)
+				return;
+
+			int hitDir = secondary.Center.X >= target.Center.X ? 1 : -1;
+			var hitInfo = new NPC.HitInfo
+			{
+				Damage = arcDamage,
+				SourceDamage = arcDamage,
+				HitDirection = hitDir,
+				DamageType = DamageClass.Generic,
+				HideCombatText = false
+			};
+			secondary.StrikeNPC(hitInfo);
+			if (Main.netMode != NetmodeID.SinglePlayer)
+				NetMessage.SendStrikeNPC(secondary, in hitInfo);
+		}
+
+		public void TryTriggerHivemindNanites(Projectile proj, NPC target)
+		{
+			if (AugmentFamilyRegistry.GetOwnedCount(this, AugmentFamilyRegistry.HivemindId) < 2)
+				return;
+
+			if (target == null || !target.active || target.friendly || target.dontTakeDamage)
+				return;
+
+			bool isMinionOrSentry = proj.minion || proj.sentry
+				|| ProjectileID.Sets.MinionShot[proj.type] || ProjectileID.Sets.SentryShot[proj.type]
+				|| (proj.CountsAsClass(DamageClass.Summon) && !ProjectileID.Sets.IsAWhip[proj.type]);
+
+			if (!isMinionOrSentry)
+				return;
+
+			target.GetGlobalNPC<AugmentNaniteNPC>().ApplyNanites(Player.whoAmI, proj.identity);
+			if (Main.netMode == NetmodeID.MultiplayerClient)
+				AugmentNet.SendApplyNPCEffectNanites(target.whoAmI, 240, proj.identity);
+		}
+
+		public void ApplyHivemindFlatDamage(NPC target, ref NPC.HitModifiers modifiers)
+		{
+			var naniteNPC = target.GetGlobalNPC<AugmentNaniteNPC>();
+			if (!naniteNPC.IsInfested)
+				return;
+
+			Player infestingPlayer = (naniteNPC.InfestedByPlayer >= 0 && naniteNPC.InfestedByPlayer < Main.maxPlayers)
+				? Main.player[naniteNPC.InfestedByPlayer]
+				: Player;
+
+			bool hivemindActive = AugmentFamilyRegistry.GetOwnedCount(this, AugmentFamilyRegistry.HivemindId) >= 2
+				|| (infestingPlayer != null && infestingPlayer.active && AugmentFamilyRegistry.GetOwnedCount(infestingPlayer.GetModPlayer<AugmentPlayer>(), AugmentFamilyRegistry.HivemindId) >= 2);
+
+			if (hivemindActive)
+			{
+				int minionCount = naniteNPC.GetActiveMinionCount(infestingPlayer ?? Player, target);
+				if (minionCount > 0)
+					modifiers.FlatBonusDamage += minionCount * 3;
+			}
+		}
+
+		public void ApplyMarksmanArmorPenetration(NPC target, bool isRanged, ref NPC.HitModifiers modifiers)
+		{
+			if (!isRanged)
+				return;
+
+			var marksmanNPC = target.GetGlobalNPC<AugmentMarksmanNPC>();
+			if (!marksmanNPC.IsMarked)
+				return;
+
+			Player markingPlayer = (marksmanNPC.MarkedByPlayer >= 0 && marksmanNPC.MarkedByPlayer < Main.maxPlayers)
+				? Main.player[marksmanNPC.MarkedByPlayer]
+				: Player;
+
+			bool marksmanActive = AugmentFamilyRegistry.GetOwnedCount(this, AugmentFamilyRegistry.MarksmanId) >= 2
+				|| (markingPlayer != null && markingPlayer.active && AugmentFamilyRegistry.GetOwnedCount(markingPlayer.GetModPlayer<AugmentPlayer>(), AugmentFamilyRegistry.MarksmanId) >= 2);
+
+			if (marksmanActive)
+			{
+				modifiers.ArmorPenetration += 15f;
+			}
+		}
+
+		public void TryTriggerChainLightning(NPC target, NPC.HitInfo hit, int onHitDamage)
+		{
+			if (!Owned.Any(a => a is ChainLightningAugment))
+				return;
+
+			ChainLightningAugment.ChainToNearbyTargets(Player, target, hit, onHitDamage);
 		}
 
 		// Fires BEFORE a melee hit is finalized - lets augments boost the
 		// actual damage of the hit via modifiers.FlatBonusDamage.
 		public override void ModifyHitNPCWithItem(Item item, NPC target, ref NPC.HitModifiers modifiers)
 		{
+			CurrentHitOnHitDamage = 0;
+
 			if (AugmentListUIState.IsDevCritMode)
 				modifiers.SetCrit();
+
+			if (AugmentFamilyRegistry.GetOwnedCount(this, AugmentFamilyRegistry.BloodhunterId) >= 2)
+			{
+				bool isBleeding = target.GetGlobalNPC<AugmentBleedNPC>().IsActive || target.HasBuff(BuffID.Bleeding);
+				if (isBleeding && Main.rand.NextFloat() < 0.08f)
+					modifiers.SetCrit();
+			}
+
+			if (AugmentFamilyRegistry.GetOwnedCount(this, AugmentFamilyRegistry.VoltId) >= 2)
+			{
+				if (target.HasBuff(BuffID.Electrified) && Main.rand.NextFloat() < 0.08f)
+					modifiers.SetCrit();
+			}
+
+			ApplyHivemindFlatDamage(target, ref modifiers);
+			ApplyMarksmanArmorPenetration(target, item.CountsAsClass(DamageClass.Ranged) || item.DamageType == DamageClass.Ranged, ref modifiers);
 
 			foreach (var a in Owned)
 				a.ModifyHitNPCWithItem(Player, item, target, ref modifiers, AugmentHitSource.NormalAttack);
@@ -1144,8 +1700,37 @@ namespace Augments
 
 		public override void ModifyHitNPCWithProj(Projectile proj, NPC target, ref NPC.HitModifiers modifiers)
 		{
+			CurrentHitOnHitDamage = 0;
+
 			if (AugmentListUIState.IsDevCritMode)
 				modifiers.SetCrit();
+
+			if (AugmentFamilyRegistry.GetOwnedCount(this, AugmentFamilyRegistry.BloodhunterId) >= 2)
+			{
+				bool isBleeding = target.GetGlobalNPC<AugmentBleedNPC>().IsActive || target.HasBuff(BuffID.Bleeding);
+				if (isBleeding && Main.rand.NextFloat() < 0.08f)
+					modifiers.SetCrit();
+			}
+
+			if (AugmentFamilyRegistry.GetOwnedCount(this, AugmentFamilyRegistry.VoltId) >= 2)
+			{
+				if (target.HasBuff(BuffID.Electrified) && Main.rand.NextFloat() < 0.08f)
+					modifiers.SetCrit();
+			}
+
+			// Lasher Protocol (2-Piece Synergy): Predatory Command (+12% minion crit against 5-stack targets)
+			if (AugmentFamilyRegistry.GetOwnedCount(this, AugmentFamilyRegistry.LasherId) >= 2)
+			{
+				bool isSummonMinion = proj.minion || proj.sentry || proj.DamageType == DamageClass.Summon;
+				if (isSummonMinion && target.GetGlobalNPC<AugmentCrackedNPC>().Stacks >= AugmentCrackedNPC.MaxStacks)
+				{
+					if (Main.rand.NextFloat() < 0.12f)
+						modifiers.SetCrit();
+				}
+			}
+
+			ApplyHivemindFlatDamage(target, ref modifiers);
+			ApplyMarksmanArmorPenetration(target, proj.CountsAsClass(DamageClass.Ranged) || proj.DamageType == DamageClass.Ranged, ref modifiers);
 
 			AugmentProjectileTag tag = proj.GetGlobalProjectile<AugmentProjectileTag>();
 			if (tag.IsAugmentProcDamage && !tag.CanTriggerOnHitAugments)
@@ -1156,6 +1741,134 @@ namespace Augments
 
 			foreach (var a in Owned)
 				a.ModifyHitNPCWithProj(Player, proj, target, ref modifiers, source, effectiveness);
+		}
+
+		public override void ModifyShootStats(Item item, ref Vector2 position, ref Vector2 velocity, ref int type, ref int damage, ref float knockback)
+		{
+			if (AugmentFamilyRegistry.GetOwnedCount(this, AugmentFamilyRegistry.MarksmanId) >= 2)
+			{
+				if (item.CountsAsClass(DamageClass.Ranged) || item.DamageType == DamageClass.Ranged)
+				{
+					velocity *= 1.25f;
+				}
+			}
+		}
+
+		public void TryTriggerMarksmanEffects(Projectile proj, NPC target, NPC.HitInfo hit, AugmentHitSource source)
+		{
+			if (AugmentFamilyRegistry.GetOwnedCount(this, AugmentFamilyRegistry.MarksmanId) < 2)
+				return;
+
+			if (target == null || !target.active || target.friendly || target.dontTakeDamage)
+				return;
+
+			if (!proj.CountsAsClass(DamageClass.Ranged) && proj.DamageType != DamageClass.Ranged)
+				return;
+
+			var marksmanNPC = target.GetGlobalNPC<AugmentMarksmanNPC>();
+
+			// 1. Kinetic Mark Application: Ranged hits from beyond 350 pixels
+			float distSq = Vector2.DistanceSquared(Player.Center, target.Center);
+			if (distSq >= 350f * 350f)
+			{
+				marksmanNPC.ApplyMark(Player.whoAmI, 240);
+				if (Main.netMode == NetmodeID.MultiplayerClient)
+					AugmentNet.SendApplyNPCEffectKineticMark(target.whoAmI, 240);
+			}
+
+			// 2. Kinetic Shrapnel Detonation: Critical strike against a marked target
+			if (hit.Crit && marksmanNPC.IsMarked && KineticShrapnelCooldown <= 0 && Main.myPlayer == Player.whoAmI)
+			{
+				KineticShrapnelCooldown = 15;
+
+				SoundEngine.PlaySound(SoundID.Item89 with { Volume = 0.55f, Pitch = 0.4f }, target.Center);
+
+				const int shrapnelCount = 3;
+				const int shrapnelDamage = 35;
+				float baseAngle = Main.rand.NextFloat(MathHelper.TwoPi);
+
+				for (int i = 0; i < shrapnelCount; i++)
+				{
+					float angle = baseAngle + (i * MathHelper.TwoPi / shrapnelCount) + Main.rand.NextFloat(-0.25f, 0.25f);
+					Vector2 velocity = angle.ToRotationVector2() * Main.rand.NextFloat(10f, 13f);
+
+					Projectile.NewProjectile(
+						Player.GetSource_OnHit(target),
+						target.Center,
+						velocity,
+						ModContent.ProjectileType<KineticShrapnelProjectile>(),
+						shrapnelDamage,
+						3f,
+						Player.whoAmI
+					);
+				}
+			}
+		}
+
+		public void TryTriggerArcaneNova(NPC target, bool isMagic)
+		{
+			if (!isMagic)
+				return;
+
+			if (AugmentFamilyRegistry.GetOwnedCount(this, AugmentFamilyRegistry.ArcaneSurgeId) < 2)
+				return;
+
+			if (AstralMatrixStacks < 5)
+				return;
+
+			if (target == null || !target.active || target.friendly || target.dontTakeDamage)
+				return;
+
+			AstralMatrixStacks = 0;
+			AstralMatrixManaSpent = 0;
+
+			// Refund +30 mana to the player
+			int oldMana = Player.statMana;
+			Player.statMana = Math.Min(Player.statManaMax2, Player.statMana + 30);
+			int restored = Player.statMana - oldMana;
+			if (restored > 0)
+			{
+				Player.ManaEffect(restored);
+			}
+
+			SoundEngine.PlaySound(SoundID.Item94 with { Volume = 0.75f, Pitch = 0.25f }, target.Center);
+
+			// Radial shockwave of astral indigo particles
+			for (int i = 0; i < 28; i++)
+			{
+				float angle = i * (MathHelper.TwoPi / 28f);
+				Vector2 vel = angle.ToRotationVector2() * 6.5f;
+				Dust d = Dust.NewDustPerfect(target.Center, DustID.DungeonSpirit, vel, 100, new Color(129, 140, 248), 1.5f);
+				d.noGravity = true;
+			}
+			for (int i = 0; i < 14; i++)
+			{
+				Dust d = Dust.NewDustPerfect(target.Center, DustID.PurpleTorch, Main.rand.NextVector2Circular(4.5f, 4.5f), 100, Color.White, 1.2f);
+				d.noGravity = true;
+			}
+
+			if (Main.myPlayer != Player.whoAmI)
+				return;
+
+			const int novaDamage = 65;
+			const float radius = 140f;
+
+			foreach (NPC npc in Main.npc)
+			{
+				if (!npc.active || npc.friendly || npc.townNPC || npc.dontTakeDamage)
+					continue;
+
+				if (npc.Distance(target.Center) > radius)
+					continue;
+
+				Vector2 knockbackDir = npc.Center - target.Center;
+				if (knockbackDir == Vector2.Zero)
+					knockbackDir = new Vector2(Player.direction, 0f);
+				knockbackDir.Normalize();
+
+				int hitDirection = knockbackDir.X >= 0f ? 1 : -1;
+				npc.SimpleStrikeNPC(novaDamage, hitDirection, false, 4.5f, DamageClass.Magic, false);
+			}
 		}
 
 		public override bool FreeDodge(Player.HurtInfo info)
@@ -1194,6 +1907,31 @@ namespace Augments
 		// Returning false prevents death; returning true allows it.
 		public override bool PreKill(double damage, int hitDirection, bool pvp, ref bool playSound, ref bool genGore, ref PlayerDeathReason damageSource)
 		{
+			// Type-D Bastion Protocol: Energy Barrier active completely prevents death
+			if (BastionBarrierTicks > 0)
+			{
+				Player.statLife = 1;
+				Player.immune = true;
+				Player.immuneTime = Math.Max(Player.immuneTime, BastionBarrierTicks);
+				return false;
+			}
+
+			// Type-D Dreadnought Protocol: If the lethal blow accumulates >= 120 cumulative damage,
+			// activate the energy barrier now to save the player's life at 1 HP.
+			if (HasAugment("type_d_dreadnought_protocol") || HasAugment("type_d_bastion_protocol") || HasAugment("avatar_of_the_wall"))
+			{
+				if (BastionStoredDamage + (int)damage >= 120)
+				{
+					BastionStoredDamage = 0;
+					BastionBarrierTicks = 90;
+					Player.statLife = 1;
+					Player.immune = true;
+					Player.immuneTime = 90;
+					AvatarOfTheWallAugment.TriggerKineticShockwave(Player);
+					return false;
+				}
+			}
+
 			// Soul Martyr: Teammates inside your aura cannot die. Any lethal damage they take is absorbed and transferred to you instead (cannot drop you below 1 HP).
 			if (SupportEffects.TryFindSupportOwner(Player, "soul_martyr", AuraRadius, out Player martyrOwner))
 			{
@@ -1328,6 +2066,16 @@ namespace Augments
 			vitalEchoLastLife = -1;
 			vitalEchoDefenseTicks = 0;
 			soulLinkRequestCooldown = 0;
+			BastionStoredDamage = 0;
+			BastionBarrierTicks = 0;
+			SynchronizerTimer = 0;
+			ApexHunterCooldown = 0;
+			KineticShockwaveCooldown = 0;
+			KineticDashWindowMemoryTimer = 0;
+			FortuneCoinBurstCooldown = 0;
+			GunslingerContinuousFireTicks = 0;
+			GunslingerLingerTimer = 0;
+			GunslingerWasAtPeak = false;
 			foreach (var a in Owned)
 				a.OnKill(Player);
 		}
@@ -1352,6 +2100,12 @@ namespace Augments
 
 		public override void OnConsumeMana(Item item, int manaConsumed)
 		{
+			if (AugmentFamilyRegistry.GetOwnedCount(this, AugmentFamilyRegistry.ArcaneSurgeId) >= 2)
+			{
+				AstralMatrixManaSpent += manaConsumed;
+				AstralMatrixStacks = Math.Clamp(AstralMatrixManaSpent / 20, 0, 5);
+			}
+
 			foreach (var a in Owned)
 				a.OnConsumeMana(Player, item, manaConsumed);
 		}
@@ -1518,8 +2272,12 @@ namespace Augments
 			AmbushStillTicks = 0;
 			AmbushReady = false;
 			ApexHunterMarkStacks = 0f;
+			ApexHunterCooldown = 0;
 			ArcaneSingularityCharge = 0f;
 			AvatarOfRageLastLife = -1;
+			BastionStoredDamage = 0;
+			BastionBarrierTicks = 0;
+			SynchronizerTimer = 0;
 			BulwarkNoDamageTicks = 0;
 			DeadeyeLastTargetWhoAmI = -1;
 			DeadeyeHitStacks = 0f;
@@ -1701,6 +2459,15 @@ namespace Augments
 			tag["bossAugmentKills"] = bossKills;
 		}
 
+		private static string NormalizeLegacyId(string id) => id switch
+		{
+			"avatar_of_rage" => "type_b_berserker_protocol",
+			"avatar_of_the_wall" => "type_d_dreadnought_protocol",
+			"type_d_bastion_protocol" => "type_d_dreadnought_protocol",
+			"avatar_of_balance" => "type_s_synchronizer_protocol",
+			_ => id
+		};
+
 		public override void LoadData(TagCompound tag)
 		{
 			ownedIds.Clear();
@@ -1711,8 +2478,9 @@ namespace Augments
 			string ownedKey = tag.ContainsKey("ownedAugmentIds") ? "ownedAugmentIds" : "augmentIds";
 			if (tag.ContainsKey(ownedKey))
 			{
-				foreach (string id in tag.GetList<string>(ownedKey))
+				foreach (string rawId in tag.GetList<string>(ownedKey))
 				{
+					string id = NormalizeLegacyId(rawId);
 					if (ownedIds.Count >= MaxOwnedAugments)
 						break;
 					if (AugmentDatabase.GetById(id) != null)
@@ -1721,11 +2489,17 @@ namespace Augments
 			}
 
 			if (tag.ContainsKey("everOwnedIds"))
-				everOwnedIds.UnionWith(tag.GetList<string>("everOwnedIds"));
+			{
+				foreach (string rawId in tag.GetList<string>("everOwnedIds"))
+					everOwnedIds.Add(NormalizeLegacyId(rawId));
+			}
 			everOwnedIds.UnionWith(ownedIds);
 
 			if (tag.ContainsKey("soldAugmentIds"))
-				soldAugmentIds.UnionWith(tag.GetList<string>("soldAugmentIds"));
+			{
+				foreach (string rawId in tag.GetList<string>("soldAugmentIds"))
+					soldAugmentIds.Add(NormalizeLegacyId(rawId));
+			}
 			else
 			{
 				// Legacy saves inferred buyback history as EverOwned minus Owned.
@@ -1804,6 +2578,20 @@ namespace Augments
 					lockedKeystoneFamilies.Add(a.KeystoneFamily);
 			}
 
+		}
+
+		public override bool OnPickup(Item item)
+		{
+			if (item.type == ItemID.Heart || item.type == ItemID.CandyApple || item.type == ItemID.CandyCane)
+			{
+				if (AugmentFamilyRegistry.GetOwnedCount(this, AugmentFamilyRegistry.FieldMedicId) >= 2)
+				{
+					int bonus = 4;
+					Player.statLife = Math.Min(Player.statLifeMax2, Player.statLife + bonus);
+					Player.HealEffect(bonus);
+				}
+			}
+			return true;
 		}
 	}
 }

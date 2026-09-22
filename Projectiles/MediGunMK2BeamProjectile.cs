@@ -157,7 +157,9 @@ namespace Augments.Projectiles
                     if (targetPlayerWhoAmI >= 0)
                     {
                         Player target = Main.player[targetPlayerWhoAmI];
-                        isTargetHurt = target.statLife < target.statLifeMax2;
+                        int targetMaxLife = Math.Max(target.statLifeMax, target.statLifeMax2);
+                        if (targetMaxLife <= 0) targetMaxLife = 500;
+                        isTargetHurt = target.statLife < targetMaxLife;
                     }
                     else if (targetNPCWhoAmI >= 0)
                     {
@@ -182,8 +184,10 @@ namespace Augments.Projectiles
                         if (targetPlayerWhoAmI >= 0)
                         {
                             Player target = Main.player[targetPlayerWhoAmI];
+                            int targetMaxLife = Math.Max(target.statLifeMax, target.statLifeMax2);
+                            if (targetMaxLife <= 0) targetMaxLife = 500;
                             // Only heal if not already at maximum health
-                            if (target.statLife < target.statLifeMax2)
+                            if (target.statLife < targetMaxLife)
                             {
                                 if (Main.netMode == NetmodeID.SinglePlayer)
                                 {

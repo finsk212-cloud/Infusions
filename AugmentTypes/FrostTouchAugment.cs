@@ -1,3 +1,4 @@
+using Augments.Core;
 using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
@@ -13,6 +14,7 @@ namespace Augments
 
         public override AugmentRarity Rarity => AugmentRarity.Common;
         public override AugmentClass Class => AugmentClass.Magic;
+        public override string FamilyId => AugmentFamilyRegistry.CryoId;
 
         private const int FrostburnDurationTicks = 240;
 

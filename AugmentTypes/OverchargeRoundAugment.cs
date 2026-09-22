@@ -9,7 +9,7 @@ namespace Augments
         public override string Id => "overcharge_round";
         public override string DisplayName => "Overcharge Round";
         public override string Description =>
-            $"Consecutive ranged hits build a stacking {AugmentText.Trigger("on-hit")} proc, +1 stack per hit up to 10, " +
+            $"Consecutive ranged hits build a stacking {AugmentText.OnHit("on-hit")} proc, +1 stack per hit up to 10, " +
             $"resetting after {AugmentText.Duration("1 second")} without a hit. The proc deals {AugmentText.SpecialDamage("5")} " +
             $"plus {AugmentText.SpecialDamage("3")} per stack, up to {AugmentText.SpecialDamage("35")} at full charge.";
 

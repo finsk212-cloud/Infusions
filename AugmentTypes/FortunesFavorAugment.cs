@@ -1,5 +1,6 @@
 using System;
 using Terraria;
+using Augments.Core;
 
 namespace Augments
 {
@@ -8,11 +9,12 @@ namespace Augments
         public override string Id => "fortunes_favor";
         public override string DisplayName => "Fortune's Favor";
         public override string Description =>
-            $"Grants {AugmentText.Crit("+10% Fortune")}, boosting the odds of all luck-based augments and world luck. " +
+            $"Grants {AugmentText.Crit("+10% Fortune")} (+0.05 World Luck & +10% lucky trigger chances across all augments). " +
             $"Also slowly {AugmentText.Healing("regenerates 1 HP")} every {AugmentText.Duration("4 seconds")} on its own.";
 
         public override AugmentRarity Rarity => AugmentRarity.Common;
         public override AugmentClass Class => AugmentClass.Universal;
+        public override string FamilyId => AugmentFamilyRegistry.FortuneId;
 
         public override bool IsLuckyThemed => true;
 

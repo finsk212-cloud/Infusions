@@ -1,6 +1,7 @@
 using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
+using Augments.Core;
 
 namespace Augments
 {
@@ -13,6 +14,7 @@ namespace Augments
 
         public override AugmentRarity Rarity => AugmentRarity.Common;
         public override AugmentClass Class => AugmentClass.Melee;
+        public override string FamilyId => AugmentFamilyRegistry.BloodhunterId;
 
         private const int BleedDurationTicks = 300;
         private const int DamagePerSecond = 3;
@@ -20,20 +22,26 @@ namespace Augments
         public override void OnHitNPCWithItem(Player player, Item item, NPC target, NPC.HitInfo hit)
         {
             if (hit.Crit && item.CountsAsClass(DamageClass.Melee))
-                ApplyBleed(target);
+                ApplyBleed(player, target);
         }
 
         public override void OnHitNPCWithProj(Player player, Projectile proj, NPC target, NPC.HitInfo hit)
         {
             if (hit.Crit && proj.CountsAsClass(DamageClass.Melee))
-                ApplyBleed(target);
+                ApplyBleed(player, target);
         }
 
-        private static void ApplyBleed(NPC target)
+        private static void ApplyBleed(Player player, NPC target)
         {
-            target.GetGlobalNPC<AugmentBleedNPC>().ApplyBleed(BleedDurationTicks, DamagePerSecond);
+            int dps = DamagePerSecond;
+            if (player != null && AugmentFamilyRegistry.GetOwnedCount(player.GetModPlayer<AugmentPlayer>(), AugmentFamilyRegistry.BloodhunterId) >= 2)
+            {
+                dps = 5;
+            }
+
+            target.GetGlobalNPC<AugmentBleedNPC>().ApplyBleed(BleedDurationTicks, dps);
             if (Main.netMode == NetmodeID.MultiplayerClient)
-                AugmentNet.SendApplyNPCEffectBleed(target.whoAmI, BleedDurationTicks, DamagePerSecond);
+                AugmentNet.SendApplyNPCEffectBleed(target.whoAmI, BleedDurationTicks, dps);
         }
     }
 }

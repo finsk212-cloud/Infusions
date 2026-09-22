@@ -8,7 +8,7 @@ namespace Augments
         public override string Id => "twin_strike";
         public override string DisplayName => "Twin Strike";
         public override string Description =>
-            $"{AugmentText.Crit("Crits")} apply {AugmentText.Trigger("on-hit")} twice. Deal {AugmentText.SpecialDamage("15 damage")} {AugmentText.Trigger("on-hit")}.";
+            $"{AugmentText.Crit("Crits")} apply {AugmentText.OnHit("on-hit")} twice. Deal {AugmentText.SpecialDamage("15 damage")} {AugmentText.OnHit("on-hit")}.";
 
         public override AugmentRarity Rarity => AugmentRarity.Rare;
         public override AugmentClass Class => AugmentClass.Universal;
@@ -35,7 +35,9 @@ namespace Augments
             var ap = player.GetModPlayer<AugmentPlayer>();
             if (!hit.Crit)
             {
-                Strike(player, target, ScaleHitEffect(ProcDamage));
+                int dmg = ScaleHitEffect(ProcDamage);
+                ap.RecordOnHitDamage(dmg);
+                Strike(player, target, dmg);
                 return;
             }
 
@@ -46,7 +48,9 @@ namespace Augments
             }
 
             ap.TwinStrikeItemProcPending = true;
-            Strike(player, target, ScaleHitEffect(ProcDamage * 2));
+            int doubledDmg = ScaleHitEffect(ProcDamage * 2);
+            ap.RecordOnHitDamage(doubledDmg);
+            Strike(player, target, doubledDmg);
         }
 
         public override void OnHitNPCWithProj(Player player, Projectile proj, NPC target, NPC.HitInfo hit)
@@ -54,7 +58,9 @@ namespace Augments
             var ap = player.GetModPlayer<AugmentPlayer>();
             if (!hit.Crit)
             {
-                Strike(player, target, ScaleHitEffect(ProcDamage));
+                int dmg = ScaleHitEffect(ProcDamage);
+                ap.RecordOnHitDamage(dmg);
+                Strike(player, target, dmg);
                 return;
             }
 
@@ -65,7 +71,9 @@ namespace Augments
             }
 
             ap.TwinStrikeProjProcPending = true;
-            Strike(player, target, ScaleHitEffect(ProcDamage * 2));
+            int doubledDmg = ScaleHitEffect(ProcDamage * 2);
+            ap.RecordOnHitDamage(doubledDmg);
+            Strike(player, target, doubledDmg);
         }
 
         private static void Strike(Player player, NPC target, int damage)

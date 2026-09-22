@@ -211,9 +211,6 @@ namespace Augments
 
 		private static void HandleOpenRewardChoices(BinaryReader reader)
 		{
-			if (Main.netMode != NetmodeID.MultiplayerClient)
-				return;
-
 			AugmentRarity rarity = (AugmentRarity)reader.ReadByte();
 			RarityBracket bracket = (RarityBracket)reader.ReadByte();
 			bool rerolled = reader.ReadBoolean();
@@ -226,6 +223,9 @@ namespace Augments
 				if (augment != null)
 					choices.Add(augment);
 			}
+
+			if (Main.netMode != NetmodeID.MultiplayerClient)
+				return;
 
 			if (choices.Count > 0)
 				ModContent.GetInstance<AugmentUISystem>().ShowChoices(choices, rarity, bracket, true, rerolled);
@@ -311,17 +311,21 @@ namespace Augments
 
 		private static void HandleSyncAugmentState(BinaryReader reader)
 		{
-			if (Main.netMode != NetmodeID.MultiplayerClient)
-				return;
-
 			int playerIndex = reader.ReadByte();
-			if (playerIndex < 0 || playerIndex >= Main.maxPlayers)
-				return;
-
-			Main.player[playerIndex].GetModPlayer<AugmentPlayer>().ReadAugmentState(reader);
-			ModContent.GetInstance<Augments>().Logger.Info($"Synced support state for player={Main.player[playerIndex].name}");
-			if (playerIndex == Main.myPlayer)
-				ModContent.GetInstance<AugmentUISystem>().RefreshOpenPlayerPanels();
+			if (playerIndex >= 0 && playerIndex < Main.maxPlayers)
+			{
+				Main.player[playerIndex].GetModPlayer<AugmentPlayer>().ReadAugmentState(reader);
+				if (Main.netMode == NetmodeID.MultiplayerClient)
+				{
+					ModContent.GetInstance<Augments>().Logger.Info($"Synced support state for player={Main.player[playerIndex].name}");
+					if (playerIndex == Main.myPlayer)
+						ModContent.GetInstance<AugmentUISystem>().RefreshOpenPlayerPanels();
+				}
+			}
+			else
+			{
+				new AugmentPlayer().ReadAugmentState(reader);
+			}
 		}
 
 		private static void HandleRequestAugmentSync(int whoAmI)
@@ -512,7 +516,9 @@ namespace Augments
 		{
 			Bleed,
 			Slow,
-			Cracked
+			Cracked,
+			Nanites,
+			KineticMark
 		}
 
 		public static void SendApplyNPCEffectBleed(int npcIndex, int durationTicks, int dps)
@@ -556,10 +562,62 @@ namespace Augments
 			packet.Send();
 		}
 
+		public static void SendApplyNPCEffectNanites(int npcIndex, int durationTicks, int minionIdentity)
+		{
+			if (Main.netMode != NetmodeID.MultiplayerClient || npcIndex < 0 || npcIndex >= Main.maxNPCs)
+				return;
+
+			ModPacket packet = ModContent.GetInstance<Augments>().GetPacket();
+			packet.Write((byte)AugmentPacketType.ApplyNPCEffect);
+			packet.Write((byte)NPCEffectType.Nanites);
+			packet.Write((short)npcIndex);
+			packet.Write(durationTicks);
+			packet.Write(minionIdentity);
+			packet.Send();
+		}
+
+		public static void SendApplyNPCEffectKineticMark(int npcIndex, int durationTicks)
+		{
+			if (Main.netMode != NetmodeID.MultiplayerClient || npcIndex < 0 || npcIndex >= Main.maxNPCs)
+				return;
+
+			ModPacket packet = ModContent.GetInstance<Augments>().GetPacket();
+			packet.Write((byte)AugmentPacketType.ApplyNPCEffect);
+			packet.Write((byte)NPCEffectType.KineticMark);
+			packet.Write((short)npcIndex);
+			packet.Write(durationTicks);
+			packet.Send();
+		}
+
 		private static void HandleApplyNPCEffect(BinaryReader reader, int whoAmI)
 		{
 			NPCEffectType effectType = (NPCEffectType)reader.ReadByte();
-			int npcIndex = reader.ReadInt16();
+			short npcIndex = reader.ReadInt16();
+
+			int durationTicks = 0;
+			int dps = 0;
+			float slowPercent = 0f;
+			int minionIdentity = -1;
+
+			switch (effectType)
+			{
+				case NPCEffectType.Bleed:
+					durationTicks = reader.ReadInt32();
+					dps = reader.ReadInt32();
+					break;
+				case NPCEffectType.Slow:
+					durationTicks = reader.ReadInt32();
+					slowPercent = reader.ReadSingle();
+					break;
+				case NPCEffectType.Cracked:
+				case NPCEffectType.KineticMark:
+					durationTicks = reader.ReadInt32();
+					break;
+				case NPCEffectType.Nanites:
+					durationTicks = reader.ReadInt32();
+					minionIdentity = reader.ReadInt32();
+					break;
+			}
 
 			if (npcIndex < 0 || npcIndex >= Main.maxNPCs)
 				return;
@@ -571,22 +629,12 @@ namespace Augments
 			switch (effectType)
 			{
 				case NPCEffectType.Bleed:
-				{
-					int durationTicks = reader.ReadInt32();
-					int dps = reader.ReadInt32();
 					npc.GetGlobalNPC<AugmentBleedNPC>().ApplyBleed(durationTicks, dps);
 					break;
-				}
 				case NPCEffectType.Slow:
-				{
-					int durationTicks = reader.ReadInt32();
-					float slowPercent = reader.ReadSingle();
 					npc.GetGlobalNPC<AugmentSlowNPC>().ApplySlow(durationTicks, slowPercent);
 					break;
-				}
 				case NPCEffectType.Cracked:
-				{
-					int durationTicks = reader.ReadInt32();
 					npc.GetGlobalNPC<AugmentCrackedNPC>().ApplyStack(durationTicks);
 
 					// If on server, relay to all other clients so their local damage multipliers are up to date.
@@ -595,12 +643,38 @@ namespace Augments
 						ModPacket relay = ModContent.GetInstance<Augments>().GetPacket();
 						relay.Write((byte)AugmentPacketType.ApplyNPCEffect);
 						relay.Write((byte)NPCEffectType.Cracked);
-						relay.Write((short)npcIndex);
+						relay.Write(npcIndex);
 						relay.Write(durationTicks);
 						relay.Send(-1, whoAmI);
 					}
 					break;
-				}
+				case NPCEffectType.Nanites:
+					npc.GetGlobalNPC<AugmentNaniteNPC>().ApplyNanites(whoAmI, minionIdentity, durationTicks);
+
+					if (Main.netMode == NetmodeID.Server)
+					{
+						ModPacket relay = ModContent.GetInstance<Augments>().GetPacket();
+						relay.Write((byte)AugmentPacketType.ApplyNPCEffect);
+						relay.Write((byte)NPCEffectType.Nanites);
+						relay.Write(npcIndex);
+						relay.Write(durationTicks);
+						relay.Write(minionIdentity);
+						relay.Send(-1, whoAmI);
+					}
+					break;
+				case NPCEffectType.KineticMark:
+					npc.GetGlobalNPC<AugmentMarksmanNPC>().ApplyMark(whoAmI, durationTicks);
+
+					if (Main.netMode == NetmodeID.Server)
+					{
+						ModPacket relay = ModContent.GetInstance<Augments>().GetPacket();
+						relay.Write((byte)AugmentPacketType.ApplyNPCEffect);
+						relay.Write((byte)NPCEffectType.KineticMark);
+						relay.Write(npcIndex);
+						relay.Write(durationTicks);
+						relay.Send(-1, whoAmI);
+					}
+					break;
 			}
 		}
 	}

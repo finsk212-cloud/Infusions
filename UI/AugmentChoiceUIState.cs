@@ -324,7 +324,7 @@ namespace Augments
 			pendingKeystone = null;
 
 			confirmMessageText.SetText(
-				"Are you sure you want to skip this augment selection? " +
+				"Are you sure you want to skip this plug-in chip selection? " +
 				"This reward will be forfeited and cannot be recovered.");
 
 			Append(confirmOverlay);

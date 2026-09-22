@@ -7,7 +7,16 @@ namespace Augments
             return $"[c/{hex}:{text}]";
         }
 
-        public static string Trigger(string text) => Color(text, AugmentTextColors.TriggerHex);
+        public static string OnHit(string text = "on-hit") => Color(text, AugmentTextColors.OnHitHex);
+        public static string Trigger(string text)
+        {
+            if (text.Equals("on-hit", System.StringComparison.OrdinalIgnoreCase) ||
+                text.Equals("on hit", System.StringComparison.OrdinalIgnoreCase))
+            {
+                return OnHit(text);
+            }
+            return Color(text, AugmentTextColors.TriggerHex);
+        }
         public static string Healing(string text) => Color(text, AugmentTextColors.HealingHex);
         public static string HP(string text) => Color(text, AugmentTextColors.HealingHex);
         public static string Crit(string text) => Color(text, AugmentTextColors.CritHex);

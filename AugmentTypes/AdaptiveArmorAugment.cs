@@ -1,5 +1,6 @@
 using Microsoft.Xna.Framework;
 using Terraria;
+using Augments.Core;
 
 namespace Augments
 {
@@ -13,6 +14,7 @@ namespace Augments
 
         public override AugmentRarity Rarity => AugmentRarity.Rare;
         public override AugmentClass Class => AugmentClass.Universal;
+        public override string FamilyId => AugmentFamilyRegistry.BastionId;
 
         private const int TicksPerStack = 120;
         private const int MaxBonus = 10;

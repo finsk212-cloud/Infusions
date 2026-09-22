@@ -1,5 +1,6 @@
 using Terraria;
 using Terraria.ModLoader;
+using Augments.Core;
 
 namespace Augments
 {
@@ -11,6 +12,7 @@ namespace Augments
             $"Ranged weapons gain {AugmentText.AttackSpeed("+10% attack speed")}.";
         public override AugmentRarity Rarity => AugmentRarity.Common;
         public override AugmentClass Class => AugmentClass.Ranged;
+        public override string FamilyId => AugmentFamilyRegistry.GunslingerId;
 
         public override void UpdateEquips(Player player)
         {

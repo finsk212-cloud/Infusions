@@ -18,6 +18,7 @@ namespace Augments
         public float OnHitEffectiveness = 1f;
         public bool PreventEchoChamberCopy;
         public bool PreventRicochetEngineCopy;
+        public bool IsEchoChamberEcho;
         public bool NecromancersCourtGhost;
         public int NecromancersCourtGhostTimeLeft;
         public int SourceMinionProjectileType = -1;
@@ -34,6 +35,7 @@ namespace Augments
                 bitWriter.WriteBit(CanTriggerOnHitAugments);
                 bitWriter.WriteBit(PreventEchoChamberCopy);
                 bitWriter.WriteBit(PreventRicochetEngineCopy);
+                bitWriter.WriteBit(IsEchoChamberEcho);
                 bitWriter.WriteBit(NecromancersCourtGhost);
                 binaryWriter.Write(OnHitEffectiveness);
 
@@ -57,6 +59,7 @@ namespace Augments
                 CanTriggerOnHitAugments = false;
                 PreventEchoChamberCopy = false;
                 PreventRicochetEngineCopy = false;
+                IsEchoChamberEcho = false;
                 NecromancersCourtGhost = false;
                 NecromancersCourtGhostTimeLeft = 0;
                 OnHitEffectiveness = 1f;
@@ -66,6 +69,7 @@ namespace Augments
                 CanTriggerOnHitAugments = bitReader.ReadBit();
                 PreventEchoChamberCopy = bitReader.ReadBit();
                 PreventRicochetEngineCopy = bitReader.ReadBit();
+                IsEchoChamberEcho = bitReader.ReadBit();
                 NecromancersCourtGhost = bitReader.ReadBit();
                 OnHitEffectiveness = binaryReader.ReadSingle();
 
@@ -86,6 +90,17 @@ namespace Augments
 
         public override void PostAI(Projectile projectile)
         {
+            if (IsEchoChamberEcho)
+            {
+                Lighting.AddLight(projectile.Center, 0.1f, 0.22f, 0.35f);
+                if (Main.rand.NextBool(2))
+                {
+                    Dust d = Dust.NewDustDirect(projectile.position, projectile.width, projectile.height, Terraria.ID.DustID.DungeonSpirit, projectile.velocity.X * 0.1f, projectile.velocity.Y * 0.1f, 150, default, 0.85f);
+                    d.noGravity = true;
+                    d.velocity *= 0.5f;
+                }
+            }
+
             if (!NecromancersCourtGhost)
                 return;
 
@@ -107,6 +122,9 @@ namespace Augments
 
         public override Color? GetAlpha(Projectile projectile, Color lightColor)
         {
+            if (IsEchoChamberEcho)
+                return new Color(130, 210, 255, 175);
+
             return NecromancersCourtGhost ? new Color(145, 185, 255, 175) : null;
         }
 

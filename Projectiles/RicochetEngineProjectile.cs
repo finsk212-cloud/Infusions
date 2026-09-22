@@ -1,5 +1,8 @@
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using Terraria;
+using Terraria.Audio;
+using Terraria.GameContent;
 using Terraria.ID;
 using Terraria.ModLoader;
 
@@ -16,7 +19,7 @@ namespace Augments
 
         public override void SetStaticDefaults()
         {
-            ProjectileID.Sets.TrailCacheLength[Type] = 4;
+            ProjectileID.Sets.TrailCacheLength[Type] = 6;
             ProjectileID.Sets.TrailingMode[Type] = 2;
         }
 
@@ -57,6 +60,22 @@ namespace Augments
                     Projectile.localNPCImmunity[originalTarget] = -1;
 
                 SetTarget(FindNearestTarget());
+
+                // Initial ricochet deflection sound and sparks
+                SoundEngine.PlaySound(SoundID.Item10 with { Volume = 0.5f, Pitch = 0.2f }, Projectile.Center);
+                for (int i = 0; i < 6; i++)
+                {
+                    Vector2 sparkVel = Main.rand.NextVector2Circular(2.5f, 2.5f);
+                    Dust d = Dust.NewDustPerfect(
+                        Projectile.Center,
+                        Main.rand.NextBool() ? DustID.PurpleTorch : DustID.GemAmethyst,
+                        sparkVel,
+                        100,
+                        default,
+                        Main.rand.NextFloat(0.8f, 1.2f)
+                    );
+                    d.noGravity = true;
+                }
             }
 
             NPC target = GetCurrentTarget();
@@ -78,24 +97,92 @@ namespace Augments
             else
                 Projectile.velocity = Vector2.Lerp(Projectile.velocity, desiredVelocity, HomingStrength);
 
-            Projectile.rotation = Projectile.velocity.ToRotation();
-            Lighting.AddLight(Projectile.Center, 0.35f, 0.08f, 0.5f);
+            // Rotate vertical bullet sprite 90 degrees so it faces horizontally along flight velocity
+            if (Projectile.velocity.LengthSquared() > 0.01f)
+                Projectile.rotation = Projectile.velocity.ToRotation() + MathHelper.PiOver2;
 
-            Dust dust = Dust.NewDustPerfect(
-                Projectile.Center - Projectile.velocity * 0.35f,
-                Main.rand.NextBool(3) ? DustID.GemAmethyst : DustID.Shadowflame,
-                -Projectile.velocity * 0.08f,
-                80,
-                default,
-                Main.rand.NextFloat(0.65f, 1f)
+            Lighting.AddLight(Projectile.Center, 0.45f, 0.12f, 0.60f);
+
+            // Shimmering neon purple tracer sparks
+            if (Main.rand.NextBool(2))
+            {
+                Dust dust = Dust.NewDustPerfect(
+                    Projectile.Center - Projectile.velocity * 0.25f,
+                    Main.rand.NextBool() ? DustID.PurpleTorch : DustID.GemAmethyst,
+                    -Projectile.velocity * 0.08f + Main.rand.NextVector2Circular(0.3f, 0.3f),
+                    80,
+                    default,
+                    Main.rand.NextFloat(0.75f, 1.1f)
+                );
+                dust.noGravity = true;
+            }
+        }
+
+        public override bool PreDraw(ref Color lightColor)
+        {
+            Texture2D texture = TextureAssets.Projectile[Projectile.type].Value;
+            Vector2 origin = new Vector2(texture.Width / 2f, texture.Height / 2f);
+
+            // Ethereal tracer afterimages
+            for (int i = 0; i < Projectile.oldPos.Length; i++)
+            {
+                Vector2 drawPos = Projectile.oldPos[i] - Main.screenPosition + origin + new Vector2(0f, Projectile.gfxOffY);
+                float progress = 1f - (float)i / Projectile.oldPos.Length;
+                Color trailColor = new Color(190, 80, 255, 0) * (progress * 0.45f);
+                float trailScale = Projectile.scale * MathHelper.Lerp(0.6f, 1f, progress);
+                float trailRot = Projectile.oldRot[i];
+
+                Main.EntitySpriteDraw(
+                    texture,
+                    drawPos,
+                    null,
+                    trailColor,
+                    trailRot,
+                    origin,
+                    trailScale,
+                    SpriteEffects.None,
+                    0
+                );
+            }
+
+            Vector2 currentDrawPos = Projectile.Center - Main.screenPosition + new Vector2(0f, Projectile.gfxOffY);
+            Color drawColor = new Color(225, 140, 255, 230);
+            Main.EntitySpriteDraw(
+                texture,
+                currentDrawPos,
+                null,
+                drawColor,
+                Projectile.rotation,
+                origin,
+                Projectile.scale,
+                SpriteEffects.None,
+                0
             );
-            dust.noGravity = true;
+
+            return false;
         }
 
         public override void OnHitNPC(NPC target, NPC.HitInfo hit, int damageDone)
         {
             Projectile.localNPCImmunity[target.whoAmI] = -1;
             Projectile.ai[1]++;
+
+            // Ricochet impact sound and spark burst
+            SoundEngine.PlaySound(SoundID.Item10 with { Volume = 0.6f, Pitch = 0.35f }, Projectile.Center);
+            for (int i = 0; i < 8; i++)
+            {
+                Vector2 sparkVel = Main.rand.NextVector2Circular(3.5f, 3.5f) - Projectile.velocity * 0.15f;
+                Dust d = Dust.NewDustPerfect(
+                    Projectile.Center,
+                    Main.rand.NextBool() ? DustID.PurpleTorch : DustID.GemAmethyst,
+                    sparkVel,
+                    80,
+                    default,
+                    Main.rand.NextFloat(1f, 1.4f)
+                );
+                d.noGravity = true;
+            }
+
             if (Projectile.ai[1] >= MaxHits)
                 return;
 
@@ -109,6 +196,24 @@ namespace Augments
             SetTarget(nextTarget);
             Projectile.velocity = Projectile.DirectionTo(nextTarget.Center) * MoveSpeed;
             Projectile.netUpdate = true;
+        }
+
+        public override void OnKill(int timeLeft)
+        {
+            SoundEngine.PlaySound(SoundID.Item10 with { Volume = 0.35f, Pitch = 0.5f }, Projectile.Center);
+            for (int i = 0; i < 6; i++)
+            {
+                Vector2 sparkVel = Main.rand.NextVector2Circular(2.5f, 2.5f);
+                Dust d = Dust.NewDustPerfect(
+                    Projectile.Center,
+                    DustID.GemAmethyst,
+                    sparkVel,
+                    100,
+                    default,
+                    1f
+                );
+                d.noGravity = true;
+            }
         }
 
         public override bool? CanHitNPC(NPC target)

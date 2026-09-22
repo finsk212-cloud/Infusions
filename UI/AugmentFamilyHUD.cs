@@ -1,0 +1,1054 @@
+using System;
+using System.Collections.Generic;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
+using ReLogic.Graphics;
+using Terraria;
+using Terraria.GameContent;
+using Terraria.UI.Chat;
+using Augments.Core;
+
+namespace Augments
+{
+	// Modular in-game HUD docked on the right side of the screen.
+	// Displays tracked Plug-in Chip Family synergies whenever the player owns >= 1 member chip.
+	// Positioned below the minimap and info accessories.
+	// Support-type families display a prominent plus sign (cross) icon.
+	// Hovering the icon smoothly slides out an inspection panel with pixel-aligned typography and status.
+	public static class AugmentFamilyHUD
+	{
+		private const float IconWidth = 42f;
+		private const float IconHeight = 46f;
+		private const float RightMargin = 12f;
+		private const float StartY = 430f; // Lowered further as requested
+		private const float Spacing = 8f;
+		private const float MinPanelWidth = 330f;
+		private const float SlideSpeed = 7f;
+
+		private static float globalTimer;
+		private static readonly Dictionary<string, float> hoverProgress = new();
+		private static readonly Dictionary<string, Rectangle> iconBounds = new();
+		private static readonly Dictionary<string, Rectangle> panelBounds = new();
+
+		public static void Update(GameTime gameTime)
+		{
+			if (Main.dedServ || Main.gameMenu)
+				return;
+
+			float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
+			globalTimer += dt;
+
+			var player = Main.LocalPlayer;
+			if (player == null || !player.active)
+				return;
+
+			var ap = player.GetModPlayer<AugmentPlayer>();
+			if (ap == null)
+				return;
+
+			Point mouse = new Point(Main.mouseX, Main.mouseY);
+			float iconX = Main.screenWidth - IconWidth - RightMargin;
+			float currentY = StartY;
+
+			foreach (var kv in AugmentFamilyRegistry.Families)
+			{
+				string id = kv.Key;
+				var fam = kv.Value;
+				int ownedCount = AugmentFamilyRegistry.GetOwnedCount(ap, id);
+
+				if (ownedCount <= 0)
+				{
+					hoverProgress[id] = 0f;
+					panelBounds[id] = Rectangle.Empty;
+					continue;
+				}
+
+				if (!hoverProgress.ContainsKey(id))
+					hoverProgress[id] = 0f;
+
+				// Calculate exact icon rect for this family directly
+				Rectangle iRect = new Rectangle((int)iconX, (int)currentY, (int)IconWidth, (int)IconHeight);
+				iconBounds[id] = iRect;
+				currentY += IconHeight + Spacing;
+
+				panelBounds.TryGetValue(id, out var pRect);
+
+				bool isHovered = false;
+
+				// 1. Hovering on or immediately around the docked icon (with 5px generous margin)
+				Rectangle generousIcon = new Rectangle(iRect.X - 5, iRect.Y - 5, iRect.Width + 10, iRect.Height + 10);
+				if (generousIcon.Contains(mouse))
+				{
+					isHovered = true;
+				}
+				// 2. Hovering on the slideout panel while it is open or opening
+				else if (hoverProgress[id] > 0.02f && pRect != Rectangle.Empty)
+				{
+					// Generous panel zone covering the panel AND extending into the icon seam
+					Rectangle generousPanel = new Rectangle(pRect.X - 5, pRect.Y - 5, pRect.Width + 10, pRect.Height + 10);
+					if (generousPanel.Contains(mouse))
+					{
+						isHovered = true;
+					}
+				}
+
+				float target = isHovered ? 1f : 0f;
+				float current = hoverProgress[id];
+				if (current < target)
+					hoverProgress[id] = Math.Min(target, current + dt * SlideSpeed);
+				else if (current > target)
+					hoverProgress[id] = Math.Max(target, current - dt * SlideSpeed);
+			}
+		}
+
+		public static void Draw(SpriteBatch spriteBatch)
+		{
+			if (Main.dedServ || Main.gameMenu)
+				return;
+
+			var player = Main.LocalPlayer;
+			if (player == null || !player.active)
+				return;
+
+			var ap = player.GetModPlayer<AugmentPlayer>();
+			if (ap == null)
+				return;
+
+			var font = FontAssets.MouseText.Value;
+			float iconX = Main.screenWidth - IconWidth - RightMargin;
+			float currentY = StartY;
+
+			foreach (var kv in AugmentFamilyRegistry.Families)
+			{
+				string id = kv.Key;
+				var fam = kv.Value;
+				int ownedCount = AugmentFamilyRegistry.GetOwnedCount(ap, id);
+
+				if (ownedCount <= 0)
+					continue;
+
+				bool isActive = ownedCount >= fam.MaxMembers;
+				hoverProgress.TryGetValue(id, out float progress);
+
+				Rectangle iconRect = new Rectangle((int)iconX, (int)currentY, (int)IconWidth, (int)IconHeight);
+				iconBounds[id] = iconRect;
+
+				// 1. Draw Slideout Panel (if expanding)
+				if (progress > 0.01f)
+				{
+					DrawSlideoutPanel(spriteBatch, font, fam, ap, ownedCount, iconRect, progress);
+				}
+				else
+				{
+					panelBounds[id] = Rectangle.Empty;
+				}
+
+				// 2. Draw Docked Icon Box
+				DrawDockedIcon(spriteBatch, font, fam, ownedCount, isActive, iconRect);
+
+				currentY += IconHeight + Spacing;
+			}
+		}
+
+		private static void DrawDockedIcon(SpriteBatch spriteBatch, DynamicSpriteFont font, AugmentFamily fam, int ownedCount, bool isActive, Rectangle rect)
+		{
+			float pulse = (float)Math.Sin(globalTimer * 3.5f) * 0.5f + 0.5f;
+
+			// Glowing aura for completed sets
+			if (isActive)
+			{
+				int auraDist = (int)(2f + pulse * 3f);
+				Rectangle auraRect = new Rectangle(rect.X - auraDist, rect.Y - auraDist, rect.Width + auraDist * 2, rect.Height + auraDist * 2);
+				Color auraCol = fam.ThemeColor * (0.15f + pulse * 0.20f);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, auraRect, auraCol);
+			}
+
+			// Background
+			Color bg = new Color(8, 14, 28) * 0.95f;
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, rect, bg);
+
+			bool hasUnlockedThreshold = false;
+			foreach (var thresh in fam.ThresholdBonuses.Keys)
+			{
+				if (ownedCount >= thresh)
+				{
+					hasUnlockedThreshold = true;
+					break;
+				}
+			}
+
+			// Border
+			Color borderColor = isActive
+				? Color.Lerp(fam.ThemeColor, Color.White, pulse * 0.35f)
+				: hasUnlockedThreshold
+					? Color.Lerp(fam.ThemeColor, new Color(120, 150, 180), 0.30f)
+					: Color.Lerp(fam.ThemeColor, new Color(90, 110, 130), 0.50f);
+			DrawHighTechBorder(spriteBatch, rect, borderColor);
+
+			int cx = rect.X + rect.Width / 2;
+
+			// Upper Section: Family Graphic
+			DrawFamilyGraphic(spriteBatch, fam, cx, rect.Y + 15, isActive || hasUnlockedThreshold);
+
+			// Subtle separator rail between icon and count
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X + 4, rect.Y + 26, rect.Width - 8, 1), fam.ThemeColor * (isActive ? 0.35f : 0.15f));
+
+			// Lower Section: Clean integrated count bar
+			Rectangle countArea = new Rectangle(rect.X + 2, rect.Y + 27, rect.Width - 4, rect.Height - 29);
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, countArea, new Color(4, 7, 14) * 0.85f);
+
+			string countText = $"{ownedCount}/{fam.MaxMembers}";
+			Vector2 numScale = new Vector2(0.55f);
+			Vector2 numSize = ChatManager.GetStringSize(font, countText, numScale);
+			float numX = cx - numSize.X * 0.5f;
+			float numY = countArea.Y + (countArea.Height - numSize.Y) * 0.5f + 8f;
+			Color countColor = (isActive || hasUnlockedThreshold) ? AugmentTextColors.Healing : new Color(175, 195, 220);
+			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, countText, new Vector2(numX, numY), countColor, 0f, Vector2.Zero, numScale);
+		}
+
+		private static void DrawFamilyGraphic(SpriteBatch spriteBatch, AugmentFamily fam, int cx, int cy, bool isActive)
+		{
+			Color iconCol = isActive
+				? Color.Lerp(fam.ThemeColor, Color.White, 0.25f)
+				: Color.Lerp(fam.ThemeColor, new Color(170, 190, 210), 0.40f);
+
+			// Check custom family ID icons first
+			if (fam.Id == AugmentFamilyRegistry.KineticId)
+			{
+				// Forward Momentum Chevron / Battering Ram
+				Color ramOutline = new Color(4, 8, 14) * 0.90f;
+
+				// Left Chevron Outline
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 7, cy - 7, 3, 14), ramOutline);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 5, cy - 5, 3, 10), ramOutline);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 3, cy - 3, 3, 6), ramOutline);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 1, cy - 1, 3, 2), ramOutline);
+
+				// Right Chevron / Ramhead Outline
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 1, cy - 7, 3, 14), ramOutline);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 1, cy - 5, 3, 10), ramOutline);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 3, cy - 3, 3, 6), ramOutline);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 5, cy - 1, 3, 2), ramOutline);
+
+				// Left Chevron Fill
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 6, cy - 5, 2, 10), iconCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 4, cy - 3, 2, 6), iconCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 2, cy - 1, 2, 2), iconCol);
+
+				// Right Chevron / Ramhead Fill
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx, cy - 5, 2, 10), iconCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 2, cy - 3, 2, 6), iconCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 4, cy - 1, 2, 2), iconCol);
+
+				// Active highlights
+				if (isActive)
+				{
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 1, cy - 3, 2, 6), Color.White * 0.85f);
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 3, cy - 1, 2, 2), Color.White * 0.95f);
+				}
+				return;
+			}
+
+			if (fam.Id == AugmentFamilyRegistry.FortuneId || fam.Type == FamilyType.Utility)
+			{
+				// Lucky 5-Pip Golden Die
+				Color dieOutline = new Color(4, 8, 14) * 0.90f;
+
+				// Outline
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 6, cy - 8, 12, 16), dieOutline);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 8, cy - 6, 16, 12), dieOutline);
+
+				// Body Fill (Amber Gold)
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 5, cy - 7, 10, 14), iconCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 7, cy - 5, 14, 10), iconCol);
+
+				// Inner Die Face contrast border/accent
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 5, cy - 5, 10, 10), Color.Lerp(iconCol, new Color(40, 20, 0), 0.25f));
+
+				// Dice Pips: classic 5-dot face pattern
+				Color pipColor = new Color(15, 20, 32);
+				Color pipHighlight = isActive ? Color.White * 0.95f : new Color(255, 240, 180);
+
+				// 4 Corner pips (2x2 each)
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 4, cy - 4, 2, 2), pipColor);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 2, cy - 4, 2, 2), pipColor);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 4, cy + 2, 2, 2), pipColor);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 2, cy + 2, 2, 2), pipColor);
+
+				// Center pip (2x2) - sparkling highlight when active!
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 1, cy - 1, 2, 2), pipHighlight);
+				return;
+			}
+
+			if (fam.Id == AugmentFamilyRegistry.CryoId)
+			{
+				// Procedural Pixel-Art Frost Crystal / Snowflake
+				Color iceOutline = new Color(4, 8, 14) * 0.90f;
+
+				// Dark Contrast Outlines
+				// Vertical & Horizontal Cross
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 2, cy - 8, 4, 16), iceOutline);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 8, cy - 2, 16, 4), iceOutline);
+				// 4 Diagonal Branches
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 6, cy - 6, 4, 4), iceOutline);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 2, cy - 6, 4, 4), iceOutline);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 6, cy + 2, 4, 4), iceOutline);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 2, cy + 2, 4, 4), iceOutline);
+
+				// Glacial Ice Cyan Fills (#38BDF8)
+				// Central Cross
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 1, cy - 7, 2, 14), iconCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 7, cy - 1, 14, 2), iconCol);
+				// 4 Diagonal Arms
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 5, cy - 5, 2, 2), iconCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 3, cy - 5, 2, 2), iconCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 5, cy + 3, 2, 2), iconCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 3, cy + 3, 2, 2), iconCol);
+
+				// Branching V-tips on 4 main cardinal axes
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 3, cy - 5, 6, 1), iconCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 3, cy + 4, 6, 1), iconCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 5, cy - 3, 1, 6), iconCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 4, cy - 3, 1, 6), iconCol);
+
+				// Bright Diamond Core
+				Color coreColor = isActive ? Color.White : Color.Lerp(iconCol, Color.White, 0.45f);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 2, cy - 2, 4, 4), coreColor);
+
+				// Sparkling Glacial Highlights when active
+				if (isActive)
+				{
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 1, cy - 1, 2, 2), Color.White);
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx, cy - 7, 1, 2), Color.White * 0.9f);
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx, cy + 5, 1, 2), Color.White * 0.9f);
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 7, cy, 2, 1), Color.White * 0.9f);
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 5, cy, 2, 1), Color.White * 0.9f);
+				}
+				return;
+			}
+
+			if (fam.Id == AugmentFamilyRegistry.VoltId)
+			{
+				// Procedural Pixel-Art Double Lightning Bolt / High-Voltage Spark
+				Color voltOutline = new Color(4, 8, 14) * 0.90f;
+
+				// Dark Contrast Outlines
+				// Primary Bolt (Left/Main)
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 2, cy - 8, 5, 5), voltOutline);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 5, cy - 4, 6, 5), voltOutline);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 7, cy - 1, 8, 4), voltOutline);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 5, cy + 2, 5, 4), voltOutline);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 6, cy + 5, 4, 4), voltOutline);
+
+				// Secondary Twin Bolt (Right/Offset)
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 2, cy - 7, 4, 4), voltOutline);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 1, cy - 4, 5, 4), voltOutline);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 2, cy - 1, 4, 4), voltOutline);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 2, cy + 2, 3, 4), voltOutline);
+
+				// Electric Violet Fills (#8B5CF6)
+				// Primary Bolt
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 1, cy - 7, 3, 4), iconCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 4, cy - 3, 4, 3), iconCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 6, cy, 6, 2), iconCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 4, cy + 2, 3, 3), iconCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 5, cy + 5, 2, 3), iconCol);
+
+				// Secondary Twin Bolt
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 3, cy - 6, 2, 3), iconCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 2, cy - 3, 3, 2), iconCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 3, cy - 1, 2, 3), iconCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 3, cy + 2, 1, 3), iconCol);
+
+				// Active High-Voltage Spark Highlights
+				if (isActive)
+				{
+					// Pure white electrified core along primary bolt
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 3, cy - 1, 3, 2), Color.White);
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 1, cy - 6, 1, 2), Color.White * 0.9f);
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 5, cy + 6, 1, 1), Color.White * 0.95f);
+
+					// Twin bolt spark highlight
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 3, cy - 2, 1, 2), Color.White);
+
+					// Ambient discharge sparks
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 6, cy - 4, 1, 1), Color.White * 0.85f);
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 7, cy + 3, 1, 1), Color.White * 0.85f);
+				}
+				return;
+			}
+
+			if (fam.Id == AugmentFamilyRegistry.HivemindId)
+			{
+				// Procedural Pixel-Art Micro-Drone / Nanite Cell Cluster
+				Color droneOutline = new Color(4, 8, 14) * 0.90f;
+
+				// Dark Contrast Outlines
+				// Center Nanite Core Chassis (Hexagonal)
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 4, cy - 3, 8, 6), droneOutline);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 3, cy - 4, 6, 8), droneOutline);
+
+				// 4 Satellite Micro-Drones (Top, Bottom, Left, Right)
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 2, cy - 8, 5, 4), droneOutline);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 2, cy + 5, 5, 4), droneOutline);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 8, cy - 2, 4, 5), droneOutline);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 5, cy - 2, 4, 5), droneOutline);
+
+				// Linkage Struts
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 1, cy - 5, 3, 2), droneOutline);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 1, cy + 4, 3, 2), droneOutline);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 5, cy - 1, 2, 3), droneOutline);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 4, cy - 1, 2, 3), droneOutline);
+
+				// Toxic Neon Lime Fills (#10B981)
+				// Center Chassis
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 3, cy - 2, 6, 4), iconCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 2, cy - 3, 4, 6), iconCol);
+
+				// Satellite Drones
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 1, cy - 7, 3, 2), iconCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 1, cy + 6, 3, 2), iconCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 7, cy - 1, 2, 3), iconCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 6, cy - 1, 2, 3), iconCol);
+
+				// Bus Struts
+				Color strutCol = Color.Lerp(iconCol, new Color(4, 8, 14), 0.35f);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx, cy - 5, 1, 2), strutCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx, cy + 4, 1, 2), strutCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 5, cy, 2, 1), strutCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 4, cy, 2, 1), strutCol);
+
+				// Orbital Swarm Nanite Motes (4 Corners)
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 5, cy - 5, 1, 1), iconCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 5, cy - 5, 1, 1), iconCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 5, cy + 5, 1, 1), iconCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 5, cy + 5, 1, 1), iconCol);
+
+				// Optical Sensor / Power Core
+				Color coreColor = isActive ? Color.White : Color.Lerp(iconCol, Color.White, 0.45f);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 1, cy - 1, 2, 2), coreColor);
+
+				// Active Drone Emitters and Swarm Highlights
+				if (isActive)
+				{
+					// Satellite drone emitter glints
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx, cy - 7, 1, 1), Color.White);
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx, cy + 7, 1, 1), Color.White);
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 7, cy, 1, 1), Color.White);
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 7, cy, 1, 1), Color.White);
+
+					// Corner nanite motes sparkle
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 5, cy - 5, 1, 1), Color.White * 0.9f);
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 5, cy - 5, 1, 1), Color.White * 0.9f);
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 5, cy + 5, 1, 1), Color.White * 0.9f);
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 5, cy + 5, 1, 1), Color.White * 0.9f);
+				}
+				return;
+			}
+
+			if (fam.Id == AugmentFamilyRegistry.MarksmanId)
+			{
+				// Procedural Pixel-Art Sniper Crosshairs / Reticle Targeting Matrix
+				Color scopeOutline = new Color(4, 8, 14) * 0.90f;
+
+				// Dark Contrast Outlines
+				// Outer Ring Housing
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 5, cy - 9, 10, 4), scopeOutline);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 5, cy + 5, 10, 4), scopeOutline);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 9, cy - 5, 4, 10), scopeOutline);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 5, cy - 5, 4, 10), scopeOutline);
+				// Diagonal corner junctions
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 7, cy - 7, 4, 4), scopeOutline);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 3, cy - 7, 4, 4), scopeOutline);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 7, cy + 3, 4, 4), scopeOutline);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 3, cy + 3, 4, 4), scopeOutline);
+
+				// Crosshair lines outline
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 1, cy - 7, 3, 4), scopeOutline);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 1, cy + 3, 3, 4), scopeOutline);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 7, cy - 1, 4, 3), scopeOutline);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 3, cy - 1, 4, 3), scopeOutline);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 2, cy - 2, 4, 4), scopeOutline);
+
+				// Laser Ruby Fills (#F43F5E)
+				// Ring Arc Segments
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 4, cy - 8, 8, 2), iconCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 4, cy + 6, 8, 2), iconCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 8, cy - 4, 2, 8), iconCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 6, cy - 4, 2, 8), iconCol);
+				// Diagonal Bevels
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 6, cy - 6, 2, 2), iconCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 4, cy - 6, 2, 2), iconCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 6, cy + 4, 2, 2), iconCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 4, cy + 4, 2, 2), iconCol);
+
+				// Crosshair Inset Reticle Lines
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx, cy - 7, 1, 4), iconCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx, cy + 3, 1, 4), iconCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 7, cy, 4, 1), iconCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 3, cy, 4, 1), iconCol);
+
+				// Center Precision Reticle Pin
+				Color pinColor = isActive ? Color.White : Color.Lerp(iconCol, Color.White, 0.40f);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 1, cy - 1, 2, 2), pinColor);
+
+				// Active State: Lock-on Brackets & Laser Emitters
+				if (isActive)
+				{
+					// Reticle tick flares
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx, cy - 7, 1, 1), Color.White);
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx, cy + 6, 1, 1), Color.White);
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 7, cy, 1, 1), Color.White);
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 6, cy, 1, 1), Color.White);
+
+					// 4 Tactical Corner Lock-On Pins
+					Color bracketCol = Color.White * 0.90f;
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 8, cy - 8, 3, 1), bracketCol);
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 8, cy - 7, 1, 2), bracketCol);
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 5, cy - 8, 3, 1), bracketCol);
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 7, cy - 7, 1, 2), bracketCol);
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 8, cy + 7, 3, 1), bracketCol);
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 8, cy + 5, 1, 2), bracketCol);
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 5, cy + 7, 3, 1), bracketCol);
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 7, cy + 5, 1, 2), bracketCol);
+				}
+				return;
+			}
+
+			if (fam.Id == AugmentFamilyRegistry.ArcaneSurgeId)
+			{
+				// Procedural Pixel-Art Arcane Singularity / Pulsating Mana Core
+				Color coreOutline = new Color(4, 8, 14) * 0.90f;
+
+				// Dark Contrast Outlines
+				// Outer Rhombus & Satellite Mote Outlines
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 2, cy - 7, 4, 3), coreOutline);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 4, cy - 5, 8, 4), coreOutline);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 5, cy - 2, 10, 5), coreOutline);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 4, cy + 2, 8, 4), coreOutline);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 2, cy + 5, 4, 3), coreOutline);
+
+				// 4 Satellite Mana Mote Outlines
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 2, cy - 9, 4, 4), coreOutline);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 2, cy + 6, 4, 4), coreOutline);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 9, cy - 2, 4, 4), coreOutline);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 6, cy - 2, 4, 4), coreOutline);
+
+				// Cosmic Indigo Fills (#818CF8)
+				// Central Mana Crystal (Diamond)
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 1, cy - 6, 2, 2), iconCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 3, cy - 4, 6, 3), iconCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 4, cy - 1, 8, 3), iconCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 3, cy + 2, 6, 3), iconCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 1, cy + 5, 2, 2), iconCol);
+
+				// 4 Satellite Mana Motes
+				Color moteCol = Color.Lerp(iconCol, Color.White, 0.25f);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 1, cy - 8, 2, 2), moteCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 1, cy + 7, 2, 2), moteCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 8, cy - 1, 2, 2), moteCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 7, cy - 1, 2, 2), moteCol);
+
+				// Inner Facet Highlight
+				Color innerFacet = isActive ? Color.White : Color.Lerp(iconCol, Color.White, 0.45f);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 2, cy - 2, 4, 4), innerFacet);
+
+				// Active Flares & Glints
+				if (isActive)
+				{
+					// Core center singularity flare
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 1, cy - 1, 2, 2), Color.White);
+
+					// Satellite motes shine
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx, cy - 8, 1, 1), Color.White);
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx, cy + 7, 1, 1), Color.White);
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 8, cy, 1, 1), Color.White);
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 7, cy, 1, 1), Color.White);
+
+					// Diagonal cosmic energy motes
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 5, cy - 5, 1, 1), Color.White * 0.9f);
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 5, cy - 5, 1, 1), Color.White * 0.9f);
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 5, cy + 5, 1, 1), Color.White * 0.9f);
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 5, cy + 5, 1, 1), Color.White * 0.9f);
+				}
+				return;
+			}
+
+			if (fam.Id == AugmentFamilyRegistry.BastionId)
+			{
+				// Procedural Pixel-Art Heavy Kinetic Aegis / Fortified Barrier Matrix
+				Color aegisOutline = new Color(4, 8, 14) * 0.90f;
+
+				// Dark Contrast Outlines
+				// Top Crown / Crest Rim
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 8, cy - 8, 16, 4), aegisOutline);
+				// Upper Shield Body
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 9, cy - 6, 18, 6), aegisOutline);
+				// Tapering Lower Body (Kite Chevron)
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 7, cy, 14, 4), aegisOutline);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 5, cy + 3, 10, 4), aegisOutline);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 3, cy + 6, 6, 3), aegisOutline);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 1, cy + 8, 2, 2), aegisOutline);
+
+				// Bastion Cyan Fills (#38BDF8)
+				// Top Crown Flat Rim
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 7, cy - 7, 14, 2), iconCol);
+				// Shield Body Plating
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 8, cy - 5, 16, 4), iconCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 6, cy - 1, 12, 4), iconCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 4, cy + 3, 8, 3), iconCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 2, cy + 6, 4, 2), iconCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 1, cy + 8, 2, 1), iconCol);
+
+				// Inner Kinetic Reinforcement Inset (Darker Bevel)
+				Color innerBevel = Color.Lerp(iconCol, new Color(4, 8, 14), 0.40f);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 5, cy - 4, 10, 2), innerBevel);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 4, cy - 2, 8, 3), innerBevel);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 2, cy + 1, 4, 3), innerBevel);
+
+				// Central Kinetic Power Core / Bulwark Diamond Lens
+				Color coreCol = isActive ? Color.White : Color.Lerp(iconCol, Color.White, 0.45f);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 2, cy - 2, 4, 2), coreCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 1, cy - 3, 2, 4), coreCol);
+
+				// Active Flares & Shield Glints
+				if (isActive)
+				{
+					// Core center diamond glint
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 1, cy - 2, 2, 2), Color.White);
+
+					// Top shoulder bastion emitters
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 6, cy - 7, 2, 1), Color.White);
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 4, cy - 7, 2, 1), Color.White);
+
+					// Lower chevron tip flare
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 1, cy + 7, 2, 1), Color.White * 0.95f);
+				}
+				return;
+			}
+
+			if (fam.Id == AugmentFamilyRegistry.GunslingerId)
+			{
+				// Procedural Pixel-Art 6-Chamber Revolver Cylinder / Gatling Rotary Cluster
+				Color cylOutline = new Color(4, 8, 14) * 0.90f;
+				Color boreColor = new Color(4, 7, 14);
+
+				// Dark Contrast Cylinder Outlines
+				// Top and bottom flats
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 5, cy - 9, 10, 3), cylOutline);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 5, cy + 6, 10, 3), cylOutline);
+				// Left and right flats
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 9, cy - 5, 3, 10), cylOutline);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 6, cy - 5, 3, 10), cylOutline);
+				// Diagonal corner junctions
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 7, cy - 7, 4, 4), cylOutline);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 3, cy - 7, 4, 4), cylOutline);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 7, cy + 3, 4, 4), cylOutline);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 3, cy + 3, 4, 4), cylOutline);
+
+				// High-Caliber Rotary Gold Cylinder Fills (#EAB308)
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 7, cy - 4, 14, 8), iconCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 4, cy - 7, 8, 14), iconCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 6, cy - 6, 12, 12), iconCol);
+
+				// 6 Chamber Bores (Hollow Chambers)
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 1, cy - 6, 2, 2), boreColor); // 12 o'clock (Firing Chamber)
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 1, cy + 4, 2, 2), boreColor); // 6 o'clock
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 5, cy - 3, 2, 2), boreColor); // 10 o'clock
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 3, cy - 3, 2, 2), boreColor); // 2 o'clock
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 5, cy + 1, 2, 2), boreColor); // 8 o'clock
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 3, cy + 1, 2, 2), boreColor); // 4 o'clock
+
+				// Central Spindle Axis Pin
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 1, cy - 1, 2, 2), boreColor);
+				Color spindleCol = isActive ? Color.White : Color.Lerp(iconCol, Color.White, 0.45f);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx, cy, 1, 1), spindleCol);
+
+				// Active Spin & Heat Glints
+				if (isActive)
+				{
+					// Top chamber firing ignition flash
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx, cy - 6, 1, 1), Color.White);
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 1, cy - 8, 2, 1), Color.White);
+
+					// Rotary chamber rim glints
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 3, cy - 3, 1, 1), Color.White * 0.90f);
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 3, cy + 1, 1, 1), Color.White * 0.75f);
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 1, cy + 4, 1, 1), Color.White * 0.60f);
+
+					// Outer rotary spin streaks
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 6, cy - 2, 1, 4), Color.White * 0.85f);
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 7, cy - 2, 1, 4), Color.White * 0.85f);
+				}
+				return;
+			}
+
+			if (fam.Id == AugmentFamilyRegistry.LasherId)
+			{
+				// Procedural Pixel-Art Coiled Barbed Bullwhip / Resonant Kinetic Lash
+				Color whipOutline = new Color(4, 8, 14) * 0.90f;
+
+				// Dark Contrast Outlines
+				// Handle & Pommel
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 8, cy + 5, 5, 5), whipOutline);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 6, cy + 2, 5, 4), whipOutline);
+				// Lower sweep
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 4, cy + 3, 7, 4), whipOutline);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 1, cy + 2, 6, 4), whipOutline);
+				// Right ascending arc
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 4, cy - 3, 4, 7), whipOutline);
+				// Top loop & cracker
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 2, cy - 8, 7, 4), whipOutline);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 3, cy - 9, 7, 4), whipOutline);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 6, cy - 9, 4, 5), whipOutline);
+				// Inner coil loop
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 4, cy - 5, 4, 5), whipOutline);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 2, cy - 3, 4, 4), whipOutline);
+
+				// Fills
+				// Grip Handle (Leather Brown Wrap)
+				Color handleCol = new Color(120, 53, 15);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 7, cy + 6, 2, 3), handleCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 5, cy + 3, 2, 3), handleCol);
+				// Brass Ferrule / Collar
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 3, cy + 2, 2, 2), new Color(250, 204, 21));
+
+				// Neural Amber Whip Cord (#F97316)
+				// Lower sweep
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 3, cy + 4, 5, 2), iconCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 2, cy + 3, 3, 2), iconCol);
+				// Right arc
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 5, cy - 1, 2, 4), iconCol);
+				// Top loop
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 3, cy - 5, 3, 2), iconCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 1, cy - 6, 4, 2), iconCol);
+				// Inner coil
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 3, cy - 4, 2, 3), iconCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 1, cy - 2, 2, 2), iconCol);
+
+				// Snapping Barbed Cracker Tip
+				Color tipCol = Color.Lerp(iconCol, Color.White, 0.35f);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 4, cy - 7, 3, 2), tipCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 7, cy - 8, 2, 2), tipCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 8, cy - 6, 1, 2), tipCol);
+
+				// Active Kinetic Crackling & Sonic Flares
+				if (isActive)
+				{
+					// Cracker tip sonic ignition flash
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 7, cy - 8, 2, 2), Color.White);
+
+					// Sonic shockwave emission sparks
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 8, cy - 10, 1, 1), Color.White);
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 10, cy - 7, 1, 1), Color.White);
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 6, cy - 10, 1, 1), Color.White);
+
+					// Energy pulse glints along the cord
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 5, cy, 1, 2), Color.White * 0.90f);
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + 1, cy - 6, 2, 1), Color.White * 0.90f);
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 1, cy + 4, 2, 1), Color.White * 0.80f);
+				}
+				return;
+			}
+
+			switch (fam.Type)
+			{
+				case FamilyType.Offense:
+					// Signature Offense Broadsword (Upright blade, crossguard, hilt, pommel)
+					Color swordOutline = new Color(4, 8, 14) * 0.90f;
+					// Outlines
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 2, cy - 10, 4, 3), swordOutline);
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 3, cy - 8, 6, 10), swordOutline);
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 8, cy + 1, 16, 5), swordOutline);
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 2, cy + 5, 4, 6), swordOutline);
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 3, cy + 10, 6, 4), swordOutline);
+
+					// Fills
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 1, cy - 9, 2, 2), iconCol);
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 2, cy - 7, 4, 9), iconCol);
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 7, cy + 2, 14, 3), iconCol);
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 1, cy + 5, 2, 5), Color.Lerp(iconCol, Color.Black, 0.35f));
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 2, cy + 10, 4, 2), iconCol);
+
+					// Active highlights
+					if (isActive)
+					{
+						spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 1, cy - 6, 2, 7), Color.White * 0.85f);
+						spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 1, cy + 2, 2, 2), Color.White * 0.95f);
+					}
+					break;
+
+				case FamilyType.Support:
+				default:
+					// Signature Support Plus Sign / Cross (18x18 total, 6px thick)
+					// 1px dark contrast outline
+					Color outline = new Color(4, 8, 14) * 0.90f;
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 10, cy - 4, 20, 8), outline);
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 4, cy - 10, 8, 20), outline);
+
+					// Main crossbars
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 9, cy - 3, 18, 6), iconCol);
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 3, cy - 9, 6, 18), iconCol);
+
+					// Center core highlight when active
+					if (isActive)
+						spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 1, cy - 1, 2, 2), Color.White * 0.9f);
+					break;
+			}
+		}
+
+		private static void DrawSlideoutPanel(SpriteBatch spriteBatch, DynamicSpriteFont font, AugmentFamily fam, AugmentPlayer ap, int ownedCount, Rectangle iconRect, float progress)
+		{
+			const float pad = 14f;
+			const float lineSpacing = 3f;
+
+			bool isActive = ownedCount >= fam.MaxMembers;
+
+			// Pre-calculate heights & positions for pixel-perfect alignment
+			Vector2 titleScale = new Vector2(0.82f);
+			Vector2 statusScale = new Vector2(0.72f);
+			Vector2 sectionScale = new Vector2(0.68f);
+			Vector2 itemScale = new Vector2(0.76f);
+			Vector2 perkScale = new Vector2(0.72f);
+
+			string titleText = $"{fam.DisplayName.ToUpper()} PROTOCOL";
+			string statusText = isActive ? "[ PROTOCOL ACTIVE ]" : $"[ PROGRESS: {ownedCount}/{fam.MaxMembers} INSTALLED ]";
+
+			float curHeight = pad;
+			float maxContentWidth = 320f;
+
+			void Measure(string text, Vector2 scale, float extraPad = 36f)
+			{
+				float w = ChatManager.GetStringSize(font, text, scale).X + extraPad;
+				if (w > maxContentWidth)
+					maxContentWidth = w;
+			}
+
+			// Header block
+			Vector2 tSz = ChatManager.GetStringSize(font, titleText, titleScale);
+			curHeight += tSz.Y + 2f;
+			Measure(titleText, titleScale, 36f);
+
+			Vector2 sSz = ChatManager.GetStringSize(font, statusText, statusScale);
+			curHeight += sSz.Y + 8f;
+			Measure(statusText, statusScale, 36f);
+
+			string fortuneStatLine = fam.Id == AugmentFamilyRegistry.FortuneId
+				? $"Active Fortune: +{(int)System.MathF.Round(ap.TotalFortune * 100f)}% (Trigger Boost)  •  World Luck: +{ap.Player.luck:0.00}"
+				: null;
+			if (fortuneStatLine != null)
+			{
+				curHeight += ChatManager.GetStringSize(font, fortuneStatLine, statusScale).Y + 4f;
+				Measure(fortuneStatLine, statusScale, 36f);
+			}
+
+			// Divider 1
+			curHeight += 6f;
+
+			// Set Bonuses Section
+			string bSectionHeader = "PROTOCOL SPECIFICATIONS:";
+			curHeight += ChatManager.GetStringSize(font, bSectionHeader, sectionScale).Y + 4f;
+			Measure(bSectionHeader, sectionScale, 36f);
+
+			foreach (var kv in fam.ThresholdBonuses)
+			{
+				int thresh = kv.Key;
+				var bonus = kv.Value;
+				string symbol = ownedCount >= thresh ? "✓" : "•";
+				string bonusTag = ownedCount >= thresh ? " (Active)" : " (Locked)";
+				string bonusTitle = $"{symbol} ({thresh}) {bonus.Title}";
+
+				curHeight += ChatManager.GetStringSize(font, bonusTitle + bonusTag, itemScale).Y + lineSpacing;
+				Measure(bonusTitle + bonusTag, itemScale, 36f);
+
+				foreach (var desc in bonus.Descriptions)
+				{
+					string perkLine = $"• {desc.Trim()}";
+					curHeight += ChatManager.GetStringSize(font, perkLine, perkScale).Y + lineSpacing;
+					Measure(perkLine, perkScale, 48f);
+				}
+			}
+
+			// Divider 2
+			curHeight += 8f;
+
+			// Synergy Members Section
+			string mSectionHeader = "ASSIGNED PLUG-IN CHIPS:";
+			curHeight += ChatManager.GetStringSize(font, mSectionHeader, sectionScale).Y + 4f;
+			Measure(mSectionHeader, sectionScale, 36f);
+
+			foreach (var memberId in fam.MemberIds)
+			{
+				Augment m = AugmentDatabase.GetById(memberId);
+				string mName = m?.DisplayName ?? memberId;
+				bool owned = ap.HasAugment(memberId);
+				string mSymbol = owned ? "✓ " : "• ";
+				string mStatus = owned ? " (Installed)" : " (Not Owned)";
+
+				curHeight += ChatManager.GetStringSize(font, mSymbol + mName + mStatus, itemScale).Y + lineSpacing;
+				Measure(mSymbol + mName + mStatus, itemScale, 36f);
+			}
+
+			curHeight += pad;
+			float panelHeight = curHeight;
+			float panelWidth = Math.Max(MinPanelWidth, (float)Math.Ceiling(maxContentWidth));
+
+			// Slide animation calculation - flush against icon edge (no gap), slides smoothly in from the left
+			float finalX = iconRect.X - panelWidth + 1f;
+			float currentX = finalX - (1f - progress) * 16f;
+			float panelY = Math.Clamp(iconRect.Y - 16f, 10f, Main.screenHeight - panelHeight - 10f);
+
+			Rectangle panelRect = new Rectangle((int)currentX, (int)panelY, (int)panelWidth, (int)panelHeight);
+			panelBounds[fam.Id] = panelRect;
+
+			// Solid opaque background so game text behind does NOT bleed through
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, panelRect, new Color(8, 12, 22) * (0.98f * progress));
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, panelRect, fam.ThemeColor * (0.04f * progress));
+
+			// High-tech panel border
+			DrawHighTechBorder(spriteBatch, panelRect, fam.ThemeColor * (0.85f * progress));
+
+			// RENDER CONTENT
+			float drawY = panelRect.Y + pad;
+			float leftX = panelRect.X + 16f;
+
+			// 1. Title (Centered)
+			Vector2 titleSz = ChatManager.GetStringSize(font, titleText, titleScale);
+			Vector2 titlePos = new Vector2(panelRect.X + (panelRect.Width - titleSz.X) * 0.5f, drawY);
+			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, titleText, titlePos, fam.ThemeColor * progress, 0f, Vector2.Zero, titleScale);
+			drawY += titleSz.Y + 2f;
+
+			// 2. Status Pill (Centered)
+			Vector2 statusSz = ChatManager.GetStringSize(font, statusText, statusScale);
+			Vector2 statusPos = new Vector2(panelRect.X + (panelRect.Width - statusSz.X) * 0.5f, drawY);
+			Color statusCol = isActive ? AugmentTextColors.Healing : new Color(170, 190, 215);
+			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, statusText, statusPos, statusCol * progress, 0f, Vector2.Zero, statusScale);
+			drawY += statusSz.Y + 6f;
+
+			if (fortuneStatLine != null)
+			{
+				Vector2 fSz = ChatManager.GetStringSize(font, fortuneStatLine, statusScale);
+				Vector2 fPos = new Vector2(panelRect.X + (panelRect.Width - fSz.X) * 0.5f, drawY);
+				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, fortuneStatLine, fPos, new Color(255, 220, 120) * progress, 0f, Vector2.Zero, statusScale);
+				drawY += fSz.Y + 6f;
+			}
+
+			// Divider 1 (Full width graphical rail)
+			DrawDivider(spriteBatch, panelRect, drawY, fam.ThemeColor, progress);
+			drawY += 8f;
+
+			// 4. Set Bonuses Section
+			string bonusSectionHeader = "PROTOCOL SPECIFICATIONS:";
+			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, bonusSectionHeader, new Vector2(leftX, drawY), new Color(130, 160, 200) * progress, 0f, Vector2.Zero, sectionScale);
+			drawY += ChatManager.GetStringSize(font, bonusSectionHeader, sectionScale).Y + 4f;
+
+			foreach (var kv in fam.ThresholdBonuses)
+			{
+				int thresh = kv.Key;
+				var bonus = kv.Value;
+				bool unlocked = ownedCount >= thresh;
+
+				string symbol = unlocked ? "✓" : "•";
+				string bonusTitle = $"{symbol} ({thresh}) {bonus.Title}";
+				string bonusTag = unlocked ? " (Active)" : " (Locked)";
+				Color headCol = unlocked ? AugmentTextColors.Healing : new Color(150, 165, 185);
+
+				// Bonus Header Line
+				Vector2 headSz = ChatManager.GetStringSize(font, bonusTitle + bonusTag, itemScale);
+				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, bonusTitle, new Vector2(leftX, drawY), headCol * progress, 0f, Vector2.Zero, itemScale);
+				Vector2 titlePartSz = ChatManager.GetStringSize(font, bonusTitle, itemScale);
+				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, bonusTag, new Vector2(leftX + titlePartSz.X, drawY), (unlocked ? AugmentTextColors.Healing : new Color(125, 140, 160)) * progress, 0f, Vector2.Zero, itemScale);
+				drawY += headSz.Y + lineSpacing;
+
+				// Indented perk descriptions (aligned at leftX + 16f)
+				float perkIndent = leftX + 16f;
+				foreach (var desc in bonus.Descriptions)
+				{
+					string perkLine = $"• {desc.Trim()}";
+					Color perkCol = unlocked ? new Color(220, 245, 230) : new Color(125, 140, 160);
+					ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, perkLine, new Vector2(perkIndent, drawY), perkCol * progress, 0f, Vector2.Zero, perkScale);
+					drawY += ChatManager.GetStringSize(font, perkLine, perkScale).Y + lineSpacing;
+				}
+			}
+
+			drawY += 4f;
+			// Divider 2 (Full width graphical rail)
+			DrawDivider(spriteBatch, panelRect, drawY, fam.ThemeColor, progress);
+			drawY += 8f;
+
+			// 5. Synergy Members Section
+			string membersSectionHeader = "ASSIGNED PLUG-IN CHIPS:";
+			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, membersSectionHeader, new Vector2(leftX, drawY), new Color(130, 160, 200) * progress, 0f, Vector2.Zero, sectionScale);
+			drawY += ChatManager.GetStringSize(font, membersSectionHeader, sectionScale).Y + 4f;
+
+			foreach (var memberId in fam.MemberIds)
+			{
+				Augment m = AugmentDatabase.GetById(memberId);
+				string mName = m?.DisplayName ?? memberId;
+				bool owned = ap.HasAugment(memberId);
+
+				string mSymbol = owned ? "✓ " : "• ";
+				string mStatus = owned ? " (Installed)" : " (Not Owned)";
+				Color mSymbolCol = owned ? AugmentTextColors.Healing : new Color(130, 150, 175);
+				Color mNameCol = owned ? Color.White : new Color(165, 180, 205);
+				Color mStatusCol = owned ? AugmentTextColors.Healing : new Color(120, 135, 155);
+
+				// Draw symbol
+				Vector2 symSz = ChatManager.GetStringSize(font, mSymbol, itemScale);
+				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, mSymbol, new Vector2(leftX, drawY), mSymbolCol * progress, 0f, Vector2.Zero, itemScale);
+
+				// Draw name
+				Vector2 nameSz = ChatManager.GetStringSize(font, mName, itemScale);
+				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, mName, new Vector2(leftX + symSz.X, drawY), mNameCol * progress, 0f, Vector2.Zero, itemScale);
+
+				// Draw status
+				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, mStatus, new Vector2(leftX + symSz.X + nameSz.X, drawY), mStatusCol * progress, 0f, Vector2.Zero, itemScale);
+
+				drawY += symSz.Y + lineSpacing;
+			}
+		}
+
+		private static void DrawDivider(SpriteBatch spriteBatch, Rectangle panelRect, float y, Color themeCol, float progress)
+		{
+			int lineLeft = panelRect.X + 16;
+			int lineW = panelRect.Width - 32;
+
+			// Subtle full-width rail
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(lineLeft, (int)y, lineW, 1), new Color(60, 90, 135) * (0.55f * progress));
+
+			// Center diamond node
+			int midX = panelRect.X + panelRect.Width / 2;
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(midX - 1, (int)y - 1, 3, 3), themeCol * (0.80f * progress));
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(midX, (int)y, 1, 1), Color.White * (0.90f * progress));
+		}
+
+		private static void DrawHighTechBorder(SpriteBatch spriteBatch, Rectangle rect, Color color)
+		{
+			// Thin border lines
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X, rect.Y, rect.Width, 1), color * 0.55f);
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X, rect.Bottom - 1, rect.Width, 1), color * 0.55f);
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X, rect.Y, 1, rect.Height), color * 0.55f);
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right - 1, rect.Y, 1, rect.Height), color * 0.55f);
+
+			// Corner brackets
+			const int cornerLen = 5;
+			const int cornerThick = 2;
+
+			// Top-left
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X, rect.Y, cornerLen, cornerThick), color);
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X, rect.Y, cornerThick, cornerLen), color);
+
+			// Top-right
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right - cornerLen, rect.Y, cornerLen, cornerThick), color);
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right - cornerThick, rect.Y, cornerThick, cornerLen), color);
+
+			// Bottom-left
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X, rect.Bottom - cornerThick, cornerLen, cornerThick), color);
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X, rect.Bottom - cornerLen, cornerThick, cornerLen), color);
+
+			// Bottom-right
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right - cornerLen, rect.Bottom - cornerThick, cornerLen, cornerThick), color);
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right - cornerThick, rect.Bottom - cornerLen, cornerThick, cornerLen), color);
+		}
+	}
+}
