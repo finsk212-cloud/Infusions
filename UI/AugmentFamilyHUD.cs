@@ -5,6 +5,7 @@ using Microsoft.Xna.Framework.Graphics;
 using ReLogic.Graphics;
 using Terraria;
 using Terraria.GameContent;
+using Terraria.ModLoader;
 using Terraria.UI.Chat;
 using Augments.Core;
 
@@ -53,7 +54,7 @@ namespace Augments
 			Rectangle analyticsBtn = new Rectangle((int)iconX, (int)StartY - 24, (int)IconWidth, 18);
 			if (analyticsBtn.Contains(mouse) && Main.mouseLeft && Main.mouseLeftRelease)
 			{
-				AugmentAnalyticsHUD.Toggle();
+				ModContent.GetInstance<AugmentUISystem>()?.ToggleAnalytics();
 				Main.mouseLeftRelease = false;
 			}
 
@@ -128,7 +129,8 @@ namespace Augments
 			Point mouse = new Point(Main.mouseX, Main.mouseY);
 			Rectangle analyticsBtn = new Rectangle((int)iconX, (int)StartY - 24, (int)IconWidth, 18);
 			bool btnHover = analyticsBtn.Contains(mouse);
-			Color btnTheme = AugmentAnalyticsHUD.Visible ? new Color(74, 222, 128) : new Color(56, 189, 248);
+			bool isAnalyticsOpen = ModContent.GetInstance<AugmentUISystem>()?.IsAnalyticsOpen == true;
+			Color btnTheme = isAnalyticsOpen ? new Color(74, 222, 128) : new Color(56, 189, 248);
 
 			spriteBatch.Draw(TextureAssets.MagicPixel.Value, analyticsBtn, new Color(8, 12, 20, 240));
 			if (btnHover)

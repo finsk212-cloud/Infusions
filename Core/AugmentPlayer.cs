@@ -1243,7 +1243,7 @@ namespace Augments
 			}
 
 			if (analyticsPressed)
-				AugmentAnalyticsHUD.Toggle();
+				ModContent.GetInstance<AugmentUISystem>().ToggleAnalytics();
 
 			if (HasAugment("cleanse") && CleanseCooldown == 0 && Augments.CleanseKeybind?.JustPressed == true)
 			{

@@ -26,6 +26,10 @@ namespace Augments
 		private UserInterface gachaInterface;
 		private AugmentGachaUIState gachaState;
 
+		// --- Combat Analytics telemetry panel ---
+		private UserInterface analyticsInterface;
+		private AugmentAnalyticsUIState analyticsState;
+
 		private GameTime lastUpdateUiGameTime;
 
 		public override void Load()
@@ -48,6 +52,10 @@ namespace Augments
 			gachaInterface = new UserInterface();
 			gachaState = new AugmentGachaUIState();
 			gachaState.Activate();
+
+			analyticsInterface = new UserInterface();
+			analyticsState = new AugmentAnalyticsUIState();
+			analyticsState.Activate();
 		}
 
 		// Called every frame - keeps both panels' buttons/hover states responsive.
@@ -67,8 +75,10 @@ namespace Augments
 			if (gachaInterface?.CurrentState != null)
 				gachaInterface.Update(gameTime);
 
+			if (analyticsInterface?.CurrentState != null)
+				analyticsInterface.Update(gameTime);
+
 			AugmentFamilyHUD.Update(gameTime);
-			AugmentAnalyticsHUD.Update(gameTime);
 		}
 
 		// Slots both panels into Terraria's actual draw order.
@@ -114,10 +124,11 @@ namespace Augments
 			);
 
 			layers.Insert(mouseTextIndex, new LegacyGameInterfaceLayer(
-				"Augments: Combat Analytics HUD",
+				"Augments: Combat Analytics UI",
 				delegate
 				{
-					AugmentAnalyticsHUD.Draw(Main.spriteBatch);
+					if (lastUpdateUiGameTime != null && analyticsInterface?.CurrentState != null)
+						analyticsInterface.Draw(Main.spriteBatch, lastUpdateUiGameTime);
 					return true;
 				},
 				InterfaceScaleType.UI)
@@ -245,7 +256,34 @@ namespace Augments
 				shopState.Refresh();
 			if (IsGachaOpen)
 				gachaState.Refresh();
+			if (IsAnalyticsOpen)
+				analyticsState.Refresh();
 		}
+
+		// --- Combat Analytics telemetry controls ---
+
+		public void ShowAnalytics()
+		{
+			analyticsState?.Refresh();
+			analyticsInterface?.SetState(analyticsState);
+			SoundEngine.PlaySound(SoundID.MenuOpen);
+		}
+
+		public void HideAnalytics()
+		{
+			analyticsInterface?.SetState(null);
+			SoundEngine.PlaySound(SoundID.MenuClose);
+		}
+
+		public void ToggleAnalytics()
+		{
+			if (IsAnalyticsOpen)
+				HideAnalytics();
+			else
+				ShowAnalytics();
+		}
+
+		public bool IsAnalyticsOpen => analyticsInterface?.CurrentState != null;
 
 		// --- "Your Augments" list controls ---
 
