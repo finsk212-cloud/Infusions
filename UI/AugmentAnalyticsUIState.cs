@@ -190,15 +190,15 @@ namespace Augments
 			// 5. Table Column Header Bar (Y = 176f to 202f)
 			CreateTableHeaders();
 
-			// 6. Scrollable Records List & Scrollbar (Y = 208f to 582f)
+			// 6. Scrollable Records List & Scrollbar (Y = 208f to 556f)
 			float listTop = 208f;
-			float listHeight = PanelHeight - listTop - 18f;
+			float listHeight = PanelHeight - listTop - 42f;
 
 			recordsList = new UIList();
 			recordsList.ManualSortMethod = _ => { };
 			recordsList.Top.Set(listTop, 0f);
 			recordsList.Left.Set(16f, 0f);
-			recordsList.Width.Set(PanelWidth - 48f, 0f);
+			recordsList.Width.Set(808f, 0f);
 			recordsList.Height.Set(listHeight, 0f);
 			recordsList.ListPadding = 4f;
 			backPanel.Append(recordsList);
@@ -206,8 +206,8 @@ namespace Augments
 			listScrollbar = new UIScrollbar();
 			listScrollbar.Top.Set(listTop, 0f);
 			listScrollbar.Height.Set(listHeight, 0f);
-			listScrollbar.Left.Set(PanelWidth - 28f, 0f);
-			listScrollbar.Width.Set(18f, 0f);
+			listScrollbar.Left.Set(830f, 0f);
+			listScrollbar.Width.Set(14f, 0f);
 			recordsList.SetScrollbar(listScrollbar);
 			backPanel.Append(listScrollbar);
 
@@ -222,26 +222,23 @@ namespace Augments
 
 		private void CreateMetricCards()
 		{
-			float cardTop = 114f;
-			float cardHeight = 52f;
-			float totalW = PanelWidth - 32f;
-			float cardSpacing = 8f;
-			float cardW = (totalW - (cardSpacing * 3f)) / 4f;
+			float cardTop = 112f;
+			float cardHeight = 56f;
 
-			// Card 1: Live DPS
-			var dpsCard = CreateSingleCard(16f + 0 * (cardW + cardSpacing), cardTop, cardW, cardHeight, new Color(74, 222, 128), "LIVE DPS (3S)", PinnedStatType.LiveDPS, out dpsValueText);
+			// Card 1: Live DPS (Width = 180f)
+			var dpsCard = CreateSingleCard(16f, cardTop, 180f, cardHeight, new Color(74, 222, 128), "LIVE DPS (3S)", PinnedStatType.LiveDPS, out dpsValueText);
 			backPanel.Append(dpsCard);
 
-			// Card 2: Total Damage
-			var dmgCard = CreateSingleCard(16f + 1 * (cardW + cardSpacing), cardTop, cardW, cardHeight, new Color(56, 189, 248), "RECORDED DAMAGE", PinnedStatType.TotalDamage, out totalDmgValueText);
+			// Card 2: Total Damage (Width = 185f)
+			var dmgCard = CreateSingleCard(204f, cardTop, 185f, cardHeight, new Color(56, 189, 248), "RECORDED DAMAGE", PinnedStatType.TotalDamage, out totalDmgValueText);
 			backPanel.Append(dmgCard);
 
-			// Card 3: Combat Time
-			var durCard = CreateSingleCard(16f + 2 * (cardW + cardSpacing), cardTop, cardW, cardHeight, new Color(192, 132, 252), "COMBAT TIME", PinnedStatType.CombatTime, out durationValueText);
+			// Card 3: Combat Time (Width = 165f)
+			var durCard = CreateSingleCard(397f, cardTop, 165f, cardHeight, new Color(192, 132, 252), "COMBAT TIME", PinnedStatType.CombatTime, out durationValueText);
 			backPanel.Append(durCard);
 
-			// Card 4: Hits & Crits Summary
-			var hitsCard = CreateSingleCard(16f + 3 * (cardW + cardSpacing), cardTop, cardW, cardHeight, new Color(250, 204, 21), "HITS & CRIT RATE", PinnedStatType.HitsAndCrits, out hitsValueText);
+			// Card 4: Hits & Crits Summary (Width = 274f - generous background room for yellow box)
+			var hitsCard = CreateSingleCard(570f, cardTop, 274f, cardHeight, new Color(250, 204, 21), "HITS & CRIT RATE", PinnedStatType.HitsAndCrits, out hitsValueText);
 			backPanel.Append(hitsCard);
 		}
 
@@ -253,21 +250,21 @@ namespace Augments
 			card.Width.Set(width, 0f);
 			card.Height.Set(height, 0f);
 			card.SetPadding(0f);
-			card.BackgroundColor = new Color(14, 20, 38) * 0.95f;
-			card.BorderColor = accent * 0.65f;
+			card.BackgroundColor = new Color(12, 18, 36) * 0.96f;
+			card.BorderColor = accent * 0.70f;
 
-			UIText labelText = new UIText(label, 0.68f)
+			UIText labelText = new UIText(label, 0.66f)
 			{
 				HAlign = 0.5f,
 				Top = new StyleDimension(6f, 0f),
-				TextColor = new Color(150, 168, 192)
+				TextColor = new Color(150, 168, 195)
 			};
 			card.Append(labelText);
 
-			valueOutput = new UIText("--", 0.92f)
+			valueOutput = new UIText("--", 0.90f)
 			{
 				HAlign = 0.5f,
-				Top = new StyleDimension(24f, 0f),
+				Top = new StyleDimension(25f, 0f),
 				TextColor = accent
 			};
 			card.Append(valueOutput);
@@ -287,10 +284,10 @@ namespace Augments
 			{
 				this.StatType = type;
 				SetPadding(0f);
-				Width.Set(20f, 0f);
-				Height.Set(20f, 0f);
-				Left.Set(-24f, 1f);
-				Top.Set(4f, 0f);
+				Width.Set(36f, 0f);
+				Height.Set(18f, 0f);
+				Left.Set(-42f, 1f);
+				Top.Set(5f, 0f);
 			}
 
 			public override void MouseOver(UIMouseEvent evt)
@@ -319,32 +316,32 @@ namespace Augments
 
 				if (isPinned)
 				{
-					BackgroundColor = isHovered ? new Color(50, 42, 22) : new Color(34, 28, 14);
+					BackgroundColor = isHovered ? new Color(55, 45, 20) : new Color(38, 30, 14);
 					BorderColor = isHovered ? Color.White : new Color(255, 215, 75);
 				}
 				else
 				{
-					BackgroundColor = isHovered ? new Color(30, 40, 70) : new Color(16, 22, 42);
-					BorderColor = isHovered ? Color.White * 0.8f : new Color(45, 60, 95);
+					BackgroundColor = isHovered ? new Color(28, 38, 68) : new Color(16, 22, 40);
+					BorderColor = isHovered ? Color.White * 0.8f : new Color(42, 58, 92);
 				}
 
 				base.DrawSelf(spriteBatch);
 
 				var dims = GetDimensions();
 				var font = FontAssets.MouseText.Value;
-				string pinGlyph = "📌";
-				Vector2 scale = new Vector2(0.58f);
-				Vector2 sz = ChatManager.GetStringSize(font, pinGlyph, scale);
+				string badgeText = isPinned ? "PIN ★" : "PIN";
+				Vector2 scale = new Vector2(0.52f);
+				Vector2 sz = ChatManager.GetStringSize(font, badgeText, scale);
 				Vector2 pos = new Vector2(dims.X + (dims.Width - sz.X) * 0.5f, dims.Y + (dims.Height - sz.Y) * 0.5f + 3f);
 				Color pinCol = isPinned ? new Color(255, 215, 75) : (isHovered ? Color.White : new Color(140, 155, 185));
 
-				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, pinGlyph, pos, pinCol, 0f, Vector2.Zero, scale);
+				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, badgeText, pos, pinCol, 0f, Vector2.Zero, scale);
 
 				if (isHovered)
 				{
 					string tip = isPinned
-						? "📌 Unpin from screen HUD"
-						: "📌 Pin to screen HUD\n(Hold Left Alt in combat to drag anywhere)";
+						? "Pinned to in-game HUD (Click to unpin)"
+						: "Pin stat to in-game HUD (Click to pin)\n[Hold Left Alt in combat to drag anywhere]";
 					Main.instance.MouseText(tip);
 				}
 			}
@@ -361,7 +358,9 @@ namespace Augments
 			{
 				base.DrawSelf(spriteBatch);
 
-				if (ContainsPoint(new Vector2(Main.mouseX, Main.mouseY)))
+				CalculatedStyle dims = GetDimensions();
+				Point mouse = new Point(Main.mouseX, Main.mouseY);
+				if (dims.ToRectangle().Contains(mouse))
 				{
 					if (AugmentDamageTracker.IsPaused)
 					{
@@ -380,16 +379,16 @@ namespace Augments
 			UIPanel header = new UIPanel();
 			header.Left.Set(16f, 0f);
 			header.Top.Set(176f, 0f);
-			header.Width.Set(PanelWidth - 48f, 0f);
+			header.Width.Set(808f, 0f);
 			header.Height.Set(26f, 0f);
 			header.SetPadding(0f);
-			header.BackgroundColor = new Color(16, 22, 42) * 0.90f;
+			header.BackgroundColor = new Color(14, 20, 40) * 0.92f;
 			header.BorderColor = new Color(34, 48, 86);
 
-			var col1 = new UIText("PLUG-IN CHIP / DAMAGE SOURCE", 0.72f) { Top = new StyleDimension(5f, 0f), Left = new StyleDimension(16f, 0f), TextColor = new Color(180, 200, 230) };
-			var col2 = new UIText("HITS & CRITS", 0.72f) { Top = new StyleDimension(5f, 0f), Left = new StyleDimension(350f, 0f), TextColor = new Color(180, 200, 230) };
-			var col3 = new UIText("MAX HIT", 0.72f) { Top = new StyleDimension(5f, 0f), Left = new StyleDimension(520f, 0f), TextColor = new Color(180, 200, 230) };
-			var col4 = new UIText("DAMAGE (% SHARE)", 0.72f) { Top = new StyleDimension(5f, 0f), HAlign = 1f, Left = new StyleDimension(-24f, 0f), TextColor = new Color(180, 200, 230) };
+			var col1 = new UIText("PLUG-IN CHIP / DAMAGE SOURCE", 0.70f) { Top = new StyleDimension(5f, 0f), Left = new StyleDimension(16f, 0f), TextColor = new Color(180, 200, 230) };
+			var col2 = new UIText("HITS & CRITS", 0.70f) { Top = new StyleDimension(5f, 0f), Left = new StyleDimension(330f, 0f), TextColor = new Color(180, 200, 230) };
+			var col3 = new UIText("MAX HIT", 0.70f) { Top = new StyleDimension(5f, 0f), Left = new StyleDimension(500f, 0f), TextColor = new Color(180, 200, 230) };
+			var col4 = new UIText("DAMAGE (% SHARE)", 0.70f) { Top = new StyleDimension(5f, 0f), Left = new StyleDimension(630f, 0f), TextColor = new Color(180, 200, 230) };
 
 			header.Append(col1);
 			header.Append(col2);
@@ -726,13 +725,66 @@ namespace Augments
 
 				CalculatedStyle dims = GetDimensions();
 
-				// Header horizontal divider (cleanly at Y = 66)
+				// 1. Cyber Corner Accents on Dialog
+				Color cornerAccent = new Color(56, 189, 248) * 0.75f;
+				const int clen = 8;
+				const int cthk = 2;
+				Rectangle bRect = dims.ToRectangle();
+
+				// Top-left
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(bRect.X + 2, bRect.Y + 2, clen, cthk), cornerAccent);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(bRect.X + 2, bRect.Y + 2, cthk, clen), cornerAccent);
+				// Top-right
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(bRect.Right - clen - 2, bRect.Y + 2, clen, cthk), cornerAccent);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(bRect.Right - cthk - 2, bRect.Y + 2, cthk, clen), cornerAccent);
+				// Bottom-left
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(bRect.X + 2, bRect.Bottom - cthk - 2, clen, cthk), cornerAccent);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(bRect.X + 2, bRect.Bottom - clen - 2, cthk, clen), cornerAccent);
+				// Bottom-right
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(bRect.Right - clen - 2, bRect.Bottom - cthk - 2, clen, cthk), cornerAccent);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(bRect.Right - cthk - 2, bRect.Bottom - clen - 2, cthk, clen), cornerAccent);
+
+				// 2. Header horizontal divider (at Y = 66)
 				int divY = (int)dims.Y + 66;
 				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle((int)dims.X + 20, divY, (int)dims.Width - 40, 1), new Color(45, 62, 105) * 0.75f);
-
-				// Center diamond node
 				int midX = (int)dims.X + (int)(dims.Width * 0.5f);
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(midX - 2, divY - 2, 5, 5), new Color(56, 189, 248) * 0.85f);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(midX - 3, divY - 2, 7, 5), new Color(56, 189, 248) * 0.85f);
+
+				// 3. Cybernetic Background Radar / Telemetry Reticle Watermark
+				Vector2 center = new Vector2(dims.X + dims.Width * 0.5f, dims.Y + 380f);
+				Color watermarkCol = new Color(56, 189, 248) * 0.04f;
+
+				DrawRadarCircle(spriteBatch, center, 50f, watermarkCol);
+				DrawRadarCircle(spriteBatch, center, 110f, watermarkCol);
+				DrawRadarCircle(spriteBatch, center, 170f, watermarkCol);
+
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle((int)center.X - 180, (int)center.Y, 360, 1), watermarkCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle((int)center.X, (int)center.Y - 180, 1, 360), watermarkCol);
+
+				// 4. Footer Horizontal Divider & Status Line (at Y = bRect.Bottom - 32)
+				int footerY = bRect.Bottom - 32;
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(bRect.X + 20, footerY, bRect.Width - 40, 1), new Color(35, 48, 80) * 0.75f);
+
+				var font = FontAssets.MouseText.Value;
+				string footerLeft = "✦ TELEMETRY ENGINE v2.0  •  [Hold Left Alt] To Drag Pinned HUD Widgets";
+				string footerRight = "[L] Toggle  •  [ESC] Close";
+				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, footerLeft, new Vector2(bRect.X + 20f, footerY + 8f), new Color(130, 150, 185) * 0.70f, 0f, Vector2.Zero, new Vector2(0.58f));
+
+				Vector2 rSz = ChatManager.GetStringSize(font, footerRight, new Vector2(0.58f));
+				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, footerRight, new Vector2(bRect.Right - 20f - rSz.X, footerY + 8f), new Color(100, 125, 160) * 0.65f, 0f, Vector2.Zero, new Vector2(0.58f));
+			}
+
+			private static void DrawRadarCircle(SpriteBatch spriteBatch, Vector2 center, float radius, Color color)
+			{
+				const int segments = 36;
+				float step = MathHelper.TwoPi / segments;
+				for (int i = 0; i < segments; i++)
+				{
+					float angle = i * step;
+					int x = (int)(center.X + (float)Math.Cos(angle) * radius);
+					int y = (int)(center.Y + (float)Math.Sin(angle) * radius);
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(x, y, 2, 2), color);
+				}
 			}
 		}
 
@@ -1070,7 +1122,7 @@ namespace Augments
 					}
 					else
 					{
-						string placeholder = "🔍 Search...";
+						string placeholder = "Search sources...";
 						Vector2 textSize = ChatManager.GetStringSize(font, placeholder, scale);
 						float textX = dims.X + 8f;
 						float textY = dims.Y + (dims.Height - textSize.Y) / 2f + textYOffset;
@@ -1473,34 +1525,33 @@ namespace Augments
 
 			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, subTag, new Vector2(textX, rect.Y + 26f), Color.White, 0f, Vector2.Zero, new Vector2(0.65f));
 
-			// 3. Hits & Crits (aligned to 350f)
+			// 3. Hits & Crits (aligned to 330f)
 			float critRate = record.HitCount > 0 ? ((float)record.CritCount / record.HitCount) * 100f : 0f;
 			string hitsText = $"{record.HitCount:N0} Hits  •  {record.CritCount:N0} Crits ({critRate:0.0}%)";
-			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, hitsText, new Vector2(rect.X + 350f, rect.Y + 16f), new Color(200, 215, 235), 0f, Vector2.Zero, new Vector2(0.72f));
+			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, hitsText, new Vector2(rect.X + 330f, rect.Y + 16f), new Color(200, 215, 235), 0f, Vector2.Zero, new Vector2(0.72f));
 
-			// 4. Max Hit (aligned to 520f)
+			// 4. Max Hit (aligned to 500f)
 			string maxHitText = record.MaxHit > 0 ? $"{record.MaxHit:N0}" : "--";
-			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, maxHitText, new Vector2(rect.X + 520f, rect.Y + 16f), new Color(253, 224, 71), 0f, Vector2.Zero, new Vector2(0.74f));
+			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, maxHitText, new Vector2(rect.X + 500f, rect.Y + 16f), new Color(253, 224, 71), 0f, Vector2.Zero, new Vector2(0.74f));
 
-			// 5. Total Damage & Share Percentage (right-aligned to right margin)
+			// 5. Total Damage & Share Percentage (aligned to 630f)
 			float sharePercent = totalSessionDamage > 0 ? (float)record.TotalDamage / totalSessionDamage : 0f;
 			string dmgText = $"{record.TotalDamage:N0}";
 			string shareText = $"({sharePercent * 100f:0.0}%)";
 
 			Vector2 dmgSz = ChatManager.GetStringSize(font, dmgText, new Vector2(0.82f));
-			Vector2 shareSz = ChatManager.GetStringSize(font, shareText, new Vector2(0.72f));
-
-			float rightColX = rect.Right - dmgSz.X - shareSz.X - 24f;
+			float rightColX = rect.X + 630f;
 			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, dmgText, new Vector2(rightColX, rect.Y + 14f), new Color(245, 248, 255), 0f, Vector2.Zero, new Vector2(0.82f));
-			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, shareText, new Vector2(rightColX + dmgSz.X + 6f, rect.Y + 16f), record.Color, 0f, Vector2.Zero, new Vector2(0.72f));
+			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, shareText, new Vector2(rightColX + dmgSz.X + 6f, rect.Y + 16f), (record.Color == Color.White ? new Color(56, 189, 248) : record.Color), 0f, Vector2.Zero, new Vector2(0.72f));
 
-			// 6. Sleek 3px Progress Fill Bar across the bottom of the row
-			Rectangle barBg = new Rectangle(rect.X + 2, rect.Bottom - 4, rect.Width - 4, 3);
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, barBg, new Color(10, 14, 26, 220));
+			// 6. Sleek 2px Progress Fill Bar across the bottom of the row
+			Color barAccent = record.Color == Color.White ? new Color(56, 189, 248) : record.Color;
+			Rectangle barBg = new Rectangle(rect.X + 6, rect.Bottom - 3, rect.Width - 12, 2);
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, barBg, new Color(10, 14, 26, 200));
 
-			int fillW = Math.Max(record.TotalDamage > 0 ? 3 : 0, (int)((rect.Width - 4) * Math.Min(1f, sharePercent)));
-			Rectangle barFill = new Rectangle(rect.X + 2, rect.Bottom - 4, fillW, 3);
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, barFill, record.Color);
+			int fillW = Math.Max(record.TotalDamage > 0 ? 3 : 0, (int)((rect.Width - 12) * Math.Min(1f, sharePercent)));
+			Rectangle barFill = new Rectangle(rect.X + 6, rect.Bottom - 3, fillW, 2);
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, barFill, barAccent * 0.85f);
 
 			// Tooltip for non-chip entries when hovered
 			if (isHovered && augmentRef == null)
