@@ -27,6 +27,7 @@ namespace Augments
 		private const float SlideSpeed = 7f;
 
 		private static float globalTimer;
+		private static bool wasMouseLeft = false;
 		private static readonly Dictionary<string, float> hoverProgress = new();
 		private static readonly Dictionary<string, Rectangle> iconBounds = new();
 		private static readonly Dictionary<string, Rectangle> panelBounds = new();
@@ -51,12 +52,14 @@ namespace Augments
 			float iconX = Main.screenWidth - IconWidth - RightMargin;
 			float currentY = StartY;
 
-			Rectangle analyticsBtn = new Rectangle((int)iconX, (int)StartY - 24, (int)IconWidth, 18);
-			if (analyticsBtn.Contains(mouse) && Main.mouseLeft && Main.mouseLeftRelease)
+			Rectangle analyticsBtn = new Rectangle((int)iconX, (int)StartY - 40, (int)IconWidth, 32);
+			bool justClicked = Main.mouseLeft && !wasMouseLeft;
+			if (analyticsBtn.Contains(mouse) && justClicked)
 			{
 				ModContent.GetInstance<AugmentUISystem>()?.ToggleAnalytics();
-				Main.mouseLeftRelease = false;
+				Main.blockMouse = true;
 			}
+			wasMouseLeft = Main.mouseLeft;
 
 			foreach (var kv in AugmentFamilyRegistry.Families)
 			{
@@ -127,26 +130,55 @@ namespace Augments
 			float currentY = StartY;
 
 			Point mouse = new Point(Main.mouseX, Main.mouseY);
-			Rectangle analyticsBtn = new Rectangle((int)iconX, (int)StartY - 24, (int)IconWidth, 18);
+			Rectangle analyticsBtn = new Rectangle((int)iconX, (int)StartY - 40, (int)IconWidth, 32);
 			bool btnHover = analyticsBtn.Contains(mouse);
 			bool isAnalyticsOpen = ModContent.GetInstance<AugmentUISystem>()?.IsAnalyticsOpen == true;
-			Color btnTheme = isAnalyticsOpen ? new Color(74, 222, 128) : new Color(56, 189, 248);
+			float dpsVal = AugmentDamageTracker.GetCurrentDPS();
+			bool hasActiveCombat = dpsVal > 0f || AugmentDamageTracker.SessionDuration > 0f;
+			Color btnTheme = isAnalyticsOpen 
+				? new Color(74, 222, 128) 
+				: (hasActiveCombat ? new Color(56, 189, 248) : new Color(130, 160, 200));
 
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, analyticsBtn, new Color(8, 12, 20, 240));
+			// Background
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, analyticsBtn, new Color(8, 14, 28, 245));
 			if (btnHover)
 			{
 				spriteBatch.Draw(TextureAssets.MagicPixel.Value, analyticsBtn, btnTheme * 0.25f);
 			}
-			DrawHighTechBorder(spriteBatch, analyticsBtn, btnHover ? btnTheme : btnTheme * 0.65f);
 
+			// Border with high tech corners
+			DrawHighTechBorder(spriteBatch, analyticsBtn, btnHover ? Color.Lerp(btnTheme, Color.White, 0.35f) : btnTheme * 0.75f);
+
+			// High-Tech Telemetry Icon: 4 animated waveform bars
+			int bcx = analyticsBtn.X + analyticsBtn.Width / 2;
+			int barBaseY = analyticsBtn.Y + 16;
+			float animPhase = globalTimer * (hasActiveCombat ? 8f : 2.5f);
+
+			int[] barHeights = new int[4];
+			barHeights[0] = 4 + (int)(Math.Sin(animPhase) * 2f + 2f);
+			barHeights[1] = 6 + (int)(Math.Sin(animPhase + 1.2f) * 3f + 3f);
+			barHeights[2] = 8 + (int)(Math.Sin(animPhase + 2.4f) * 4f + 4f);
+			barHeights[3] = 5 + (int)(Math.Sin(animPhase + 3.6f) * 2.5f + 2.5f);
+
+			int[] barXOffsets = { -9, -3, 3, 9 };
+			for (int bi = 0; bi < 4; bi++)
+			{
+				int bx = bcx + barXOffsets[bi];
+				int bh = Math.Clamp(barHeights[bi], 3, 12);
+				Rectangle barRect = new Rectangle(bx, barBaseY - bh, 3, bh);
+				Color barCol = btnHover ? Color.White : Color.Lerp(btnTheme, Color.White, bi * 0.15f);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, barRect, barCol);
+			}
+
+			// Label underneath: "DPS"
 			string label = "DPS";
-			Vector2 lSz = ChatManager.GetStringSize(font, label, new Vector2(0.60f));
-			Vector2 lPos = new Vector2(analyticsBtn.X + (analyticsBtn.Width - lSz.X) * 0.5f, analyticsBtn.Y + (analyticsBtn.Height - lSz.Y) * 0.5f);
-			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, label, lPos, btnHover ? Color.White : btnTheme, 0f, Vector2.Zero, new Vector2(0.60f));
+			Vector2 lSz = ChatManager.GetStringSize(font, label, new Vector2(0.52f));
+			Vector2 lPos = new Vector2(bcx - lSz.X * 0.5f, analyticsBtn.Y + 18f);
+			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, label, lPos, btnHover ? Color.White : btnTheme, 0f, Vector2.Zero, new Vector2(0.52f));
 
 			if (btnHover)
 			{
-				Main.instance.MouseText("Combat Analytics & DPS (Press L)");
+				Main.instance.MouseText("✦ Combat Analytics & DPS [L] ✦\nClick to view full telemetry & breakdown\nTip: You can pin DPS & Crit stats to your HUD!");
 			}
 
 			foreach (var kv in AugmentFamilyRegistry.Families)

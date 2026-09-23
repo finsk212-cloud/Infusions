@@ -166,7 +166,7 @@ namespace Augments
 			backPanel.Append(searchBar);
 
 			// Status indicator pill on the far right
-			statusPill = new UIPanel();
+			statusPill = new StatusIndicatorPill();
 			statusPill.Left.Set(-152f, 1f);
 			statusPill.Top.Set(barTop, 0f);
 			statusPill.Width.Set(136f, 0f);
@@ -229,23 +229,23 @@ namespace Augments
 			float cardW = (totalW - (cardSpacing * 3f)) / 4f;
 
 			// Card 1: Live DPS
-			var dpsCard = CreateSingleCard(16f + 0 * (cardW + cardSpacing), cardTop, cardW, cardHeight, new Color(74, 222, 128), "LIVE DPS (3S)", out dpsValueText);
+			var dpsCard = CreateSingleCard(16f + 0 * (cardW + cardSpacing), cardTop, cardW, cardHeight, new Color(74, 222, 128), "LIVE DPS (3S)", PinnedStatType.LiveDPS, out dpsValueText);
 			backPanel.Append(dpsCard);
 
 			// Card 2: Total Damage
-			var dmgCard = CreateSingleCard(16f + 1 * (cardW + cardSpacing), cardTop, cardW, cardHeight, new Color(56, 189, 248), "RECORDED DAMAGE", out totalDmgValueText);
+			var dmgCard = CreateSingleCard(16f + 1 * (cardW + cardSpacing), cardTop, cardW, cardHeight, new Color(56, 189, 248), "RECORDED DAMAGE", PinnedStatType.TotalDamage, out totalDmgValueText);
 			backPanel.Append(dmgCard);
 
 			// Card 3: Combat Time
-			var durCard = CreateSingleCard(16f + 2 * (cardW + cardSpacing), cardTop, cardW, cardHeight, new Color(192, 132, 252), "COMBAT TIME", out durationValueText);
+			var durCard = CreateSingleCard(16f + 2 * (cardW + cardSpacing), cardTop, cardW, cardHeight, new Color(192, 132, 252), "COMBAT TIME", PinnedStatType.CombatTime, out durationValueText);
 			backPanel.Append(durCard);
 
 			// Card 4: Hits & Crits Summary
-			var hitsCard = CreateSingleCard(16f + 3 * (cardW + cardSpacing), cardTop, cardW, cardHeight, new Color(250, 204, 21), "HITS & CRIT RATE", out hitsValueText);
+			var hitsCard = CreateSingleCard(16f + 3 * (cardW + cardSpacing), cardTop, cardW, cardHeight, new Color(250, 204, 21), "HITS & CRIT RATE", PinnedStatType.HitsAndCrits, out hitsValueText);
 			backPanel.Append(hitsCard);
 		}
 
-		private UIPanel CreateSingleCard(float left, float top, float width, float height, Color accent, string label, out UIText valueOutput)
+		private UIPanel CreateSingleCard(float left, float top, float width, float height, Color accent, string label, PinnedStatType statType, out UIText valueOutput)
 		{
 			UIPanel card = new UIPanel();
 			card.Left.Set(left, 0f);
@@ -272,7 +272,107 @@ namespace Augments
 			};
 			card.Append(valueOutput);
 
+			var pinBtn = new CardPinButton(statType);
+			card.Append(pinBtn);
+
 			return card;
+		}
+
+		private class CardPinButton : UIPanel
+		{
+			public readonly PinnedStatType StatType;
+			private bool isHovered;
+
+			public CardPinButton(PinnedStatType type)
+			{
+				this.StatType = type;
+				SetPadding(0f);
+				Width.Set(20f, 0f);
+				Height.Set(20f, 0f);
+				Left.Set(-24f, 1f);
+				Top.Set(4f, 0f);
+			}
+
+			public override void MouseOver(UIMouseEvent evt)
+			{
+				base.MouseOver(evt);
+				isHovered = true;
+				SoundEngine.PlaySound(SoundID.MenuTick);
+			}
+
+			public override void MouseOut(UIMouseEvent evt)
+			{
+				base.MouseOut(evt);
+				isHovered = false;
+			}
+
+			public override void LeftClick(UIMouseEvent evt)
+			{
+				base.LeftClick(evt);
+				AugmentPinnedHUD.TogglePin(StatType);
+				SoundEngine.PlaySound(AugmentPinnedHUD.IsPinned(StatType) ? SoundID.Research : SoundID.MenuClose);
+			}
+
+			protected override void DrawSelf(SpriteBatch spriteBatch)
+			{
+				bool isPinned = AugmentPinnedHUD.IsPinned(StatType);
+
+				if (isPinned)
+				{
+					BackgroundColor = isHovered ? new Color(50, 42, 22) : new Color(34, 28, 14);
+					BorderColor = isHovered ? Color.White : new Color(255, 215, 75);
+				}
+				else
+				{
+					BackgroundColor = isHovered ? new Color(30, 40, 70) : new Color(16, 22, 42);
+					BorderColor = isHovered ? Color.White * 0.8f : new Color(45, 60, 95);
+				}
+
+				base.DrawSelf(spriteBatch);
+
+				var dims = GetDimensions();
+				var font = FontAssets.MouseText.Value;
+				string pinGlyph = "📌";
+				Vector2 scale = new Vector2(0.58f);
+				Vector2 sz = ChatManager.GetStringSize(font, pinGlyph, scale);
+				Vector2 pos = new Vector2(dims.X + (dims.Width - sz.X) * 0.5f, dims.Y + (dims.Height - sz.Y) * 0.5f + 3f);
+				Color pinCol = isPinned ? new Color(255, 215, 75) : (isHovered ? Color.White : new Color(140, 155, 185));
+
+				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, pinGlyph, pos, pinCol, 0f, Vector2.Zero, scale);
+
+				if (isHovered)
+				{
+					string tip = isPinned
+						? "📌 Unpin from screen HUD"
+						: "📌 Pin to screen HUD\n(Hold Left Alt in combat to drag anywhere)";
+					Main.instance.MouseText(tip);
+				}
+			}
+		}
+
+		private class StatusIndicatorPill : UIPanel
+		{
+			public StatusIndicatorPill()
+			{
+				SetPadding(0f);
+			}
+
+			protected override void DrawSelf(SpriteBatch spriteBatch)
+			{
+				base.DrawSelf(spriteBatch);
+
+				if (ContainsPoint(new Vector2(Main.mouseX, Main.mouseY)))
+				{
+					if (AugmentDamageTracker.IsPaused)
+					{
+						Main.instance.MouseText("Telemetry Feed: PAUSED\nLive combat hits are temporarily frozen. Click 'Resume Feed' to restart recording.");
+					}
+					else
+					{
+						Main.instance.MouseText("Telemetry Feed: LIVE FEED (Online)\nGreen indicator confirms combat damage telemetry is actively recording in real-time.");
+					}
+				}
+			}
 		}
 
 		private void CreateTableHeaders()

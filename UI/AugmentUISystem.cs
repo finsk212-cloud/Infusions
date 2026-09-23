@@ -79,6 +79,7 @@ namespace Augments
 				analyticsInterface.Update(gameTime);
 
 			AugmentFamilyHUD.Update(gameTime);
+			AugmentPinnedHUD.Update(gameTime);
 		}
 
 		// Slots both panels into Terraria's actual draw order.
@@ -129,6 +130,16 @@ namespace Augments
 				{
 					if (lastUpdateUiGameTime != null && analyticsInterface?.CurrentState != null)
 						analyticsInterface.Draw(Main.spriteBatch, lastUpdateUiGameTime);
+					return true;
+				},
+				InterfaceScaleType.UI)
+			);
+
+			layers.Insert(mouseTextIndex, new LegacyGameInterfaceLayer(
+				"Augments: Pinned Telemetry HUD",
+				delegate
+				{
+					AugmentPinnedHUD.Draw(Main.spriteBatch);
 					return true;
 				},
 				InterfaceScaleType.UI)
