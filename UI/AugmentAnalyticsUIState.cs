@@ -27,16 +27,18 @@ namespace Augments
 		private UIText dpsValueText;
 		private UIText totalDmgValueText;
 		private UIText durationValueText;
-		private UIText modeValueText;
+		private UIText hitsValueText;
 
 		private AnalyticsActionButton modeButton;
 		private AnalyticsActionButton pauseButton;
 		private AnalyticsActionButton resetButton;
+		private UIPanel statusPill;
+		private UIText statusPillText;
 
-		private readonly UIParticleSystem particles = new UIParticleSystem(50);
+		private readonly UIParticleSystem particles = new UIParticleSystem(40);
 
-		private const float PanelWidth = 840f;
-		private const float PanelHeight = 570f;
+		private const float PanelWidth = 860f;
+		private const float PanelHeight = 600f;
 
 		private int updateCounter = 0;
 		private long lastSeenTotalDamage = -1;
@@ -54,7 +56,7 @@ namespace Augments
 			backPanel.BorderColor = new Color(38, 52, 98);
 			Append(backPanel);
 
-			// 2. Title & Subtitle Header
+			// 2. Title & Subtitle Header (Cleanly separated at Y = 12 & Y = 36)
 			UIText titleText = new UIText("✦  Combat Analytics & DPS  ✦", 1.15f)
 			{
 				HAlign = 0.5f,
@@ -68,7 +70,7 @@ namespace Augments
 				HAlign = 0.5f,
 				TextColor = new Color(150, 170, 205)
 			};
-			subtitle.Top.Set(38f, 0f);
+			subtitle.Top.Set(36f, 0f);
 			backPanel.Append(subtitle);
 
 			// Close Button in top-right corner
@@ -77,18 +79,19 @@ namespace Augments
 			closeButton.Height.Set(24f, 0f);
 			closeButton.HAlign = 1f;
 			closeButton.Top.Set(10f, 0f);
-			closeButton.Left.Set(-10f, 0f);
+			closeButton.Left.Set(-12f, 0f);
 			closeButton.Clicked += () => ModContent.GetInstance<AugmentUISystem>().HideAnalytics();
 			backPanel.Append(closeButton);
 
-			// 3. Top Action Buttons (Mode, Pause, Reset)
-			float btnTop = 48f;
+			// 3. Control Action Toolbar (Y = 70f to 98f - completely clear of header & divider)
+			float barTop = 70f;
+			float barHeight = 28f;
 
 			modeButton = new AnalyticsActionButton("★  Mode: Last 10 Mins  ★", new Color(56, 189, 248), new Color(20, 42, 65));
 			modeButton.Left.Set(16f, 0f);
-			modeButton.Top.Set(btnTop, 0f);
-			modeButton.Width.Set(185f, 0f);
-			modeButton.Height.Set(24f, 0f);
+			modeButton.Top.Set(barTop, 0f);
+			modeButton.Width.Set(200f, 0f);
+			modeButton.Height.Set(barHeight, 0f);
 			modeButton.Clicked += () =>
 			{
 				AugmentDamageTracker.ViewMode = AugmentDamageTracker.ViewMode == AnalyticsViewMode.Last10Minutes
@@ -100,10 +103,10 @@ namespace Augments
 			backPanel.Append(modeButton);
 
 			pauseButton = new AnalyticsActionButton("⏸  Pause Feed", new Color(250, 204, 21), new Color(48, 42, 20));
-			pauseButton.Left.Set(209f, 0f);
-			pauseButton.Top.Set(btnTop, 0f);
-			pauseButton.Width.Set(120f, 0f);
-			pauseButton.Height.Set(24f, 0f);
+			pauseButton.Left.Set(224f, 0f);
+			pauseButton.Top.Set(barTop, 0f);
+			pauseButton.Width.Set(125f, 0f);
+			pauseButton.Height.Set(barHeight, 0f);
 			pauseButton.Clicked += () =>
 			{
 				AugmentDamageTracker.TogglePause();
@@ -112,10 +115,10 @@ namespace Augments
 			backPanel.Append(pauseButton);
 
 			resetButton = new AnalyticsActionButton("↺  Reset Data", new Color(248, 113, 113), new Color(50, 24, 24));
-			resetButton.Left.Set(337f, 0f);
-			resetButton.Top.Set(btnTop, 0f);
+			resetButton.Left.Set(357f, 0f);
+			resetButton.Top.Set(barTop, 0f);
 			resetButton.Width.Set(110f, 0f);
-			resetButton.Height.Set(24f, 0f);
+			resetButton.Height.Set(barHeight, 0f);
 			resetButton.Clicked += () =>
 			{
 				AugmentDamageTracker.Reset();
@@ -124,34 +127,56 @@ namespace Augments
 			};
 			backPanel.Append(resetButton);
 
-			// 4. Summary Metric Cards (4 Cards across)
+			// Status indicator pill on the far right
+			statusPill = new UIPanel();
+			statusPill.Left.Set(-180f, 1f);
+			statusPill.Top.Set(barTop, 0f);
+			statusPill.Width.Set(164f, 0f);
+			statusPill.Height.Set(barHeight, 0f);
+			statusPill.SetPadding(0f);
+			statusPill.BackgroundColor = new Color(14, 20, 36) * 0.95f;
+			statusPill.BorderColor = new Color(74, 222, 128) * 0.7f;
+
+			statusPillText = new UIText("● Live Telemetry", 0.72f)
+			{
+				HAlign = 0.5f,
+				VAlign = 0.5f,
+				TextColor = new Color(74, 222, 128)
+			};
+			statusPill.Append(statusPillText);
+			backPanel.Append(statusPill);
+
+			// 4. Summary Metric Cards (Y = 108f to 162f)
 			CreateMetricCards();
 
-			// 5. Table Column Header Bar
+			// 5. Table Column Header Bar (Y = 170f to 196f)
 			CreateTableHeaders();
 
-			// 6. Scrollable Records List & Scrollbar
+			// 6. Scrollable Records List & Scrollbar (Y = 202f to 582f)
+			float listTop = 202f;
+			float listHeight = PanelHeight - listTop - 18f;
+
 			recordsList = new UIList();
 			recordsList.ManualSortMethod = _ => { };
-			recordsList.Top.Set(176f, 0f);
-			recordsList.Left.Set(14f, 0f);
-			recordsList.Width.Set(PanelWidth - 48f, 0f);
-			recordsList.Height.Set(PanelHeight - 192f, 0f);
+			recordsList.Top.Set(listTop, 0f);
+			recordsList.Left.Set(16f, 0f);
+			recordsList.Width.Set(PanelWidth - 46f, 0f);
+			recordsList.Height.Set(listHeight, 0f);
 			recordsList.ListPadding = 4f;
 			backPanel.Append(recordsList);
 
 			listScrollbar = new UIScrollbar();
-			listScrollbar.Top.Set(176f, 0f);
-			listScrollbar.Height.Set(PanelHeight - 192f, 0f);
-			listScrollbar.Left.Set(PanelWidth - 28f, 0f);
+			listScrollbar.Top.Set(listTop, 0f);
+			listScrollbar.Height.Set(listHeight, 0f);
+			listScrollbar.Left.Set(PanelWidth - 26f, 0f);
 			recordsList.SetScrollbar(listScrollbar);
 			backPanel.Append(listScrollbar);
 		}
 
 		private void CreateMetricCards()
 		{
-			float cardTop = 84f;
-			float cardHeight = 52f;
+			float cardTop = 108f;
+			float cardHeight = 54f;
 			float totalW = PanelWidth - 32f;
 			float cardSpacing = 8f;
 			float cardW = (totalW - (cardSpacing * 3f)) / 4f;
@@ -164,13 +189,13 @@ namespace Augments
 			var dmgCard = CreateSingleCard(16f + 1 * (cardW + cardSpacing), cardTop, cardW, cardHeight, new Color(56, 189, 248), "RECORDED DAMAGE", out totalDmgValueText);
 			backPanel.Append(dmgCard);
 
-			// Card 3: Session Duration
-			var durCard = CreateSingleCard(16f + 2 * (cardW + cardSpacing), cardTop, cardW, cardHeight, new Color(168, 85, 247), "COMBAT TIME", out durationValueText);
+			// Card 3: Combat Time
+			var durCard = CreateSingleCard(16f + 2 * (cardW + cardSpacing), cardTop, cardW, cardHeight, new Color(192, 132, 252), "COMBAT TIME", out durationValueText);
 			backPanel.Append(durCard);
 
-			// Card 4: Active Mode
-			var modeCard = CreateSingleCard(16f + 3 * (cardW + cardSpacing), cardTop, cardW, cardHeight, new Color(250, 204, 21), "CURRENT VIEW", out modeValueText);
-			backPanel.Append(modeCard);
+			// Card 4: Hits & Crits Summary
+			var hitsCard = CreateSingleCard(16f + 3 * (cardW + cardSpacing), cardTop, cardW, cardHeight, new Color(250, 204, 21), "HITS & CRIT RATE", out hitsValueText);
+			backPanel.Append(hitsCard);
 		}
 
 		private UIPanel CreateSingleCard(float left, float top, float width, float height, Color accent, string label, out UIText valueOutput)
@@ -184,18 +209,18 @@ namespace Augments
 			card.BackgroundColor = new Color(14, 20, 38) * 0.95f;
 			card.BorderColor = accent * 0.65f;
 
-			UIText labelText = new UIText(label, 0.65f)
+			UIText labelText = new UIText(label, 0.68f)
 			{
 				HAlign = 0.5f,
-				Top = new StyleDimension(5f, 0f),
-				TextColor = new Color(148, 163, 184)
+				Top = new StyleDimension(6f, 0f),
+				TextColor = new Color(150, 168, 192)
 			};
 			card.Append(labelText);
 
-			valueOutput = new UIText("--", 0.95f)
+			valueOutput = new UIText("--", 0.92f)
 			{
 				HAlign = 0.5f,
-				Top = new StyleDimension(22f, 0f),
+				Top = new StyleDimension(24f, 0f),
 				TextColor = accent
 			};
 			card.Append(valueOutput);
@@ -206,18 +231,18 @@ namespace Augments
 		private void CreateTableHeaders()
 		{
 			UIPanel header = new UIPanel();
-			header.Left.Set(14f, 0f);
-			header.Top.Set(144f, 0f);
-			header.Width.Set(PanelWidth - 48f, 0f);
+			header.Left.Set(16f, 0f);
+			header.Top.Set(170f, 0f);
+			header.Width.Set(PanelWidth - 46f, 0f);
 			header.Height.Set(26f, 0f);
 			header.SetPadding(0f);
-			header.BackgroundColor = new Color(16, 22, 42) * 0.85f;
+			header.BackgroundColor = new Color(16, 22, 42) * 0.90f;
 			header.BorderColor = new Color(34, 48, 86);
 
-			var col1 = new UIText("PLUG-IN CHIP / DAMAGE SOURCE", 0.72f) { Top = new StyleDimension(5f, 0f), Left = new StyleDimension(14f, 0f), TextColor = new Color(180, 200, 230) };
-			var col2 = new UIText("HITS & CRITS", 0.72f) { Top = new StyleDimension(5f, 0f), Left = new StyleDimension(350f, 0f), TextColor = new Color(180, 200, 230) };
-			var col3 = new UIText("MAX HIT", 0.72f) { Top = new StyleDimension(5f, 0f), Left = new StyleDimension(515f, 0f), TextColor = new Color(180, 200, 230) };
-			var col4 = new UIText("DAMAGE (% SHARE)", 0.72f) { Top = new StyleDimension(5f, 0f), Left = new StyleDimension(635f, 0f), TextColor = new Color(180, 200, 230) };
+			var col1 = new UIText("PLUG-IN CHIP / DAMAGE SOURCE", 0.72f) { Top = new StyleDimension(5f, 0f), Left = new StyleDimension(16f, 0f), TextColor = new Color(180, 200, 230) };
+			var col2 = new UIText("HITS & CRITS", 0.72f) { Top = new StyleDimension(5f, 0f), Left = new StyleDimension(340f, 0f), TextColor = new Color(180, 200, 230) };
+			var col3 = new UIText("MAX HIT", 0.72f) { Top = new StyleDimension(5f, 0f), Left = new StyleDimension(510f, 0f), TextColor = new Color(180, 200, 230) };
+			var col4 = new UIText("DAMAGE (% SHARE)", 0.72f) { Top = new StyleDimension(5f, 0f), HAlign = 1f, Left = new StyleDimension(-24f, 0f), TextColor = new Color(180, 200, 230) };
 
 			header.Append(col1);
 			header.Append(col2);
@@ -247,9 +272,20 @@ namespace Augments
 				pauseButton.SetAccent(AugmentDamageTracker.IsPaused ? new Color(74, 222, 128) : new Color(250, 204, 21));
 			}
 
-			if (modeValueText != null)
+			if (statusPill != null && statusPillText != null)
 			{
-				modeValueText.SetText(AugmentDamageTracker.ViewMode == AnalyticsViewMode.Last10Minutes ? "Last 10 Mins" : "Total Session");
+				if (AugmentDamageTracker.IsPaused)
+				{
+					statusPill.BorderColor = new Color(250, 204, 21) * 0.7f;
+					statusPillText.SetText("❚❚ Feed Paused");
+					statusPillText.TextColor = new Color(250, 204, 21);
+				}
+				else
+				{
+					statusPill.BorderColor = new Color(74, 222, 128) * 0.7f;
+					statusPillText.SetText("● Live Telemetry");
+					statusPillText.TextColor = new Color(74, 222, 128);
+				}
 			}
 		}
 
@@ -292,10 +328,21 @@ namespace Augments
 			{
 				var player = Main.LocalPlayer;
 				var ap = player?.GetModPlayer<AugmentPlayer>();
-				var (viewDmg, _) = AugmentDamageTracker.GetCurrentViewData(ap);
+				var (viewDmg, sortedRecords) = AugmentDamageTracker.GetCurrentViewData(ap);
 
 				if (totalDmgValueText != null)
 					totalDmgValueText.SetText($"{viewDmg:N0}");
+
+				int totalHits = 0;
+				int totalCrits = 0;
+				foreach (var r in sortedRecords)
+				{
+					totalHits += r.HitCount;
+					totalCrits += r.CritCount;
+				}
+				float critRate = totalHits > 0 ? ((float)totalCrits / totalHits) * 100f : 0f;
+				if (hitsValueText != null)
+					hitsValueText.SetText($"{totalHits:N0} ({critRate:0.0}%)");
 
 				if (viewDmg != lastSeenTotalDamage || AugmentDamageTracker.ViewMode != lastSeenMode)
 				{
@@ -328,6 +375,17 @@ namespace Augments
 
 			if (totalDmgValueText != null)
 				totalDmgValueText.SetText($"{viewDamage:N0}");
+
+			int totalHits = 0;
+			int totalCrits = 0;
+			foreach (var r in sortedRecords)
+			{
+				totalHits += r.HitCount;
+				totalCrits += r.CritCount;
+			}
+			float critRate = totalHits > 0 ? ((float)totalCrits / totalHits) * 100f : 0f;
+			if (hitsValueText != null)
+				hitsValueText.SetText($"{totalHits:N0} ({critRate:0.0}%)");
 
 			if (sortedRecords.Count == 0)
 			{
@@ -363,8 +421,8 @@ namespace Augments
 
 				CalculatedStyle dims = GetDimensions();
 
-				// Header horizontal divider
-				int divY = (int)dims.Y + 74;
+				// Header horizontal divider (cleanly at Y = 62)
+				int divY = (int)dims.Y + 62;
 				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle((int)dims.X + 20, divY, (int)dims.Width - 40, 1), new Color(45, 62, 105) * 0.75f);
 
 				// Center diamond node
@@ -584,16 +642,16 @@ namespace Augments
 
 			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, subTag, new Vector2(textX, rect.Y + 26f), Color.White, 0f, Vector2.Zero, new Vector2(0.65f));
 
-			// 3. Hits & Crits
+			// 3. Hits & Crits (aligned to 340f)
 			float critRate = record.HitCount > 0 ? ((float)record.CritCount / record.HitCount) * 100f : 0f;
 			string hitsText = $"{record.HitCount:N0} Hits  •  {record.CritCount:N0} Crits ({critRate:0.0}%)";
-			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, hitsText, new Vector2(rect.X + 350f, rect.Y + 16f), new Color(200, 215, 235), 0f, Vector2.Zero, new Vector2(0.72f));
+			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, hitsText, new Vector2(rect.X + 340f, rect.Y + 16f), new Color(200, 215, 235), 0f, Vector2.Zero, new Vector2(0.72f));
 
-			// 4. Max Hit
+			// 4. Max Hit (aligned to 510f)
 			string maxHitText = record.MaxHit > 0 ? $"{record.MaxHit:N0}" : "--";
-			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, maxHitText, new Vector2(rect.X + 515f, rect.Y + 16f), new Color(253, 224, 71), 0f, Vector2.Zero, new Vector2(0.74f));
+			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, maxHitText, new Vector2(rect.X + 510f, rect.Y + 16f), new Color(253, 224, 71), 0f, Vector2.Zero, new Vector2(0.74f));
 
-			// 5. Total Damage & Share Percentage
+			// 5. Total Damage & Share Percentage (right-aligned to right margin)
 			float sharePercent = totalSessionDamage > 0 ? (float)record.TotalDamage / totalSessionDamage : 0f;
 			string dmgText = $"{record.TotalDamage:N0}";
 			string shareText = $"({sharePercent * 100f:0.0}%)";
@@ -601,7 +659,7 @@ namespace Augments
 			Vector2 dmgSz = ChatManager.GetStringSize(font, dmgText, new Vector2(0.82f));
 			Vector2 shareSz = ChatManager.GetStringSize(font, shareText, new Vector2(0.72f));
 
-			float rightColX = rect.Right - dmgSz.X - shareSz.X - 22f;
+			float rightColX = rect.Right - dmgSz.X - shareSz.X - 24f;
 			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, dmgText, new Vector2(rightColX, rect.Y + 14f), new Color(245, 248, 255), 0f, Vector2.Zero, new Vector2(0.82f));
 			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, shareText, new Vector2(rightColX + dmgSz.X + 6f, rect.Y + 16f), record.Color, 0f, Vector2.Zero, new Vector2(0.72f));
 
