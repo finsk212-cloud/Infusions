@@ -1380,7 +1380,17 @@ namespace Augments
 
 			if (Player.whoAmI == Main.myPlayer)
 			{
-				AugmentDamageTracker.RecordWeaponHit(item.Name, damageDone, hit.Crit);
+				AugmentClass wClass = AugmentClass.Melee;
+				if (item.CountsAsClass(DamageClass.Ranged) || item.DamageType == DamageClass.Ranged)
+					wClass = AugmentClass.Ranged;
+				else if (item.CountsAsClass(DamageClass.Magic) || item.DamageType == DamageClass.Magic)
+					wClass = AugmentClass.Magic;
+				else if (item.CountsAsClass(DamageClass.Summon) || item.DamageType == DamageClass.Summon || item.CountsAsClass(DamageClass.SummonMeleeSpeed))
+					wClass = AugmentClass.Summon;
+				else if (item.CountsAsClass(DamageClass.Generic) || item.DamageType == DamageClass.Generic)
+					wClass = AugmentClass.Universal;
+
+				AugmentDamageTracker.RecordWeaponHit(item.Name, damageDone, hit.Crit, wClass);
 			}
 
 			if (item.CountsAsClass(DamageClass.Melee))
@@ -1450,7 +1460,17 @@ namespace Augments
 				else
 				{
 					string weaponName = Player.HeldItem != null && !Player.HeldItem.IsAir ? Player.HeldItem.Name : proj.Name;
-					AugmentDamageTracker.RecordWeaponHit(weaponName, damageDone, hit.Crit);
+					AugmentClass wClass = AugmentClass.Universal;
+					if (proj.CountsAsClass(DamageClass.Melee) || proj.DamageType == DamageClass.Melee)
+						wClass = AugmentClass.Melee;
+					else if (proj.CountsAsClass(DamageClass.Ranged) || proj.DamageType == DamageClass.Ranged)
+						wClass = AugmentClass.Ranged;
+					else if (proj.CountsAsClass(DamageClass.Magic) || proj.DamageType == DamageClass.Magic)
+						wClass = AugmentClass.Magic;
+					else if (proj.CountsAsClass(DamageClass.Summon) || proj.DamageType == DamageClass.Summon || proj.CountsAsClass(DamageClass.SummonMeleeSpeed))
+						wClass = AugmentClass.Summon;
+
+					AugmentDamageTracker.RecordWeaponHit(weaponName, damageDone, hit.Crit, wClass);
 				}
 			}
 

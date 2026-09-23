@@ -22,6 +22,7 @@ namespace Augments.Core
 		public int CritCount { get; set; }
 		public int MaxHit { get; set; }
 		public AugmentRarity? Rarity { get; set; }
+		public AugmentClass? SourceClass { get; set; }
 		public bool IsProtocol { get; set; }
 		public bool IsWeapon { get; set; }
 	}
@@ -74,7 +75,7 @@ namespace Augments.Core
 			}
 		}
 
-		public static void RecordHit(string sourceId, string displayName, int damage, bool isCrit, Color color, AugmentRarity? rarity = null, bool isProtocol = false, bool isWeapon = false)
+		public static void RecordHit(string sourceId, string displayName, int damage, bool isCrit, Color color, AugmentRarity? rarity = null, AugmentClass? sourceClass = null, bool isProtocol = false, bool isWeapon = false)
 		{
 			if (IsPaused || damage <= 0)
 				return;
@@ -102,10 +103,18 @@ namespace Augments.Core
 					CritCount = 0,
 					MaxHit = 0,
 					Rarity = rarity,
+					SourceClass = sourceClass,
 					IsProtocol = isProtocol,
 					IsWeapon = isWeapon
 				};
 				totalRecords[sourceId] = rec;
+			}
+			else
+			{
+				if (sourceClass.HasValue && !rec.SourceClass.HasValue)
+					rec.SourceClass = sourceClass;
+				if (rarity.HasValue && !rec.Rarity.HasValue)
+					rec.Rarity = rarity;
 			}
 
 			rec.TotalDamage += damage;
@@ -116,9 +125,11 @@ namespace Augments.Core
 				rec.MaxHit = damage;
 		}
 
-		public static void RecordWeaponHit(string weaponName, int damage, bool isCrit)
+		public static void RecordWeaponHit(string weaponName, int damage, bool isCrit, AugmentClass weaponClass = AugmentClass.Universal)
 		{
-			RecordHit("weapon_base", string.IsNullOrEmpty(weaponName) ? "Held Weapon" : weaponName, damage, isCrit, new Color(240, 240, 245), null, isProtocol: false, isWeapon: true);
+			string cleanName = string.IsNullOrEmpty(weaponName) ? "Held Weapon" : weaponName;
+			string id = "weapon_" + cleanName.ToLowerInvariant().Replace(' ', '_');
+			RecordHit(id, cleanName, damage, isCrit, new Color(240, 240, 245), null, weaponClass, isProtocol: false, isWeapon: true);
 		}
 
 		public static void RecordChipHit(Augment augment, int damage, bool isCrit)
@@ -134,7 +145,7 @@ namespace Augments.Core
 				_ => new Color(210, 215, 225)
 			};
 
-			RecordHit(augment.Id, augment.DisplayName, damage, isCrit, rarityColor, augment.Rarity, isProtocol: false, isWeapon: false);
+			RecordHit(augment.Id, augment.DisplayName, damage, isCrit, rarityColor, augment.Rarity, augment.Class, isProtocol: false, isWeapon: false);
 		}
 
 		public static void RecordChipHit(string sourceId, int damage, bool isCrit)
@@ -149,19 +160,29 @@ namespace Augments.Core
 			}
 			else
 			{
-				RecordHit(sourceId, sourceId, damage, isCrit, Color.White, null, isProtocol: false, isWeapon: false);
+				RecordHit(sourceId, sourceId, damage, isCrit, Color.White, null, null, isProtocol: false, isWeapon: false);
 			}
 		}
 
 		public static void RecordProtocolHit(string protocolId, string protocolName, int damage, bool isCrit)
 		{
 			Color protocolColor = new Color(255, 62, 165); // Vivid Electric Fuchsia
+			AugmentClass protoClass = protocolId switch
+			{
+				AugmentFamilyRegistry.BloodhunterId or AugmentFamilyRegistry.KineticId => AugmentClass.Melee,
+				AugmentFamilyRegistry.MarksmanId or AugmentFamilyRegistry.GunslingerId => AugmentClass.Ranged,
+				AugmentFamilyRegistry.ArcaneSurgeId or AugmentFamilyRegistry.CryoId => AugmentClass.Magic,
+				AugmentFamilyRegistry.HivemindId or AugmentFamilyRegistry.LasherId => AugmentClass.Summon,
+				AugmentFamilyRegistry.FieldMedicId => AugmentClass.Support,
+				_ => AugmentClass.Universal
+			};
+
 			if (AugmentFamilyRegistry.Families.TryGetValue(protocolId, out var fam))
 			{
 				protocolColor = fam.ThemeColor;
 			}
 
-			RecordHit($"proto_{protocolId}", protocolName, damage, isCrit, protocolColor, null, isProtocol: true, isWeapon: false);
+			RecordHit($"proto_{protocolId}", protocolName, damage, isCrit, protocolColor, null, protoClass, isProtocol: true, isWeapon: false);
 		}
 
 		public static float GetCurrentDPS()
@@ -217,6 +238,7 @@ namespace Augments.Core
 						CritCount = 0,
 						MaxHit = 0,
 						Rarity = a.Rarity,
+						SourceClass = a.Class,
 						IsProtocol = false,
 						IsWeapon = false
 					};
@@ -238,6 +260,7 @@ namespace Augments.Core
 							DisplayName = kvp.Value.DisplayName,
 							Color = kvp.Value.Color,
 							Rarity = kvp.Value.Rarity,
+							SourceClass = kvp.Value.SourceClass,
 							IsProtocol = kvp.Value.IsProtocol,
 							IsWeapon = kvp.Value.IsWeapon
 						};
@@ -272,6 +295,7 @@ namespace Augments.Core
 								DisplayName = meta.DisplayName,
 								Color = meta.Color,
 								Rarity = meta.Rarity,
+								SourceClass = meta.SourceClass,
 								IsProtocol = meta.IsProtocol,
 								IsWeapon = meta.IsWeapon
 							};

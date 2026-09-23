@@ -29,9 +29,26 @@ namespace Augments
 		private UIText durationValueText;
 		private UIText hitsValueText;
 
+		public enum AnalyticsSourceFilter
+		{
+			All,
+			PluginsOnly,
+			WeaponsOnly,
+			ProtocolsOnly
+		}
+
+		private AnalyticsSourceFilter currentSourceFilter = AnalyticsSourceFilter.All;
+		private AugmentClass? currentClassFilter = null;
+		private AugmentRarity? currentRarityFilter = null;
+		private string currentSearchQuery = "";
+		private bool isFilterMenuOpen = false;
+		private AnalyticsFilterPanel filterPanel;
+
 		private AnalyticsActionButton modeButton;
 		private AnalyticsActionButton pauseButton;
 		private AnalyticsActionButton resetButton;
+		private AnalyticsActionButton filterButton;
+		private AnalyticsSearchBar searchBar;
 		private UIPanel statusPill;
 		private UIText statusPillText;
 
@@ -91,7 +108,7 @@ namespace Augments
 			modeButton = new AnalyticsActionButton("★  Mode: Last 10 Mins  ★", new Color(56, 189, 248), new Color(20, 42, 65));
 			modeButton.Left.Set(16f, 0f);
 			modeButton.Top.Set(barTop, 0f);
-			modeButton.Width.Set(200f, 0f);
+			modeButton.Width.Set(180f, 0f);
 			modeButton.Height.Set(barHeight, 0f);
 			modeButton.Clicked += () =>
 			{
@@ -103,10 +120,10 @@ namespace Augments
 			};
 			backPanel.Append(modeButton);
 
-			pauseButton = new AnalyticsActionButton("⏸  Pause Feed", new Color(250, 204, 21), new Color(48, 42, 20));
-			pauseButton.Left.Set(224f, 0f);
+			pauseButton = new AnalyticsActionButton("⏸  Pause", new Color(250, 204, 21), new Color(48, 42, 20));
+			pauseButton.Left.Set(202f, 0f);
 			pauseButton.Top.Set(barTop, 0f);
-			pauseButton.Width.Set(125f, 0f);
+			pauseButton.Width.Set(108f, 0f);
 			pauseButton.Height.Set(barHeight, 0f);
 			pauseButton.Clicked += () =>
 			{
@@ -115,10 +132,10 @@ namespace Augments
 			};
 			backPanel.Append(pauseButton);
 
-			resetButton = new AnalyticsActionButton("↺  Reset Data", new Color(248, 113, 113), new Color(50, 24, 24));
-			resetButton.Left.Set(357f, 0f);
+			resetButton = new AnalyticsActionButton("↺  Reset", new Color(248, 113, 113), new Color(50, 24, 24));
+			resetButton.Left.Set(316f, 0f);
 			resetButton.Top.Set(barTop, 0f);
-			resetButton.Width.Set(110f, 0f);
+			resetButton.Width.Set(95f, 0f);
 			resetButton.Height.Set(barHeight, 0f);
 			resetButton.Clicked += () =>
 			{
@@ -128,17 +145,37 @@ namespace Augments
 			};
 			backPanel.Append(resetButton);
 
+			filterButton = new AnalyticsActionButton("⚙  Filters", new Color(168, 85, 247), new Color(38, 22, 58));
+			filterButton.Left.Set(417f, 0f);
+			filterButton.Top.Set(barTop, 0f);
+			filterButton.Width.Set(125f, 0f);
+			filterButton.Height.Set(barHeight, 0f);
+			filterButton.Clicked += ToggleFilterMenu;
+			backPanel.Append(filterButton);
+
+			searchBar = new AnalyticsSearchBar();
+			searchBar.Left.Set(548f, 0f);
+			searchBar.Top.Set(barTop, 0f);
+			searchBar.Width.Set(140f, 0f);
+			searchBar.Height.Set(barHeight, 0f);
+			searchBar.OnSearchChanged += (text) =>
+			{
+				currentSearchQuery = text;
+				PopulateRecords();
+			};
+			backPanel.Append(searchBar);
+
 			// Status indicator pill on the far right
 			statusPill = new UIPanel();
-			statusPill.Left.Set(-180f, 1f);
+			statusPill.Left.Set(-152f, 1f);
 			statusPill.Top.Set(barTop, 0f);
-			statusPill.Width.Set(164f, 0f);
+			statusPill.Width.Set(136f, 0f);
 			statusPill.Height.Set(barHeight, 0f);
 			statusPill.SetPadding(0f);
 			statusPill.BackgroundColor = new Color(14, 20, 36) * 0.95f;
 			statusPill.BorderColor = new Color(74, 222, 128) * 0.7f;
 
-			statusPillText = new UIText("● Live Telemetry", 0.72f)
+			statusPillText = new UIText("● Live Feed", 0.70f)
 			{
 				HAlign = 0.5f,
 				VAlign = 0.5f,
@@ -261,9 +298,115 @@ namespace Augments
 			backPanel.Append(header);
 		}
 
+		public bool HasActiveFilters => currentSourceFilter != AnalyticsSourceFilter.All || currentClassFilter.HasValue || currentRarityFilter.HasValue;
+
+		public AnalyticsSourceFilter CurrentSourceFilter => currentSourceFilter;
+		public AugmentClass? CurrentClassFilter => currentClassFilter;
+		public AugmentRarity? CurrentRarityFilter => currentRarityFilter;
+
+		public void SetSourceFilter(AnalyticsSourceFilter filter)
+		{
+			currentSourceFilter = filter;
+			UpdateFilterButtonDisplay();
+			PopulateRecords();
+		}
+
+		public void SetClassFilter(AugmentClass? cls)
+		{
+			currentClassFilter = cls;
+			UpdateFilterButtonDisplay();
+			PopulateRecords();
+		}
+
+		public void SetRarityFilter(AugmentRarity? rar)
+		{
+			currentRarityFilter = rar;
+			UpdateFilterButtonDisplay();
+			PopulateRecords();
+		}
+
+		public void ResetFilters()
+		{
+			currentSourceFilter = AnalyticsSourceFilter.All;
+			currentClassFilter = null;
+			currentRarityFilter = null;
+			if (searchBar != null)
+				searchBar.Text = "";
+			currentSearchQuery = "";
+			UpdateFilterButtonDisplay();
+			PopulateRecords();
+		}
+
+		public void UpdateFilterButtonDisplay()
+		{
+			if (filterButton == null)
+				return;
+
+			if (!HasActiveFilters)
+			{
+				filterButton.SetLabel("⚙  Filters");
+				filterButton.SetAccent(new Color(168, 85, 247));
+			}
+			else
+			{
+				string filterSummary = "⚙ ";
+				if (currentClassFilter.HasValue)
+					filterSummary += $"{currentClassFilter.Value} ";
+				else if (currentSourceFilter != AnalyticsSourceFilter.All)
+				{
+					filterSummary += currentSourceFilter switch
+					{
+						AnalyticsSourceFilter.PluginsOnly => "Chips ",
+						AnalyticsSourceFilter.WeaponsOnly => "Weapons ",
+						AnalyticsSourceFilter.ProtocolsOnly => "Protocols ",
+						_ => ""
+					};
+				}
+				else if (currentRarityFilter.HasValue)
+					filterSummary += $"{currentRarityFilter.Value} ";
+
+				filterButton.SetLabel(filterSummary.TrimEnd() + " ★");
+				filterButton.SetAccent(new Color(255, 215, 75));
+			}
+
+			filterPanel?.UpdatePillStates();
+		}
+
+		public void ToggleFilterMenu()
+		{
+			isFilterMenuOpen = !isFilterMenuOpen;
+			if (isFilterMenuOpen)
+			{
+				if (filterPanel == null)
+				{
+					filterPanel = new AnalyticsFilterPanel(this);
+					filterPanel.Left.Set(240f, 0f);
+					filterPanel.Top.Set(108f, 0f);
+					filterPanel.Width.Set(520f, 0f);
+					filterPanel.Height.Set(210f, 0f);
+				}
+				filterPanel.UpdatePillStates();
+				backPanel.Append(filterPanel);
+			}
+			else if (filterPanel != null && backPanel.HasChild(filterPanel))
+			{
+				backPanel.RemoveChild(filterPanel);
+			}
+		}
+
+		public override void OnDeactivate()
+		{
+			base.OnDeactivate();
+			if (searchBar != null)
+				searchBar.IsFocused = false;
+			if (isFilterMenuOpen)
+				ToggleFilterMenu();
+		}
+
 		public void Refresh()
 		{
 			UpdateControlLabels();
+			UpdateFilterButtonDisplay();
 			PopulateRecords();
 		}
 
@@ -293,7 +436,7 @@ namespace Augments
 				else
 				{
 					statusPill.BorderColor = new Color(74, 222, 128) * 0.7f;
-					statusPillText.SetText("● Live Telemetry");
+					statusPillText.SetText("● Live Feed");
 					statusPillText.TextColor = new Color(74, 222, 128);
 				}
 			}
@@ -304,6 +447,10 @@ namespace Augments
 			base.Update(gameTime);
 
 			if (backPanel != null && backPanel.ContainsPoint(Main.MouseScreen))
+			{
+				Main.LocalPlayer.mouseInterface = true;
+			}
+			else if (filterPanel != null && isFilterMenuOpen && filterPanel.ContainsPoint(Main.MouseScreen))
 			{
 				Main.LocalPlayer.mouseInterface = true;
 			}
@@ -399,7 +546,40 @@ namespace Augments
 			if (hitsValueText != null)
 				hitsValueText.SetText($"{totalHits:N0} ({critRate:0.0}%)");
 
-			if (sortedRecords.Count == 0)
+			// Apply active filters
+			var filteredRecords = new List<DamageSourceRecord>();
+			foreach (var rec in sortedRecords)
+			{
+				// Source type filter
+				if (currentSourceFilter == AnalyticsSourceFilter.PluginsOnly && (rec.IsWeapon || rec.IsProtocol))
+					continue;
+				if (currentSourceFilter == AnalyticsSourceFilter.WeaponsOnly && !rec.IsWeapon)
+					continue;
+				if (currentSourceFilter == AnalyticsSourceFilter.ProtocolsOnly && !rec.IsProtocol)
+					continue;
+
+				// Combat class filter
+				if (currentClassFilter.HasValue && rec.SourceClass != currentClassFilter.Value)
+					continue;
+
+				// Chip rarity filter (only applies to chips)
+				if (currentRarityFilter.HasValue)
+				{
+					if (rec.IsWeapon || rec.IsProtocol)
+						continue;
+					if (rec.Rarity != currentRarityFilter.Value)
+						continue;
+				}
+
+				// Text search query
+				if (!string.IsNullOrWhiteSpace(currentSearchQuery) &&
+				    !rec.DisplayName.Contains(currentSearchQuery, StringComparison.OrdinalIgnoreCase))
+					continue;
+
+				filteredRecords.Add(rec);
+			}
+
+			if (filteredRecords.Count == 0)
 			{
 				UIPanel emptyRow = new UIPanel();
 				emptyRow.Width.Set(0f, 1f);
@@ -407,18 +587,31 @@ namespace Augments
 				emptyRow.BackgroundColor = new Color(16, 22, 42) * 0.8f;
 				emptyRow.BorderColor = new Color(30, 42, 70);
 
-				UIText emptyLabel = new UIText("No combat damage recorded yet. Strike enemies to gather neural telemetry.", 0.80f)
+				bool hasFilters = HasActiveFilters || !string.IsNullOrWhiteSpace(currentSearchQuery);
+				string emptyMsg = hasFilters
+					? "No telemetry records match your active filters. Click here to reset filters."
+					: "No combat damage recorded yet. Strike enemies to gather neural telemetry.";
+
+				UIText emptyLabel = new UIText(emptyMsg, 0.78f)
 				{
 					HAlign = 0.5f,
 					VAlign = 0.5f,
-					TextColor = new Color(148, 163, 184)
+					TextColor = hasFilters ? new Color(255, 215, 75) : new Color(148, 163, 184)
 				};
+				if (hasFilters)
+				{
+					emptyRow.OnLeftClick += (evt, elem) =>
+					{
+						ResetFilters();
+						SoundEngine.PlaySound(SoundID.MenuTick);
+					};
+				}
 				emptyRow.Append(emptyLabel);
 				recordsList.Add(emptyRow);
 				return;
 			}
 
-			foreach (var rec in sortedRecords)
+			foreach (var rec in filteredRecords)
 			{
 				var row = new AnalyticsRowEntry(rec, viewDamage);
 				recordsList.Add(row);
@@ -545,6 +738,501 @@ namespace Augments
 				BorderColor = accentColor * 0.7f;
 			}
 		}
+
+		// Reusable interactive button/pill for filter panel
+		private class FilterPillButton : UIPanel
+		{
+			public readonly UIText Label;
+			public event Action Clicked;
+			private bool isHovered;
+			public bool IsActiveHighlight { get; set; }
+			public Color CustomActiveBg { get; set; } = new Color(38, 54, 105);
+			public Color CustomActiveBorder { get; set; } = new Color(255, 215, 75);
+
+			public FilterPillButton(string initialText, float textScale = 0.70f)
+			{
+				SetPadding(0f);
+				BackgroundColor = new Color(20, 28, 54);
+				BorderColor = new Color(45, 60, 105);
+
+				Label = new UIText(initialText, textScale)
+				{
+					HAlign = 0.5f,
+					VAlign = 0.5f,
+					TextColor = new Color(200, 215, 235)
+				};
+				Append(Label);
+			}
+
+			public void SetText(string text) => Label.SetText(text);
+			public void SetTextColor(Color color) => Label.TextColor = color;
+
+			public override void MouseOver(UIMouseEvent evt)
+			{
+				base.MouseOver(evt);
+				isHovered = true;
+				SoundEngine.PlaySound(SoundID.MenuTick);
+			}
+
+			public override void MouseOut(UIMouseEvent evt)
+			{
+				base.MouseOut(evt);
+				isHovered = false;
+			}
+
+			public override void LeftClick(UIMouseEvent evt)
+			{
+				base.LeftClick(evt);
+				SoundEngine.PlaySound(SoundID.MenuTick);
+				Clicked?.Invoke();
+			}
+
+			protected override void DrawSelf(SpriteBatch spriteBatch)
+			{
+				if (IsActiveHighlight)
+				{
+					BackgroundColor = isHovered ? Color.Lerp(CustomActiveBg, Color.White, 0.2f) : CustomActiveBg;
+					BorderColor = CustomActiveBorder;
+					Label.TextColor = Color.White;
+				}
+				else
+				{
+					BackgroundColor = isHovered ? new Color(32, 44, 82) : new Color(18, 24, 46);
+					BorderColor = isHovered ? Color.White * 0.7f : new Color(42, 54, 95);
+					Label.TextColor = isHovered ? Color.White : new Color(180, 195, 220);
+				}
+
+				base.DrawSelf(spriteBatch);
+			}
+		}
+
+		// Search input bar with live text input, placeholder, clear button, and focus styling
+		private class AnalyticsSearchBar : UIPanel
+		{
+			public string Text { get; set; } = "";
+			public bool IsFocused { get; set; }
+			public event Action<string> OnSearchChanged;
+
+			private bool isHovered;
+			private int _textBlinkerCount;
+			private int _textBlinkerState;
+
+			public AnalyticsSearchBar()
+			{
+				SetPadding(0f);
+				BackgroundColor = new Color(16, 22, 44) * 0.95f;
+				BorderColor = new Color(45, 60, 105);
+			}
+
+			public void Clear()
+			{
+				if (!string.IsNullOrEmpty(Text))
+				{
+					Text = "";
+					OnSearchChanged?.Invoke(Text);
+				}
+			}
+
+			public override void Update(GameTime gameTime)
+			{
+				base.Update(gameTime);
+
+				if (IsFocused)
+				{
+					PlayerInput.WritingText = true;
+					Main.CurrentInputTextTakerOverride = this;
+				}
+
+				Vector2 mousePoint = new Vector2(Main.mouseX, Main.mouseY);
+				if (IsFocused && !ContainsPoint(mousePoint) && Main.mouseLeft)
+				{
+					IsFocused = false;
+				}
+			}
+
+			public override void LeftClick(UIMouseEvent evt)
+			{
+				base.LeftClick(evt);
+
+				var dims = GetDimensions();
+				if (!string.IsNullOrEmpty(Text) && evt.MousePosition.X >= dims.X + dims.Width - 22f)
+				{
+					Clear();
+					SoundEngine.PlaySound(SoundID.MenuTick);
+					return;
+				}
+
+				if (!IsFocused)
+				{
+					Main.clrInput();
+					IsFocused = true;
+					SoundEngine.PlaySound(SoundID.MenuTick);
+				}
+			}
+
+			public override void RightClick(UIMouseEvent evt)
+			{
+				base.RightClick(evt);
+				if (!string.IsNullOrEmpty(Text))
+				{
+					Clear();
+					SoundEngine.PlaySound(SoundID.MenuTick);
+				}
+			}
+
+			public override void MouseOver(UIMouseEvent evt)
+			{
+				base.MouseOver(evt);
+				isHovered = true;
+			}
+
+			public override void MouseOut(UIMouseEvent evt)
+			{
+				base.MouseOut(evt);
+				isHovered = false;
+			}
+
+			protected override void DrawSelf(SpriteBatch spriteBatch)
+			{
+				if (IsFocused)
+				{
+					PlayerInput.WritingText = true;
+					Main.CurrentInputTextTakerOverride = this;
+					Main.instance.HandleIME();
+
+					string inputText = Main.GetInputText(Text);
+					inputText = inputText.Replace("\r", "").Replace("\n", "");
+
+					if (Main.inputTextEscape)
+					{
+						Main.inputTextEscape = false;
+						IsFocused = false;
+					}
+					else if (Main.inputTextEnter)
+					{
+						Main.inputTextEnter = false;
+						IsFocused = false;
+					}
+
+					if (!inputText.Equals(Text))
+					{
+						Text = inputText;
+						OnSearchChanged?.Invoke(Text);
+					}
+
+					if (++_textBlinkerCount >= 20)
+					{
+						_textBlinkerState = (_textBlinkerState + 1) % 2;
+						_textBlinkerCount = 0;
+					}
+
+					BackgroundColor = new Color(18, 26, 56) * 0.98f;
+					BorderColor = new Color(110, 185, 255);
+				}
+				else if (isHovered)
+				{
+					BackgroundColor = new Color(22, 30, 60) * 0.95f;
+					BorderColor = new Color(75, 115, 185);
+				}
+				else
+				{
+					BackgroundColor = new Color(16, 22, 44) * 0.95f;
+					BorderColor = new Color(45, 60, 105);
+				}
+
+				base.DrawSelf(spriteBatch);
+
+				var dims = GetDimensions();
+				Vector2 scale = new Vector2(0.70f);
+				var font = FontAssets.MouseText.Value;
+				float textYOffset = 5f;
+
+				if (string.IsNullOrEmpty(Text))
+				{
+					if (IsFocused)
+					{
+						if (_textBlinkerState == 1)
+						{
+							Vector2 cursorSize = ChatManager.GetStringSize(font, "|", scale);
+							float textX = dims.X + 8f;
+							float textY = dims.Y + (dims.Height - cursorSize.Y) / 2f + textYOffset;
+							ChatManager.DrawColorCodedStringWithShadow(
+								spriteBatch,
+								font,
+								"|",
+								new Vector2(textX, textY),
+								new Color(110, 185, 255),
+								0f,
+								Vector2.Zero,
+								scale
+							);
+						}
+					}
+					else
+					{
+						string placeholder = "🔍 Search...";
+						Vector2 textSize = ChatManager.GetStringSize(font, placeholder, scale);
+						float textX = dims.X + 8f;
+						float textY = dims.Y + (dims.Height - textSize.Y) / 2f + textYOffset;
+						ChatManager.DrawColorCodedStringWithShadow(
+							spriteBatch,
+							font,
+							placeholder,
+							new Vector2(textX, textY),
+							new Color(130, 148, 175) * 0.75f,
+							0f,
+							Vector2.Zero,
+							scale
+						);
+					}
+				}
+				else
+				{
+					string display = Text;
+					if (IsFocused && _textBlinkerState == 1)
+					{
+						display += "|";
+					}
+
+					float clearBtnReserve = 20f;
+					float maxTextWidth = dims.Width - 12f - clearBtnReserve;
+					while (display.Length > 0 && ChatManager.GetStringSize(font, display, scale).X > maxTextWidth)
+					{
+						display = display.Substring(1);
+					}
+
+					Vector2 textSize = ChatManager.GetStringSize(font, display, scale);
+					float textX = dims.X + 8f;
+					float textY = dims.Y + (dims.Height - textSize.Y) / 2f + textYOffset;
+
+					ChatManager.DrawColorCodedStringWithShadow(
+						spriteBatch,
+						font,
+						display,
+						new Vector2(textX, textY),
+						Color.White,
+						0f,
+						Vector2.Zero,
+						scale
+					);
+
+					// Draw Clear [✕] button
+					bool clearHover = isHovered && Main.MouseScreen.X >= dims.X + dims.Width - 20f;
+					Color clearColor = clearHover ? new Color(255, 110, 110) : new Color(160, 175, 205) * 0.8f;
+					Vector2 xSize = ChatManager.GetStringSize(font, "✕", scale);
+					float xX = dims.X + dims.Width - 16f;
+					float xY = dims.Y + (dims.Height - xSize.Y) / 2f + textYOffset;
+
+					ChatManager.DrawColorCodedStringWithShadow(
+						spriteBatch,
+						font,
+						"✕",
+						new Vector2(xX, xY),
+						clearColor,
+						0f,
+						Vector2.Zero,
+						scale
+					);
+				}
+
+				if (isHovered && !string.IsNullOrEmpty(Text) && Main.MouseScreen.X >= dims.X + dims.Width - 20f)
+				{
+					Main.instance.MouseText("Clear search");
+				}
+			}
+		}
+
+		// Floating filter popup panel
+		private class AnalyticsFilterPanel : UIPanel
+		{
+			private readonly AugmentAnalyticsUIState state;
+			private readonly List<(AnalyticsSourceFilter filter, FilterPillButton btn)> sourceButtons = new();
+			private readonly List<(AugmentClass? cls, FilterPillButton btn)> classButtons = new();
+			private readonly List<(AugmentRarity? rar, FilterPillButton btn)> rarityButtons = new();
+			private UIText summaryText;
+
+			public AnalyticsFilterPanel(AugmentAnalyticsUIState state)
+			{
+				this.state = state;
+				SetPadding(8f);
+				BackgroundColor = new Color(14, 20, 42) * 0.98f;
+				BorderColor = new Color(255, 215, 75);
+
+				// Title
+				UIText title = new UIText("⚙ Combat Telemetry Filters", 0.84f)
+				{
+					TextColor = new Color(255, 215, 75),
+					Top = { Pixels = 2f },
+					Left = { Pixels = 4f }
+				};
+				Append(title);
+
+				// Close button [x]
+				var closeBtn = new CloseButton();
+				closeBtn.Width.Set(20f, 0f);
+				closeBtn.Height.Set(20f, 0f);
+				closeBtn.HAlign = 1f;
+				closeBtn.Top.Set(2f, 0f);
+				closeBtn.Left.Set(-2f, 0f);
+				closeBtn.Clicked += state.ToggleFilterMenu;
+				Append(closeBtn);
+
+				float curY = 26f;
+
+				// 1. SOURCE CATEGORY
+				AddSectionLabel("SOURCE CATEGORY", curY);
+				curY += 16f;
+
+				(AnalyticsSourceFilter filter, string name, float w)[] sourceDefs = {
+					(AnalyticsSourceFilter.All, "All Sources", 86f),
+					(AnalyticsSourceFilter.PluginsOnly, "Plug-in Chips", 104f),
+					(AnalyticsSourceFilter.WeaponsOnly, "Weapons", 82f),
+					(AnalyticsSourceFilter.ProtocolsOnly, "Protocols", 82f)
+				};
+				float rowX = 4f;
+				foreach (var def in sourceDefs)
+				{
+					var btn = CreatePill(def.name, def.w, 22f, rowX, curY);
+					btn.Clicked += () => state.SetSourceFilter(def.filter);
+					sourceButtons.Add((def.filter, btn));
+					rowX += def.w + 6f;
+				}
+				curY += 28f;
+
+				// 2. COMBAT CLASS
+				AddSectionLabel("COMBAT CLASS (WEAPONS & CHIPS)", curY);
+				curY += 16f;
+
+				(AugmentClass? cls, string name, float w)[] classDefs = {
+					(null, "All", 52f),
+					(AugmentClass.Melee, "Melee", 66f),
+					(AugmentClass.Ranged, "Ranged", 70f),
+					(AugmentClass.Magic, "Magic", 66f),
+					(AugmentClass.Summon, "Summon", 74f),
+					(AugmentClass.Universal, "Universal", 78f)
+				};
+				rowX = 4f;
+				foreach (var def in classDefs)
+				{
+					var btn = CreatePill(def.name, def.w, 22f, rowX, curY);
+					btn.Clicked += () => state.SetClassFilter(def.cls);
+					classButtons.Add((def.cls, btn));
+					rowX += def.w + 6f;
+				}
+				curY += 28f;
+
+				// 3. RARITY
+				AddSectionLabel("PLUG-IN CHIP RARITY", curY);
+				curY += 16f;
+
+				(AugmentRarity? rar, string name, float w)[] rarityDefs = {
+					(null, "All", 52f),
+					(AugmentRarity.Common, "Common", 72f),
+					(AugmentRarity.Rare, "Rare", 66f),
+					(AugmentRarity.Epic, "Epic", 66f),
+					(AugmentRarity.Legendary, "Legendary", 84f)
+				};
+				rowX = 4f;
+				foreach (var def in rarityDefs)
+				{
+					var btn = CreatePill(def.name, def.w, 22f, rowX, curY);
+					if (def.rar.HasValue)
+					{
+						Color rColor = AugmentListEntry.RarityColor(def.rar.Value);
+						if (def.rar.Value == AugmentRarity.Common) rColor = new Color(225, 230, 240);
+						btn.CustomActiveBorder = rColor;
+					}
+					btn.Clicked += () => state.SetRarityFilter(def.rar);
+					rarityButtons.Add((def.rar, btn));
+					rowX += def.w + 6f;
+				}
+				curY += 32f;
+
+				// Bottom Action Bar: Reset + Close + Summary
+				var resetBtn = new FilterPillButton("↺ Clear Filters", 0.72f);
+				resetBtn.Width.Set(110f, 0f);
+				resetBtn.Height.Set(24f, 0f);
+				resetBtn.Left.Set(4f, 0f);
+				resetBtn.Top.Set(curY, 0f);
+				resetBtn.BackgroundColor = new Color(60, 25, 35);
+				resetBtn.BorderColor = new Color(180, 70, 80);
+				resetBtn.Clicked += state.ResetFilters;
+				Append(resetBtn);
+
+				var closeApplyBtn = new FilterPillButton("✔ Close Menu", 0.72f);
+				closeApplyBtn.Width.Set(110f, 0f);
+				closeApplyBtn.Height.Set(24f, 0f);
+				closeApplyBtn.Left.Set(120f, 0f);
+				closeApplyBtn.Top.Set(curY, 0f);
+				closeApplyBtn.BackgroundColor = new Color(25, 45, 80);
+				closeApplyBtn.BorderColor = new Color(70, 130, 210);
+				closeApplyBtn.Clicked += state.ToggleFilterMenu;
+				Append(closeApplyBtn);
+
+				summaryText = new UIText("", 0.70f)
+				{
+					Left = { Pixels = 240f },
+					Top = { Pixels = curY + 4f },
+					TextColor = new Color(200, 215, 235)
+				};
+				Append(summaryText);
+			}
+
+			private void AddSectionLabel(string text, float top)
+			{
+				UIText label = new UIText(text, 0.65f)
+				{
+					TextColor = new Color(56, 189, 248),
+					Top = { Pixels = top },
+					Left = { Pixels = 4f }
+				};
+				Append(label);
+			}
+
+			private FilterPillButton CreatePill(string label, float width, float height, float left, float top)
+			{
+				var pill = new FilterPillButton(label)
+				{
+					Width = { Pixels = width },
+					Height = { Pixels = height },
+					Left = { Pixels = left },
+					Top = { Pixels = top }
+				};
+				Append(pill);
+				return pill;
+			}
+
+			public void UpdatePillStates()
+			{
+				foreach (var (filter, btn) in sourceButtons)
+				{
+					btn.IsActiveHighlight = state.CurrentSourceFilter == filter;
+				}
+
+				foreach (var (cls, btn) in classButtons)
+				{
+					btn.IsActiveHighlight = state.CurrentClassFilter == cls;
+				}
+
+				foreach (var (rar, btn) in rarityButtons)
+				{
+					btn.IsActiveHighlight = state.CurrentRarityFilter == rar;
+				}
+
+				if (summaryText != null)
+				{
+					int count = 0;
+					if (state.CurrentSourceFilter != AnalyticsSourceFilter.All) count++;
+					if (state.CurrentClassFilter.HasValue) count++;
+					if (state.CurrentRarityFilter.HasValue) count++;
+
+					if (count > 0)
+						summaryText.SetText($"[c/FDE047:{count} filter{(count > 1 ? "s" : "")} active]");
+					else
+						summaryText.SetText("[c/94A3B8:Showing all telemetry]");
+				}
+			}
+		}
 	}
 
 	// Single styled row in the Analytics telemetry list
@@ -624,9 +1312,31 @@ namespace Augments
 					spriteBatch.Draw(classIcon, targetIcon, Color.White);
 				}
 			}
+			else if (record.IsWeapon)
+			{
+				string weaponGlyph = record.SourceClass switch
+				{
+					AugmentClass.Melee => "⚔",
+					AugmentClass.Ranged => "⌖",
+					AugmentClass.Magic => "★",
+					AugmentClass.Summon => "❖",
+					_ => "⚔"
+				};
+				Color weaponCol = record.SourceClass switch
+				{
+					AugmentClass.Melee => new Color(249, 115, 22),
+					AugmentClass.Ranged => new Color(74, 222, 128),
+					AugmentClass.Magic => new Color(56, 189, 248),
+					AugmentClass.Summon => new Color(192, 132, 252),
+					_ => new Color(225, 230, 240)
+				};
+				Vector2 cSz = ChatManager.GetStringSize(font, weaponGlyph, new Vector2(0.85f));
+				Vector2 cPos = new Vector2(iconBox.X + (iconBox.Width - cSz.X) * 0.5f, iconBox.Y + (iconBox.Height - cSz.Y) * 0.5f);
+				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, weaponGlyph, cPos, weaponCol, 0f, Vector2.Zero, new Vector2(0.85f));
+			}
 			else
 			{
-				string iconChar = record.IsWeapon ? "⚔" : "✦";
+				string iconChar = record.IsProtocol ? "◆" : "✦";
 				Vector2 cSz = ChatManager.GetStringSize(font, iconChar, new Vector2(0.85f));
 				Vector2 cPos = new Vector2(iconBox.X + (iconBox.Width - cSz.X) * 0.5f, iconBox.Y + (iconBox.Height - cSz.Y) * 0.5f);
 				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, iconChar, cPos, record.Color, 0f, Vector2.Zero, new Vector2(0.85f));
@@ -647,11 +1357,19 @@ namespace Augments
 				subTag = $"[c/38BDF8:{augmentRef.Class}]  •  [c/{rHex}:{augmentRef.Rarity} Chip]";
 			}
 			else if (record.IsProtocol)
-				subTag = "[c/FF3EA5:Protocol Synergy]";
+			{
+				string pClass = record.SourceClass.HasValue ? record.SourceClass.Value.ToString() : "Universal";
+				subTag = $"[c/38BDF8:{pClass}]  •  [c/FF3EA5:Protocol Synergy]";
+			}
 			else if (record.IsWeapon)
-				subTag = "[c/CBD5E1:Primary Weapon]";
+			{
+				string wClass = record.SourceClass.HasValue ? record.SourceClass.Value.ToString() : "Melee";
+				subTag = $"[c/38BDF8:{wClass} Weapon]  •  [c/CBD5E1:Primary]";
+			}
 			else
+			{
 				subTag = "[c/94A3B8:Combat Proc]";
+			}
 
 			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, subTag, new Vector2(textX, rect.Y + 26f), Color.White, 0f, Vector2.Zero, new Vector2(0.65f));
 
