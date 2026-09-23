@@ -30,7 +30,7 @@ namespace Augments
             if (source == AugmentHitSource.AugmentProc)
                 return;
 
-            if (item.CountsAsClass(DamageClass.Melee))
+            if (item.CountsAsClass(DamageClass.Melee) || item.DamageType == DamageClass.Melee)
                 ApplyOnHitDamage(player, target);
         }
 
@@ -39,19 +39,19 @@ namespace Augments
             if (source == AugmentHitSource.AugmentProc)
                 return;
 
-            if (proj.CountsAsClass(DamageClass.Melee))
+            if (proj.CountsAsClass(DamageClass.Melee) || proj.DamageType == DamageClass.Melee)
                 ApplyOnHitDamage(player, target);
         }
 
         public override void OnHitNPCWithItem(Player player, Item item, NPC target, NPC.HitInfo hit)
         {
-            if (item.CountsAsClass(DamageClass.Melee))
+            if (item.CountsAsClass(DamageClass.Melee) || item.DamageType == DamageClass.Melee)
                 ApplyOnHitDamage(player, target);
         }
 
         public override void OnHitNPCWithProj(Player player, Projectile proj, NPC target, NPC.HitInfo hit)
         {
-            if (proj.CountsAsClass(DamageClass.Melee))
+            if (proj.CountsAsClass(DamageClass.Melee) || proj.DamageType == DamageClass.Melee)
                 ApplyOnHitDamage(player, target);
         }
 
@@ -62,7 +62,7 @@ namespace Augments
             Strike(player, target, BaseOnHitDamage);
             if (player.whoAmI == Main.myPlayer)
             {
-                AugmentDamageTracker.RecordChipHit(AugmentDatabase.GetById("chain_lightning"), BaseOnHitDamage, false);
+                AugmentDamageTracker.RecordChipHit("chain_lightning", BaseOnHitDamage, false);
             }
         }
 
@@ -142,7 +142,7 @@ namespace Augments
                 chainTarget.StrikeNPC(chainHit);
                 if (player.whoAmI == Main.myPlayer)
                 {
-                    AugmentDamageTracker.RecordChipHit(AugmentDatabase.GetById("chain_lightning"), chainDamage, hit.Crit);
+                    AugmentDamageTracker.RecordChipHit("chain_lightning", chainDamage, hit.Crit);
                 }
                 if (Main.netMode != NetmodeID.SinglePlayer)
                     NetMessage.SendStrikeNPC(chainTarget, in chainHit);

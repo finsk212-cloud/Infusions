@@ -1,6 +1,7 @@
 using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
+using Augments.Core;
 
 namespace Augments
 {
@@ -78,6 +79,8 @@ namespace Augments
             };
 
             target.StrikeNPC(hit);
+            if (player.whoAmI == Main.myPlayer)
+                AugmentDamageTracker.RecordChipHit("overcharge_round", damage, false);
             // StrikeNPC does not sync itself. In multiplayer the damage would
             // only apply on the local client; the server's authoritative NPC
             // never takes it and re-syncs back to alive (looks like a "respawn").

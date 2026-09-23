@@ -43,6 +43,7 @@ namespace Augments
 		private int updateCounter = 0;
 		private long lastSeenTotalDamage = -1;
 		private AnalyticsViewMode lastSeenMode = AnalyticsViewMode.Last10Minutes;
+		private int lastSeenOwnedCount = -1;
 
 		public override void OnInitialize()
 		{
@@ -56,7 +57,7 @@ namespace Augments
 			backPanel.BorderColor = new Color(38, 52, 98);
 			Append(backPanel);
 
-			// 2. Title & Subtitle Header (Cleanly separated at Y = 12 & Y = 36)
+			// 2. Title & Subtitle Header (Cleanly separated at Y = 12 & Y = 38)
 			UIText titleText = new UIText("✦  Combat Analytics & DPS  ✦", 1.15f)
 			{
 				HAlign = 0.5f,
@@ -70,7 +71,7 @@ namespace Augments
 				HAlign = 0.5f,
 				TextColor = new Color(150, 170, 205)
 			};
-			subtitle.Top.Set(36f, 0f);
+			subtitle.Top.Set(38f, 0f);
 			backPanel.Append(subtitle);
 
 			// Close Button in top-right corner
@@ -83,8 +84,8 @@ namespace Augments
 			closeButton.Clicked += () => ModContent.GetInstance<AugmentUISystem>().HideAnalytics();
 			backPanel.Append(closeButton);
 
-			// 3. Control Action Toolbar (Y = 70f to 98f - completely clear of header & divider)
-			float barTop = 70f;
+			// 3. Control Action Toolbar (Y = 76f to 104f - completely clear of header divider at 66f)
+			float barTop = 76f;
 			float barHeight = 28f;
 
 			modeButton = new AnalyticsActionButton("★  Mode: Last 10 Mins  ★", new Color(56, 189, 248), new Color(20, 42, 65));
@@ -146,21 +147,21 @@ namespace Augments
 			statusPill.Append(statusPillText);
 			backPanel.Append(statusPill);
 
-			// 4. Summary Metric Cards (Y = 108f to 162f)
+			// 4. Summary Metric Cards (Y = 114f to 166f)
 			CreateMetricCards();
 
-			// 5. Table Column Header Bar (Y = 170f to 196f)
+			// 5. Table Column Header Bar (Y = 176f to 202f)
 			CreateTableHeaders();
 
-			// 6. Scrollable Records List & Scrollbar (Y = 202f to 582f)
-			float listTop = 202f;
+			// 6. Scrollable Records List & Scrollbar (Y = 208f to 582f)
+			float listTop = 208f;
 			float listHeight = PanelHeight - listTop - 18f;
 
 			recordsList = new UIList();
 			recordsList.ManualSortMethod = _ => { };
 			recordsList.Top.Set(listTop, 0f);
 			recordsList.Left.Set(16f, 0f);
-			recordsList.Width.Set(PanelWidth - 46f, 0f);
+			recordsList.Width.Set(PanelWidth - 48f, 0f);
 			recordsList.Height.Set(listHeight, 0f);
 			recordsList.ListPadding = 4f;
 			backPanel.Append(recordsList);
@@ -168,15 +169,24 @@ namespace Augments
 			listScrollbar = new UIScrollbar();
 			listScrollbar.Top.Set(listTop, 0f);
 			listScrollbar.Height.Set(listHeight, 0f);
-			listScrollbar.Left.Set(PanelWidth - 26f, 0f);
+			listScrollbar.Left.Set(PanelWidth - 28f, 0f);
+			listScrollbar.Width.Set(18f, 0f);
 			recordsList.SetScrollbar(listScrollbar);
 			backPanel.Append(listScrollbar);
+
+			PopulateRecords();
+		}
+
+		public override void OnActivate()
+		{
+			base.OnActivate();
+			PopulateRecords();
 		}
 
 		private void CreateMetricCards()
 		{
-			float cardTop = 108f;
-			float cardHeight = 54f;
+			float cardTop = 114f;
+			float cardHeight = 52f;
 			float totalW = PanelWidth - 32f;
 			float cardSpacing = 8f;
 			float cardW = (totalW - (cardSpacing * 3f)) / 4f;
@@ -232,16 +242,16 @@ namespace Augments
 		{
 			UIPanel header = new UIPanel();
 			header.Left.Set(16f, 0f);
-			header.Top.Set(170f, 0f);
-			header.Width.Set(PanelWidth - 46f, 0f);
+			header.Top.Set(176f, 0f);
+			header.Width.Set(PanelWidth - 48f, 0f);
 			header.Height.Set(26f, 0f);
 			header.SetPadding(0f);
 			header.BackgroundColor = new Color(16, 22, 42) * 0.90f;
 			header.BorderColor = new Color(34, 48, 86);
 
 			var col1 = new UIText("PLUG-IN CHIP / DAMAGE SOURCE", 0.72f) { Top = new StyleDimension(5f, 0f), Left = new StyleDimension(16f, 0f), TextColor = new Color(180, 200, 230) };
-			var col2 = new UIText("HITS & CRITS", 0.72f) { Top = new StyleDimension(5f, 0f), Left = new StyleDimension(340f, 0f), TextColor = new Color(180, 200, 230) };
-			var col3 = new UIText("MAX HIT", 0.72f) { Top = new StyleDimension(5f, 0f), Left = new StyleDimension(510f, 0f), TextColor = new Color(180, 200, 230) };
+			var col2 = new UIText("HITS & CRITS", 0.72f) { Top = new StyleDimension(5f, 0f), Left = new StyleDimension(350f, 0f), TextColor = new Color(180, 200, 230) };
+			var col3 = new UIText("MAX HIT", 0.72f) { Top = new StyleDimension(5f, 0f), Left = new StyleDimension(520f, 0f), TextColor = new Color(180, 200, 230) };
 			var col4 = new UIText("DAMAGE (% SHARE)", 0.72f) { Top = new StyleDimension(5f, 0f), HAlign = 1f, Left = new StyleDimension(-24f, 0f), TextColor = new Color(180, 200, 230) };
 
 			header.Append(col1);
@@ -344,10 +354,12 @@ namespace Augments
 				if (hitsValueText != null)
 					hitsValueText.SetText($"{totalHits:N0} ({critRate:0.0}%)");
 
-				if (viewDmg != lastSeenTotalDamage || AugmentDamageTracker.ViewMode != lastSeenMode)
+				int ownedCount = ap?.Owned?.Count ?? 0;
+				if (viewDmg != lastSeenTotalDamage || AugmentDamageTracker.ViewMode != lastSeenMode || ownedCount != lastSeenOwnedCount)
 				{
 					lastSeenTotalDamage = viewDmg;
 					lastSeenMode = AugmentDamageTracker.ViewMode;
+					lastSeenOwnedCount = ownedCount;
 					PopulateRecords();
 				}
 			}
@@ -421,8 +433,8 @@ namespace Augments
 
 				CalculatedStyle dims = GetDimensions();
 
-				// Header horizontal divider (cleanly at Y = 62)
-				int divY = (int)dims.Y + 62;
+				// Header horizontal divider (cleanly at Y = 66)
+				int divY = (int)dims.Y + 66;
 				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle((int)dims.X + 20, divY, (int)dims.Width - 40, 1), new Color(45, 62, 105) * 0.75f);
 
 				// Center diamond node
@@ -550,6 +562,7 @@ namespace Augments
 			this.augmentRef = AugmentDatabase.GetById(record.Id);
 
 			SetPadding(0f);
+			Width.Set(0f, 1f);
 			Height.Set(48f, 0f);
 		}
 
@@ -595,7 +608,7 @@ namespace Augments
 			DynamicSpriteFont font = FontAssets.MouseText.Value;
 
 			// 1. Icon Box on the Left
-			Rectangle iconBox = new Rectangle(rect.X + 8, rect.Y + 8, 32, 32);
+			Rectangle iconBox = new Rectangle(rect.X + 12, rect.Y + 8, 32, 32);
 			spriteBatch.Draw(TextureAssets.MagicPixel.Value, iconBox, new Color(12, 18, 34) * 0.95f);
 			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(iconBox.X, iconBox.Y, iconBox.Width, 1), borderColor * 0.7f);
 			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(iconBox.X, iconBox.Bottom - 1, iconBox.Width, 1), borderColor * 0.7f);
@@ -620,7 +633,7 @@ namespace Augments
 			}
 
 			// 2. Name & Category Tag
-			float textX = rect.X + 48f;
+			float textX = rect.X + 52f;
 			string nameText = record.DisplayName;
 			if (nameText.Length > 28)
 				nameText = nameText.Substring(0, 26) + "...";
@@ -642,14 +655,14 @@ namespace Augments
 
 			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, subTag, new Vector2(textX, rect.Y + 26f), Color.White, 0f, Vector2.Zero, new Vector2(0.65f));
 
-			// 3. Hits & Crits (aligned to 340f)
+			// 3. Hits & Crits (aligned to 350f)
 			float critRate = record.HitCount > 0 ? ((float)record.CritCount / record.HitCount) * 100f : 0f;
 			string hitsText = $"{record.HitCount:N0} Hits  •  {record.CritCount:N0} Crits ({critRate:0.0}%)";
-			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, hitsText, new Vector2(rect.X + 340f, rect.Y + 16f), new Color(200, 215, 235), 0f, Vector2.Zero, new Vector2(0.72f));
+			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, hitsText, new Vector2(rect.X + 350f, rect.Y + 16f), new Color(200, 215, 235), 0f, Vector2.Zero, new Vector2(0.72f));
 
-			// 4. Max Hit (aligned to 510f)
+			// 4. Max Hit (aligned to 520f)
 			string maxHitText = record.MaxHit > 0 ? $"{record.MaxHit:N0}" : "--";
-			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, maxHitText, new Vector2(rect.X + 510f, rect.Y + 16f), new Color(253, 224, 71), 0f, Vector2.Zero, new Vector2(0.74f));
+			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, maxHitText, new Vector2(rect.X + 520f, rect.Y + 16f), new Color(253, 224, 71), 0f, Vector2.Zero, new Vector2(0.74f));
 
 			// 5. Total Damage & Share Percentage (right-aligned to right margin)
 			float sharePercent = totalSessionDamage > 0 ? (float)record.TotalDamage / totalSessionDamage : 0f;

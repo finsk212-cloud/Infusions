@@ -36,13 +36,23 @@ namespace Augments
         public override void OnHitNPCWithItem(Player player, Item item, NPC target, NPC.HitInfo hit)
         {
             if (hit.Crit && Main.rand.NextFloat() < ProcChance * (1f + player.GetModPlayer<AugmentPlayer>().TotalFortune))
-                target.SimpleStrikeNPC(ScaleHitEffect(hit.Damage), player.direction);
+            {
+                int dmg = ScaleHitEffect(hit.Damage);
+                target.SimpleStrikeNPC(dmg, player.direction);
+                if (player.whoAmI == Main.myPlayer)
+                    AugmentDamageTracker.RecordChipHit("lucky_strike", dmg, false);
+            }
         }
 
         public override void OnHitNPCWithProj(Player player, Projectile proj, NPC target, NPC.HitInfo hit)
         {
             if (hit.Crit && Main.rand.NextFloat() < ProcChance * (1f + player.GetModPlayer<AugmentPlayer>().TotalFortune))
-                target.SimpleStrikeNPC(ScaleHitEffect(hit.Damage), player.direction);
+            {
+                int dmg = ScaleHitEffect(hit.Damage);
+                target.SimpleStrikeNPC(dmg, player.direction);
+                if (player.whoAmI == Main.myPlayer)
+                    AugmentDamageTracker.RecordChipHit("lucky_strike", dmg, false);
+            }
         }
     }
 }

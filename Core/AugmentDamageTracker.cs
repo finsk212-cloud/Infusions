@@ -137,6 +137,22 @@ namespace Augments.Core
 			RecordHit(augment.Id, augment.DisplayName, damage, isCrit, rarityColor, augment.Rarity, isProtocol: false, isWeapon: false);
 		}
 
+		public static void RecordChipHit(string sourceId, int damage, bool isCrit)
+		{
+			if (string.IsNullOrEmpty(sourceId) || damage <= 0)
+				return;
+
+			Augment aug = AugmentDatabase.GetById(sourceId);
+			if (aug != null)
+			{
+				RecordChipHit(aug, damage, isCrit);
+			}
+			else
+			{
+				RecordHit(sourceId, sourceId, damage, isCrit, Color.White, null, isProtocol: false, isWeapon: false);
+			}
+		}
+
 		public static void RecordProtocolHit(string protocolId, string protocolName, int damage, bool isCrit)
 		{
 			Color protocolColor = new Color(255, 62, 165); // Vivid Electric Fuchsia
