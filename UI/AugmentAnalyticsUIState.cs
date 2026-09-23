@@ -284,9 +284,9 @@ namespace Augments
 			{
 				this.StatType = type;
 				SetPadding(0f);
-				Width.Set(36f, 0f);
+				Width.Set(18f, 0f);
 				Height.Set(18f, 0f);
-				Left.Set(-42f, 1f);
+				Left.Set(-24f, 1f);
 				Top.Set(5f, 0f);
 			}
 
@@ -316,7 +316,7 @@ namespace Augments
 
 				if (isPinned)
 				{
-					BackgroundColor = isHovered ? new Color(55, 45, 20) : new Color(38, 30, 14);
+					BackgroundColor = isHovered ? new Color(60, 48, 20) : new Color(38, 30, 14);
 					BorderColor = isHovered ? Color.White : new Color(255, 215, 75);
 				}
 				else
@@ -327,15 +327,29 @@ namespace Augments
 
 				base.DrawSelf(spriteBatch);
 
-				var dims = GetDimensions();
-				var font = FontAssets.MouseText.Value;
-				string badgeText = isPinned ? "PIN ★" : "PIN";
-				Vector2 scale = new Vector2(0.52f);
-				Vector2 sz = ChatManager.GetStringSize(font, badgeText, scale);
-				Vector2 pos = new Vector2(dims.X + (dims.Width - sz.X) * 0.5f, dims.Y + (dims.Height - sz.Y) * 0.5f + 3f);
-				Color pinCol = isPinned ? new Color(255, 215, 75) : (isHovered ? Color.White : new Color(140, 155, 185));
+				CalculatedStyle dims = GetDimensions();
+				int cx = (int)dims.X + 9;
+				int cy = (int)dims.Y + 8;
 
-				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, badgeText, pos, pinCol, 0f, Vector2.Zero, scale);
+				Color headCol = isPinned ? new Color(255, 215, 75) : (isHovered ? Color.White : new Color(160, 180, 210));
+				Color needleCol = isPinned ? new Color(255, 245, 200) : new Color(210, 225, 245);
+				Color shadowCol = new Color(0, 0, 0, 160);
+
+				// 1px Drop Shadow for 3D depth
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 3, cy - 4, 7, 2), shadowCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 1, cy - 2, 3, 3), shadowCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 3, cy + 1, 7, 2), shadowCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx, cy + 3, 1, 5), shadowCol);
+
+				// Crisp Pixel Pushpin:
+				// 1. Top Rim / Cap
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 3, cy - 5, 7, 2), headCol);
+				// 2. Middle Stem
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 1, cy - 3, 3, 3), headCol * 0.85f);
+				// 3. Lower Flange / Collar
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 3, cy, 7, 2), headCol);
+				// 4. Needle
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx, cy + 2, 1, 5), needleCol);
 
 				if (isHovered)
 				{
