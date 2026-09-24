@@ -734,7 +734,8 @@ namespace Augments
 			if (filteredRecords.Count == 0)
 			{
 				UIPanel emptyRow = new UIPanel();
-				emptyRow.Width.Set(0f, 1f);
+				emptyRow.Left.Set(2f, 0f);
+				emptyRow.Width.Set(-4f, 1f);
 				emptyRow.Height.Set(48f, 0f);
 				emptyRow.BackgroundColor = new Color(16, 22, 42) * 0.8f;
 				emptyRow.BorderColor = new Color(30, 42, 70);
@@ -1457,7 +1458,8 @@ namespace Augments
 			this.augmentRef = AugmentDatabase.GetById(record.Id);
 
 			SetPadding(0f);
-			Width.Set(0f, 1f);
+			Left.Set(2f, 0f);
+			Width.Set(-4f, 1f);
 			Height.Set(48f, 0f);
 		}
 
@@ -1485,7 +1487,12 @@ namespace Augments
 		protected override void DrawSelf(SpriteBatch spriteBatch)
 		{
 			CalculatedStyle dims = GetDimensions();
-			Rectangle rect = new Rectangle((int)dims.X, (int)dims.Y, (int)dims.Width, (int)dims.Height);
+			int rx = (int)dims.X;
+			int ry = (int)dims.Y;
+			int rw = (int)dims.Width;
+			int rh = (int)dims.Height;
+
+			Rectangle rect = new Rectangle(rx, ry, rw, rh);
 
 			Color baseBorder = record.Color;
 			Color bgColor = isHovered ? new Color(30, 42, 76) * 0.98f : new Color(18, 26, 48) * 0.94f;
@@ -1494,11 +1501,11 @@ namespace Augments
 			// Row Background
 			spriteBatch.Draw(TextureAssets.MagicPixel.Value, rect, bgColor);
 
-			// Borders
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X, rect.Y, rect.Width, 1), borderColor);
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X, rect.Bottom - 1, rect.Width, 1), borderColor);
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X, rect.Y, 1, rect.Height), borderColor);
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right - 1, rect.Y, 1, rect.Height), borderColor);
+			// Borders (Top, Bottom, Left, Right)
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rx, ry, rw, 1), borderColor);
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rx, ry + rh - 1, rw, 1), borderColor);
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rx, ry, 1, rh), borderColor);
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rx + rw - 1, ry, 1, rh), borderColor);
 
 			DynamicSpriteFont font = FontAssets.MouseText.Value;
 
