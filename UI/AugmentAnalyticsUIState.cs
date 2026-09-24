@@ -68,6 +68,7 @@ namespace Augments
 		{
 			// 1. Main Background Panel (Classic Terraria slate-navy styling)
 			backPanel = new AnalyticsBackPanel();
+			backPanel.SetPadding(0f);
 			backPanel.Width.Set(PanelWidth, 0f);
 			backPanel.Height.Set(PanelHeight, 0f);
 			backPanel.HAlign = 0.5f;
@@ -93,13 +94,12 @@ namespace Augments
 			subtitle.Top.Set(38f, 0f);
 			backPanel.Append(subtitle);
 
-			// Close Button in top-right corner
+			// Close Button in top-right corner (ends at 840f, exact 20px buffer from right edge)
 			var closeButton = new CloseButton();
 			closeButton.Width.Set(24f, 0f);
 			closeButton.Height.Set(24f, 0f);
-			closeButton.HAlign = 1f;
 			closeButton.Top.Set(10f, 0f);
-			closeButton.Left.Set(-16f, 0f);
+			closeButton.Left.Set(816f, 0f);
 			closeButton.Clicked += () => ModContent.GetInstance<AugmentUISystem>().HideAnalytics();
 			backPanel.Append(closeButton);
 
@@ -108,9 +108,9 @@ namespace Augments
 			float barHeight = 28f;
 
 			modeButton = new AnalyticsActionButton("★  Mode: Last 10 Mins  ★", new Color(56, 189, 248), new Color(20, 42, 65));
-			modeButton.Left.Set(16f, 0f);
+			modeButton.Left.Set(20f, 0f);
 			modeButton.Top.Set(barTop, 0f);
-			modeButton.Width.Set(180f, 0f);
+			modeButton.Width.Set(175f, 0f);
 			modeButton.Height.Set(barHeight, 0f);
 			modeButton.Clicked += () =>
 			{
@@ -123,9 +123,9 @@ namespace Augments
 			backPanel.Append(modeButton);
 
 			pauseButton = new AnalyticsActionButton("⏸  Pause", new Color(250, 204, 21), new Color(48, 42, 20));
-			pauseButton.Left.Set(202f, 0f);
+			pauseButton.Left.Set(203f, 0f);
 			pauseButton.Top.Set(barTop, 0f);
-			pauseButton.Width.Set(108f, 0f);
+			pauseButton.Width.Set(105f, 0f);
 			pauseButton.Height.Set(barHeight, 0f);
 			pauseButton.Clicked += () =>
 			{
@@ -148,17 +148,17 @@ namespace Augments
 			backPanel.Append(resetButton);
 
 			filterButton = new AnalyticsActionButton("⚙  Filters", new Color(168, 85, 247), new Color(38, 22, 58));
-			filterButton.Left.Set(417f, 0f);
+			filterButton.Left.Set(419f, 0f);
 			filterButton.Top.Set(barTop, 0f);
-			filterButton.Width.Set(125f, 0f);
+			filterButton.Width.Set(120f, 0f);
 			filterButton.Height.Set(barHeight, 0f);
 			filterButton.Clicked += ToggleFilterMenu;
 			backPanel.Append(filterButton);
 
 			searchBar = new AnalyticsSearchBar();
-			searchBar.Left.Set(548f, 0f);
+			searchBar.Left.Set(547f, 0f);
 			searchBar.Top.Set(barTop, 0f);
-			searchBar.Width.Set(154f, 0f);
+			searchBar.Width.Set(150f, 0f);
 			searchBar.Height.Set(barHeight, 0f);
 			searchBar.OnSearchChanged += (text) =>
 			{
@@ -167,11 +167,11 @@ namespace Augments
 			};
 			backPanel.Append(searchBar);
 
-			// Status indicator pill on the far right (ends at 844f, exact 6px gap from searchBar)
+			// Status indicator pill on the far right (ends at 840f, exact 20px buffer from right edge)
 			statusPill = new StatusIndicatorPill();
-			statusPill.Left.Set(708f, 0f);
+			statusPill.Left.Set(705f, 0f);
 			statusPill.Top.Set(barTop, 0f);
-			statusPill.Width.Set(136f, 0f);
+			statusPill.Width.Set(135f, 0f);
 			statusPill.Height.Set(barHeight, 0f);
 			statusPill.SetPadding(0f);
 			statusPill.BackgroundColor = new Color(14, 20, 36) * 0.95f;
@@ -199,8 +199,8 @@ namespace Augments
 			recordsList = new UIList();
 			recordsList.ManualSortMethod = _ => { };
 			recordsList.Top.Set(listTop, 0f);
-			recordsList.Left.Set(16f, 0f);
-			recordsList.Width.Set(814f, 0f);
+			recordsList.Left.Set(20f, 0f);
+			recordsList.Width.Set(806f, 0f);
 			recordsList.Height.Set(listHeight, 0f);
 			recordsList.ListPadding = 4f;
 			backPanel.Append(recordsList);
@@ -208,7 +208,7 @@ namespace Augments
 			listScrollbar = new AnalyticsScrollbar();
 			listScrollbar.Top.Set(listTop, 0f);
 			listScrollbar.Height.Set(listHeight, 0f);
-			listScrollbar.Left.Set(834f, 0f);
+			listScrollbar.Left.Set(830f, 0f);
 			listScrollbar.Width.Set(8f, 0f);
 			recordsList.SetScrollbar(listScrollbar);
 			backPanel.Append(listScrollbar);
@@ -226,25 +226,26 @@ namespace Augments
 		{
 			float cardTop = 112f;
 			float cardHeight = 56f;
+			float cardWidth = 156f;
 
-			// Card 1: Live DPS (Width = 150f)
-			var dpsCard = CreateSingleCard(16f, cardTop, 150f, cardHeight, new Color(74, 222, 128), "LIVE DPS (3S)", PinnedStatType.LiveDPS, out dpsValueText);
+			// Card 1: Live DPS (Left = 20f, ends at 176f)
+			var dpsCard = CreateSingleCard(20f, cardTop, cardWidth, cardHeight, new Color(74, 222, 128), "LIVE DPS (3S)", PinnedStatType.LiveDPS, out dpsValueText);
 			backPanel.Append(dpsCard);
 
-			// Card 2: Total Damage (Width = 155f)
-			var dmgCard = CreateSingleCard(178f, cardTop, 155f, cardHeight, new Color(56, 189, 248), "RECORDED DAMAGE", PinnedStatType.TotalDamage, out totalDmgValueText);
+			// Card 2: Total Damage (Left = 186f, ends at 342f)
+			var dmgCard = CreateSingleCard(186f, cardTop, cardWidth, cardHeight, new Color(56, 189, 248), "RECORDED DAMAGE", PinnedStatType.TotalDamage, out totalDmgValueText);
 			backPanel.Append(dmgCard);
 
-			// Card 3: Damage Blocked (Width = 155f)
-			var blockCard = CreateSingleCard(345f, cardTop, 155f, cardHeight, new Color(52, 211, 153), "DAMAGE BLOCKED", PinnedStatType.DamageBlocked, out blockedValueText);
+			// Card 3: Damage Blocked (Left = 352f, ends at 508f)
+			var blockCard = CreateSingleCard(352f, cardTop, cardWidth, cardHeight, new Color(52, 211, 153), "DAMAGE BLOCKED", PinnedStatType.DamageBlocked, out blockedValueText);
 			backPanel.Append(blockCard);
 
-			// Card 4: Combat Time (Width = 140f)
-			var durCard = CreateSingleCard(512f, cardTop, 140f, cardHeight, new Color(192, 132, 252), "COMBAT TIME", PinnedStatType.CombatTime, out durationValueText);
+			// Card 4: Combat Time (Left = 518f, ends at 674f)
+			var durCard = CreateSingleCard(518f, cardTop, cardWidth, cardHeight, new Color(192, 132, 252), "COMBAT TIME", PinnedStatType.CombatTime, out durationValueText);
 			backPanel.Append(durCard);
 
-			// Card 5: Hits & Crits Summary (Width = 180f)
-			var hitsCard = CreateSingleCard(664f, cardTop, 180f, cardHeight, new Color(250, 204, 21), "HITS & CRIT RATE", PinnedStatType.HitsAndCrits, out hitsValueText);
+			// Card 5: Hits & Crits Summary (Left = 684f, ends at 840f - exactly 20px buffer from right edge!)
+			var hitsCard = CreateSingleCard(684f, cardTop, cardWidth, cardHeight, new Color(250, 204, 21), "HITS & CRIT RATE", PinnedStatType.HitsAndCrits, out hitsValueText);
 			backPanel.Append(hitsCard);
 		}
 
@@ -259,9 +260,9 @@ namespace Augments
 			card.BackgroundColor = new Color(12, 18, 36) * 0.96f;
 			card.BorderColor = accent * 0.70f;
 
-			UIText labelText = new UIText(label, 0.62f)
+			UIText labelText = new UIText(label, 0.58f)
 			{
-				Left = new StyleDimension(10f, 0f),
+				Left = new StyleDimension(8f, 0f),
 				Top = new StyleDimension(6f, 0f),
 				HAlign = 0f,
 				TextColor = new Color(150, 168, 195)
@@ -291,9 +292,9 @@ namespace Augments
 			{
 				this.StatType = type;
 				SetPadding(0f);
-				Width.Set(18f, 0f);
-				Height.Set(18f, 0f);
-				Left.Set(-24f, 1f);
+				Width.Set(16f, 0f);
+				Height.Set(16f, 0f);
+				Left.Set(-20f, 1f);
 				Top.Set(5f, 0f);
 			}
 
@@ -335,7 +336,7 @@ namespace Augments
 				base.DrawSelf(spriteBatch);
 
 				CalculatedStyle dims = GetDimensions();
-				int cx = (int)dims.X + 9;
+				int cx = (int)dims.X + 8;
 				int cy = (int)dims.Y + 8;
 
 				Color headCol = isPinned ? new Color(255, 215, 75) : (isHovered ? Color.White : new Color(160, 180, 210));
@@ -422,18 +423,18 @@ namespace Augments
 		private void CreateTableHeaders()
 		{
 			UIPanel header = new UIPanel();
-			header.Left.Set(16f, 0f);
+			header.Left.Set(20f, 0f);
 			header.Top.Set(176f, 0f);
-			header.Width.Set(828f, 0f);
+			header.Width.Set(820f, 0f);
 			header.Height.Set(26f, 0f);
 			header.SetPadding(0f);
 			header.BackgroundColor = new Color(14, 20, 40) * 0.92f;
 			header.BorderColor = new Color(34, 48, 86);
 
-			var col1 = new UIText("PLUGIN / DAMAGE SOURCE", 0.70f) { Top = new StyleDimension(5f, 0f), Left = new StyleDimension(16f, 0f), TextColor = new Color(180, 200, 230) };
-			var col2 = new UIText("HITS & CRITS", 0.70f) { Top = new StyleDimension(5f, 0f), Left = new StyleDimension(330f, 0f), TextColor = new Color(180, 200, 230) };
-			var col3 = new UIText("MAX HIT", 0.70f) { Top = new StyleDimension(5f, 0f), Left = new StyleDimension(500f, 0f), TextColor = new Color(180, 200, 230) };
-			var col4 = new UIText("DAMAGE (% SHARE)", 0.70f) { Top = new StyleDimension(5f, 0f), Left = new StyleDimension(630f, 0f), TextColor = new Color(180, 200, 230) };
+			var col1 = new UIText("PLUGIN / DAMAGE SOURCE", 0.70f) { Top = new StyleDimension(5f, 0f), Left = new StyleDimension(14f, 0f), TextColor = new Color(180, 200, 230) };
+			var col2 = new UIText("HITS & CRITS", 0.70f) { Top = new StyleDimension(5f, 0f), Left = new StyleDimension(325f, 0f), TextColor = new Color(180, 200, 230) };
+			var col3 = new UIText("MAX HIT", 0.70f) { Top = new StyleDimension(5f, 0f), Left = new StyleDimension(495f, 0f), TextColor = new Color(180, 200, 230) };
+			var col4 = new UIText("DAMAGE (% SHARE)", 0.70f) { Top = new StyleDimension(5f, 0f), Left = new StyleDimension(625f, 0f), TextColor = new Color(180, 200, 230) };
 
 			header.Append(col1);
 			header.Append(col2);
