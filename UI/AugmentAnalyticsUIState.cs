@@ -22,7 +22,7 @@ namespace Augments
 	{
 		private AnalyticsBackPanel backPanel;
 		private UIList recordsList;
-		private UIScrollbar listScrollbar;
+		private AnalyticsScrollbar listScrollbar;
 
 		private UIText dpsValueText;
 		private UIText totalDmgValueText;
@@ -99,7 +99,7 @@ namespace Augments
 			closeButton.Height.Set(24f, 0f);
 			closeButton.HAlign = 1f;
 			closeButton.Top.Set(10f, 0f);
-			closeButton.Left.Set(-12f, 0f);
+			closeButton.Left.Set(-16f, 0f);
 			closeButton.Clicked += () => ModContent.GetInstance<AugmentUISystem>().HideAnalytics();
 			backPanel.Append(closeButton);
 
@@ -158,7 +158,7 @@ namespace Augments
 			searchBar = new AnalyticsSearchBar();
 			searchBar.Left.Set(548f, 0f);
 			searchBar.Top.Set(barTop, 0f);
-			searchBar.Width.Set(140f, 0f);
+			searchBar.Width.Set(154f, 0f);
 			searchBar.Height.Set(barHeight, 0f);
 			searchBar.OnSearchChanged += (text) =>
 			{
@@ -167,9 +167,9 @@ namespace Augments
 			};
 			backPanel.Append(searchBar);
 
-			// Status indicator pill on the far right
+			// Status indicator pill on the far right (ends at 844f, exact 6px gap from searchBar)
 			statusPill = new StatusIndicatorPill();
-			statusPill.Left.Set(-152f, 1f);
+			statusPill.Left.Set(708f, 0f);
 			statusPill.Top.Set(barTop, 0f);
 			statusPill.Width.Set(136f, 0f);
 			statusPill.Height.Set(barHeight, 0f);
@@ -200,16 +200,16 @@ namespace Augments
 			recordsList.ManualSortMethod = _ => { };
 			recordsList.Top.Set(listTop, 0f);
 			recordsList.Left.Set(16f, 0f);
-			recordsList.Width.Set(808f, 0f);
+			recordsList.Width.Set(814f, 0f);
 			recordsList.Height.Set(listHeight, 0f);
 			recordsList.ListPadding = 4f;
 			backPanel.Append(recordsList);
 
-			listScrollbar = new UIScrollbar();
+			listScrollbar = new AnalyticsScrollbar();
 			listScrollbar.Top.Set(listTop, 0f);
 			listScrollbar.Height.Set(listHeight, 0f);
-			listScrollbar.Left.Set(830f, 0f);
-			listScrollbar.Width.Set(14f, 0f);
+			listScrollbar.Left.Set(834f, 0f);
+			listScrollbar.Width.Set(8f, 0f);
 			recordsList.SetScrollbar(listScrollbar);
 			backPanel.Append(listScrollbar);
 
@@ -259,10 +259,11 @@ namespace Augments
 			card.BackgroundColor = new Color(12, 18, 36) * 0.96f;
 			card.BorderColor = accent * 0.70f;
 
-			UIText labelText = new UIText(label, 0.66f)
+			UIText labelText = new UIText(label, 0.62f)
 			{
-				HAlign = 0.5f,
+				Left = new StyleDimension(10f, 0f),
 				Top = new StyleDimension(6f, 0f),
+				HAlign = 0f,
 				TextColor = new Color(150, 168, 195)
 			};
 			card.Append(labelText);
@@ -394,12 +395,36 @@ namespace Augments
 			}
 		}
 
+		private class AnalyticsScrollbar : UIScrollbar
+		{
+			public AnalyticsScrollbar()
+			{
+				Width.Set(8f, 0f);
+			}
+
+			protected override void DrawSelf(SpriteBatch spriteBatch)
+			{
+				if (!CanScroll)
+					return;
+
+				CalculatedStyle dims = GetDimensions();
+				Rectangle trackRect = new Rectangle((int)dims.X, (int)dims.Y, (int)dims.Width, (int)dims.Height);
+
+				// Dark sleek cybernetic track backing
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, trackRect, new Color(10, 16, 32) * 0.92f);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(trackRect.X, trackRect.Y, 1, trackRect.Height), new Color(34, 48, 86) * 0.6f);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(trackRect.Right - 1, trackRect.Y, 1, trackRect.Height), new Color(34, 48, 86) * 0.6f);
+
+				base.DrawSelf(spriteBatch);
+			}
+		}
+
 		private void CreateTableHeaders()
 		{
 			UIPanel header = new UIPanel();
 			header.Left.Set(16f, 0f);
 			header.Top.Set(176f, 0f);
-			header.Width.Set(808f, 0f);
+			header.Width.Set(828f, 0f);
 			header.Height.Set(26f, 0f);
 			header.SetPadding(0f);
 			header.BackgroundColor = new Color(14, 20, 40) * 0.92f;
