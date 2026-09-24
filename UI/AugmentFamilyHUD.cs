@@ -936,7 +936,7 @@ namespace Augments
 			curHeight += 8f;
 
 			// Synergy Members Section
-			string mSectionHeader = "ASSIGNED PLUG-IN CHIPS:";
+			string mSectionHeader = "ASSIGNED PLUGINS:";
 			curHeight += ChatManager.GetStringSize(font, mSectionHeader, sectionScale).Y + 4f;
 			Measure(mSectionHeader, sectionScale, 36f);
 
@@ -1040,7 +1040,7 @@ namespace Augments
 			drawY += 8f;
 
 			// 5. Synergy Members Section
-			string membersSectionHeader = "ASSIGNED PLUG-IN CHIPS:";
+			string membersSectionHeader = "ASSIGNED PLUGINS:";
 			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, membersSectionHeader, new Vector2(leftX, drawY), new Color(130, 160, 200) * progress, 0f, Vector2.Zero, sectionScale);
 			drawY += ChatManager.GetStringSize(font, membersSectionHeader, sectionScale).Y + 4f;
 

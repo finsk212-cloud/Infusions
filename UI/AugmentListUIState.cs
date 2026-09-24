@@ -118,7 +118,7 @@ namespace Augments
 			titleContainer.HAlign = 0.5f;
 			titleContainer.Top.Set(8f, 0f);
 
-			UIText title = new UIText("✦  Plug-in Chips  ✦", 1.12f)
+			UIText title = new UIText("✦  Plugins  ✦", 1.12f)
 			{
 				HAlign = 0.44f,
 				VAlign = 0.5f,
@@ -298,7 +298,7 @@ namespace Augments
 					AugmentNet.ApplyDebugCommand(Main.LocalPlayer, DebugAugmentCommandType.Clear);
 
 				SoundEngine.PlaySound(SoundID.Shatter);
-				Main.NewText("✦ [DEV] All equipped plug-in chips cleared! ✦", Color.Yellow);
+				Main.NewText("✦ [DEV] All equipped plugins cleared! ✦", Color.Yellow);
 				PopulateGrid();
 				if (selectedAugment != null)
 					detailPanel.SetAugment(selectedAugment, false);
@@ -315,7 +315,7 @@ namespace Augments
 			{
 				Main.LocalPlayer.GetModPlayer<AugmentPlayer>().ResetAllCooldowns();
 				SoundEngine.PlaySound(SoundID.MaxMana, Main.LocalPlayer.Center);
-				Main.NewText("✦ [DEV] All plug-in chip cooldowns have been reset to 0! ✦", Color.Cyan);
+				Main.NewText("✦ [DEV] All plugin cooldowns have been reset to 0! ✦", Color.Cyan);
 			};
 			devBarContainer.Append(resetCdsBtn);
 
@@ -822,8 +822,8 @@ namespace Augments
 			if (filtered.Count == 0)
 			{
 				string msg = hasQuery
-					? $"No plug-in chips found matching \"{query}\"."
-					: "No plug-in chips match the current filters.";
+					? $"No plugins found matching \"{query}\"."
+					: "No plugins match the current filters.";
 				var emptyText = new UIText(msg, 0.9f)
 				{
 					HAlign = 0.5f
@@ -1357,7 +1357,7 @@ namespace Augments
 				if (kb != null)
 				{
 					y += 8f;
-					string kbText = kb.GetAssignedKeys().Count > 0 ? $"Keybind: {string.Join(", ", kb.GetAssignedKeys())}" : "No key bound to this chip";
+					string kbText = kb.GetAssignedKeys().Count > 0 ? $"Keybind: {string.Join(", ", kb.GetAssignedKeys())}" : "No key bound to this plugin";
 					Color kbColor = kb.GetAssignedKeys().Count > 0 ? Color.SkyBlue : new Color(255, 120, 100);
 					ChatManager.DrawColorCodedStringWithShadow(
 						spriteBatch, font, kbText, new Vector2(x, y), kbColor, 0f, Vector2.Zero, new Vector2(0.75f)
@@ -1660,7 +1660,7 @@ namespace Augments
 					}
 					else
 					{
-						string placeholder = "Search chips...";
+						string placeholder = "Search plugins...";
 						Vector2 textSize = ChatManager.GetStringSize(font, placeholder, scale);
 						float textX = dims.X + (dims.Width - textSize.X) / 2f;
 						float textY = dims.Y + (dims.Height - textSize.Y) / 2f + textYOffset;

@@ -1,11 +1,11 @@
 Keybinds: {
-	OpenAugmentList.DisplayName: Open Plug-in Chips
+	OpenAugmentList.DisplayName: Open Plugins
 	DebugTriggerPopup.DisplayName: Debug Trigger Popup
 	DebugSpawnVendor.DisplayName: Spawn Mistress 2B (Vendor)
 	DebugToggleShop.DisplayName: Open Mistress 2B Shop
 	Cleanse.DisplayName: Cleanse
 	UndoReforge.DisplayName: Undo Reforge
-	ResetCooldowns.DisplayName: Reset Plug-in Chip Cooldowns (Dev)
+	ResetCooldowns.DisplayName: Reset Plugin Cooldowns (Dev)
 	ToggleCombatAnalytics.DisplayName: Toggle Combat Analytics
 }
 
@@ -32,16 +32,16 @@ NPCs: {
 Items: {
 	AugmentEssenceItem: {
 		DisplayName: Machine Core
-		Tooltip: A pulsing power unit salvaged from machines, traded with Mistress 2B to acquire and re-forge Plug-in Chips.
+		Tooltip: A pulsing power unit salvaged from machines, traded with Mistress 2B to acquire and re-forge Plugins.
 	}
 
 	SealedChipCacheItem: {
-		DisplayName: Sealed Chip Cache
+		DisplayName: Sealed Plugin Cache
 		Tooltip:
 			'''
 			Encrypted YoRHa combat salvage pod
-			Right-click to decrypt and choose 1 of 3 Plug-in Chips
-			Chip tier scales with your world's boss progression
+			Right-click to decrypt and choose 1 of 3 Plugins
+			Plugin tier scales with your world's boss progression
 			'''
 	}
 
@@ -180,7 +180,7 @@ Buffs: {
 
 	SupportClassBuff: {
 		DisplayName: Support Class
-		Description: Your aura chips are active.
+		Description: Your aura plugins are active.
 	}
 
 	WarCryBuff: {

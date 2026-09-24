@@ -103,7 +103,7 @@ namespace Augments
 			backPanel.BorderColor = new Color(42, 68, 108) * 0.85f;
 
 			// Top Navigation Tab: Return to Storage
-			var storageTab = new TabButton("← Chip Storage & Dismantle", () => ModContent.GetInstance<AugmentUISystem>().ShowShop());
+			var storageTab = new TabButton("← Plugin Storage & Dismantle", () => ModContent.GetInstance<AugmentUISystem>().ShowShop());
 			storageTab.Left.Set(14f, 0f);
 			storageTab.Top.Set(10f, 0f);
 			storageTab.Width.Set(220f, 0f);
@@ -233,7 +233,7 @@ namespace Augments
 			readyLabel.Height.Set(24f, 0f);
 			chamberContainer.Append(readyLabel);
 
-			var subtext = new ColoredLabel("[c/889EB8:Consume 3 Machine Cores to synthesize neural frequency and extract 1 combat Plug-in Chip]", 0.78f)
+			var subtext = new ColoredLabel("[c/889EB8:Consume 3 Machine Cores to synthesize neural frequency and extract 1 combat Plugin]", 0.78f)
 			{
 				HAlign = 0.5f
 			};
@@ -255,7 +255,7 @@ namespace Augments
 			decryptBtn.Top.Set(265f, 0f);
 			chamberContainer.Append(decryptBtn);
 
-			var footer = new ColoredLabel("[c/627A98:Rolls prioritize unowned chips from your active progression bracket.]", 0.72f)
+			var footer = new ColoredLabel("[c/627A98:Rolls prioritize unowned plugins from your active progression bracket.]", 0.72f)
 			{
 				HAlign = 0.5f
 			};
@@ -327,7 +327,7 @@ namespace Augments
 			chamberContainer.Append(decryptAgainBtn);
 
 			var returnBtn = new ChamberActionButton(
-				"← Return to Chip Storage",
+				"← Return to Plugin Storage",
 				null,
 				isPrimary: false,
 				onClick: () => ModContent.GetInstance<AugmentUISystem>().ShowShop()

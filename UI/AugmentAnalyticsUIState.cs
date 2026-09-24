@@ -83,7 +83,7 @@ namespace Augments
 			titleText.Top.Set(12f, 0f);
 			backPanel.Append(titleText);
 
-			UIText subtitle = new UIText("Real-time neural telemetry and plug-in chip performance metrics", 0.76f)
+			UIText subtitle = new UIText("Real-time neural telemetry and plugin performance metrics", 0.76f)
 			{
 				HAlign = 0.5f,
 				TextColor = new Color(150, 170, 205)
@@ -399,7 +399,7 @@ namespace Augments
 			header.BackgroundColor = new Color(14, 20, 40) * 0.92f;
 			header.BorderColor = new Color(34, 48, 86);
 
-			var col1 = new UIText("PLUG-IN CHIP / DAMAGE SOURCE", 0.70f) { Top = new StyleDimension(5f, 0f), Left = new StyleDimension(16f, 0f), TextColor = new Color(180, 200, 230) };
+			var col1 = new UIText("PLUGIN / DAMAGE SOURCE", 0.70f) { Top = new StyleDimension(5f, 0f), Left = new StyleDimension(16f, 0f), TextColor = new Color(180, 200, 230) };
 			var col2 = new UIText("HITS & CRITS", 0.70f) { Top = new StyleDimension(5f, 0f), Left = new StyleDimension(330f, 0f), TextColor = new Color(180, 200, 230) };
 			var col3 = new UIText("MAX HIT", 0.70f) { Top = new StyleDimension(5f, 0f), Left = new StyleDimension(500f, 0f), TextColor = new Color(180, 200, 230) };
 			var col4 = new UIText("DAMAGE (% SHARE)", 0.70f) { Top = new StyleDimension(5f, 0f), Left = new StyleDimension(630f, 0f), TextColor = new Color(180, 200, 230) };
@@ -469,7 +469,7 @@ namespace Augments
 				{
 					filterSummary += currentSourceFilter switch
 					{
-						AnalyticsSourceFilter.PluginsOnly => "Chips ",
+						AnalyticsSourceFilter.PluginsOnly => "Plugins ",
 						AnalyticsSourceFilter.WeaponsOnly => "Weapons ",
 						AnalyticsSourceFilter.ProtocolsOnly => "Protocols ",
 						_ => ""
@@ -1251,7 +1251,7 @@ namespace Augments
 
 				(AnalyticsSourceFilter filter, string name, float w)[] sourceDefs = {
 					(AnalyticsSourceFilter.All, "All Sources", 86f),
-					(AnalyticsSourceFilter.PluginsOnly, "Plug-in Chips", 104f),
+					(AnalyticsSourceFilter.PluginsOnly, "Plugins", 76f),
 					(AnalyticsSourceFilter.WeaponsOnly, "Weapons", 82f),
 					(AnalyticsSourceFilter.ProtocolsOnly, "Protocols", 82f)
 				};
@@ -1266,7 +1266,7 @@ namespace Augments
 				curY += 28f;
 
 				// 2. COMBAT CLASS
-				AddSectionLabel("COMBAT CLASS (WEAPONS & CHIPS)", curY);
+				AddSectionLabel("COMBAT CLASS (WEAPONS & PLUGINS)", curY);
 				curY += 16f;
 
 				(AugmentClass? cls, string name, float w)[] classDefs = {
@@ -1288,7 +1288,7 @@ namespace Augments
 				curY += 28f;
 
 				// 3. RARITY
-				AddSectionLabel("PLUG-IN CHIP RARITY", curY);
+				AddSectionLabel("PLUGIN RARITY", curY);
 				curY += 16f;
 
 				(AugmentRarity? rar, string name, float w)[] rarityDefs = {
@@ -1520,7 +1520,7 @@ namespace Augments
 			if (augmentRef != null)
 			{
 				string rHex = AugmentListEntry.RarityColor(augmentRef.Rarity).Hex3();
-				subTag = $"[c/38BDF8:{augmentRef.Class}]  •  [c/{rHex}:{augmentRef.Rarity} Chip]";
+				subTag = $"[c/38BDF8:{augmentRef.Class}]  •  [c/{rHex}:{augmentRef.Rarity} Plugin]";
 			}
 			else if (record.IsProtocol)
 			{

@@ -634,7 +634,7 @@ namespace Augments
 			{
 				("CORE OVERRIDE ARCHITECTURE", KeystoneTagColor),
 				("Unique protocol that rewires chassis combat specifications.", new Color(220, 230, 245)),
-				("• Limit 1 Core Override chip per chassis.", new Color(248, 113, 113)),
+				("• Limit 1 Core Override plugin per chassis.", new Color(248, 113, 113)),
 				("• Permanent installation — cannot be sold or removed.", new Color(200, 215, 235)),
 				("• Grants massive combat power with operational trade-offs.", new Color(175, 190, 215))
 			};
@@ -680,10 +680,10 @@ namespace Augments
 			var lines = new (string Text, Color Color)[]
 			{
 				("SUPPORT STANCE",                        SupportTagColor),
-				("2 chips: -30% damage, +20 defense",     new Color(220, 230, 245)),
-				("3 chips: -23% damage, +30 defense",     new Color(220, 230, 245)),
-				("4 chips: -16% damage, +40 defense",     new Color(220, 230, 245)),
-				("5 chips: -5% damage, +60 defense",      new Color(220, 230, 245)),
+				("2 plugins: -30% damage, +20 defense",   new Color(220, 230, 245)),
+				("3 plugins: -23% damage, +30 defense",   new Color(220, 230, 245)),
+				("4 plugins: -16% damage, +40 defense",   new Color(220, 230, 245)),
+				("5 plugins: -5% damage, +60 defense",    new Color(220, 230, 245)),
 			};
 
 			var scale = new Vector2(0.80f);
@@ -761,7 +761,7 @@ namespace Augments
 			}
 
 			lines.Add(("─────────────────────────────", new Color(60, 80, 120) * 0.7f));
-			lines.Add(("Assigned Plug-in Chips:", Color.White));
+			lines.Add(("Assigned Plugins:", Color.White));
 
 			foreach (var memberId in family.MemberIds)
 			{

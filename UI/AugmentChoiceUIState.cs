@@ -78,7 +78,7 @@ namespace Augments
 			backPanel.BackgroundColor = new Color(16, 22, 44);
 			backPanel.BorderColor = new Color(38, 52, 98);
 
-			UIText titleText = new UIText("CHOOSE A PLUG-IN CHIP", 1.22f)
+			UIText titleText = new UIText("CHOOSE A PLUGIN", 1.22f)
 			{
 				HAlign = 0.5f,
 				TextColor = new Color(255, 225, 150)
@@ -86,7 +86,7 @@ namespace Augments
 			titleText.Top.Set(15f, 0f);
 			backPanel.Append(titleText);
 
-			UIText subtitle = new UIText("Select a plug-in chip to install into your neural frame", 0.76f)
+			UIText subtitle = new UIText("Select a plugin to install into your neural frame", 0.76f)
 			{
 				HAlign = 0.5f,
 				TextColor = new Color(150, 170, 205)
@@ -324,7 +324,7 @@ namespace Augments
 			pendingKeystone = null;
 
 			confirmMessageText.SetText(
-				"Are you sure you want to skip this plug-in chip selection? " +
+				"Are you sure you want to skip this plugin selection? " +
 				"This reward will be forfeited and cannot be recovered.");
 
 			Append(confirmOverlay);
@@ -441,7 +441,7 @@ namespace Augments
 			var augmentPlayer = player.GetModPlayer<AugmentPlayer>();
 			if (!AugmentRewardLogic.TryRollRewardChoices(augmentPlayer, currentBracket, currentChoiceIds, out List<Augment> newChoices, out AugmentRarity newRarity))
 			{
-				Main.NewText("No other plug-in chips are available.", 255, 100, 100);
+				Main.NewText("No other plugins are available.", 255, 100, 100);
 				RefreshRerollButton();
 				return;
 			}

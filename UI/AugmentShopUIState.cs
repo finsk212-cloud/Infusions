@@ -95,7 +95,7 @@ namespace Augments
 			backPanel.Append(essenceBadge);
 
 			// Title Header
-			UIText title = new UIText("Plug-in Chips Storage", 1.15f)
+			UIText title = new UIText("Plugin Storage", 1.15f)
 			{
 				HAlign = 0.5f,
 				TextColor = new Color(255, 235, 175)
@@ -104,7 +104,7 @@ namespace Augments
 			backPanel.Append(title);
 
 			// Subtitle
-			UIText subtitle = new UIText("Mistress 2B's Archive — Re-acquire archived chips or dismantle equipped chips", 0.76f)
+			UIText subtitle = new UIText("Mistress 2B's Archive — Re-acquire archived plugins or dismantle equipped plugins", 0.76f)
 			{
 				HAlign = 0.5f,
 				TextColor = new Color(155, 170, 200)
@@ -200,7 +200,7 @@ namespace Augments
 
 			if (buyBackCount == 0)
 			{
-				var empty = new UIText("No archived chips.\nChips you sell will appear here.", 0.8f)
+				var empty = new UIText("No archived plugins.\nPlugins you sell will appear here.", 0.8f)
 				{
 					HAlign = 0.5f,
 					TextColor = new Color(130, 145, 175)
@@ -231,7 +231,7 @@ namespace Augments
 
 			if (removeCount == 0)
 			{
-				var empty = new UIText("No chips currently equipped.", 0.8f)
+				var empty = new UIText("No plugins currently equipped.", 0.8f)
 				{
 					HAlign = 0.5f,
 					TextColor = new Color(130, 145, 175)
@@ -284,7 +284,7 @@ namespace Augments
 
 			if (augmentPlayer.Owned.Count >= AugmentPlayer.MaxOwnedAugments)
 			{
-				Main.NewText("Plug-in Chip slots full.", 255, 80, 80);
+				Main.NewText("Plugin slots full.", 255, 80, 80);
 				return;
 			}
 
