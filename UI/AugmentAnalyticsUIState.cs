@@ -26,6 +26,7 @@ namespace Augments
 
 		private UIText dpsValueText;
 		private UIText totalDmgValueText;
+		private UIText blockedValueText;
 		private UIText durationValueText;
 		private UIText hitsValueText;
 
@@ -59,6 +60,7 @@ namespace Augments
 
 		private int updateCounter = 0;
 		private long lastSeenTotalDamage = -1;
+		private long lastSeenBlockedDamage = -1;
 		private AnalyticsViewMode lastSeenMode = AnalyticsViewMode.Last10Minutes;
 		private int lastSeenOwnedCount = -1;
 
@@ -225,20 +227,24 @@ namespace Augments
 			float cardTop = 112f;
 			float cardHeight = 56f;
 
-			// Card 1: Live DPS (Width = 180f)
-			var dpsCard = CreateSingleCard(16f, cardTop, 180f, cardHeight, new Color(74, 222, 128), "LIVE DPS (3S)", PinnedStatType.LiveDPS, out dpsValueText);
+			// Card 1: Live DPS (Width = 150f)
+			var dpsCard = CreateSingleCard(16f, cardTop, 150f, cardHeight, new Color(74, 222, 128), "LIVE DPS (3S)", PinnedStatType.LiveDPS, out dpsValueText);
 			backPanel.Append(dpsCard);
 
-			// Card 2: Total Damage (Width = 185f)
-			var dmgCard = CreateSingleCard(204f, cardTop, 185f, cardHeight, new Color(56, 189, 248), "RECORDED DAMAGE", PinnedStatType.TotalDamage, out totalDmgValueText);
+			// Card 2: Total Damage (Width = 155f)
+			var dmgCard = CreateSingleCard(178f, cardTop, 155f, cardHeight, new Color(56, 189, 248), "RECORDED DAMAGE", PinnedStatType.TotalDamage, out totalDmgValueText);
 			backPanel.Append(dmgCard);
 
-			// Card 3: Combat Time (Width = 165f)
-			var durCard = CreateSingleCard(397f, cardTop, 165f, cardHeight, new Color(192, 132, 252), "COMBAT TIME", PinnedStatType.CombatTime, out durationValueText);
+			// Card 3: Damage Blocked (Width = 155f)
+			var blockCard = CreateSingleCard(345f, cardTop, 155f, cardHeight, new Color(52, 211, 153), "DAMAGE BLOCKED", PinnedStatType.DamageBlocked, out blockedValueText);
+			backPanel.Append(blockCard);
+
+			// Card 4: Combat Time (Width = 140f)
+			var durCard = CreateSingleCard(512f, cardTop, 140f, cardHeight, new Color(192, 132, 252), "COMBAT TIME", PinnedStatType.CombatTime, out durationValueText);
 			backPanel.Append(durCard);
 
-			// Card 4: Hits & Crits Summary (Width = 274f - generous background room for yellow box)
-			var hitsCard = CreateSingleCard(570f, cardTop, 274f, cardHeight, new Color(250, 204, 21), "HITS & CRIT RATE", PinnedStatType.HitsAndCrits, out hitsValueText);
+			// Card 5: Hits & Crits Summary (Width = 180f)
+			var hitsCard = CreateSingleCard(664f, cardTop, 180f, cardHeight, new Color(250, 204, 21), "HITS & CRIT RATE", PinnedStatType.HitsAndCrits, out hitsValueText);
 			backPanel.Append(hitsCard);
 		}
 
@@ -598,10 +604,13 @@ namespace Augments
 			{
 				var player = Main.LocalPlayer;
 				var ap = player?.GetModPlayer<AugmentPlayer>();
-				var (viewDmg, sortedRecords) = AugmentDamageTracker.GetCurrentViewData(ap);
+				var (viewDmg, viewBlocked, sortedRecords) = AugmentDamageTracker.GetCurrentViewData(ap);
 
 				if (totalDmgValueText != null)
 					totalDmgValueText.SetText($"{viewDmg:N0}");
+
+				if (blockedValueText != null)
+					blockedValueText.SetText($"{viewBlocked:N0}");
 
 				int totalHits = 0;
 				int totalCrits = 0;
@@ -615,9 +624,10 @@ namespace Augments
 					hitsValueText.SetText($"{totalHits:N0} ({critRate:0.0}%)");
 
 				int ownedCount = ap?.Owned?.Count ?? 0;
-				if (viewDmg != lastSeenTotalDamage || AugmentDamageTracker.ViewMode != lastSeenMode || ownedCount != lastSeenOwnedCount)
+				if (viewDmg != lastSeenTotalDamage || viewBlocked != lastSeenBlockedDamage || AugmentDamageTracker.ViewMode != lastSeenMode || ownedCount != lastSeenOwnedCount)
 				{
 					lastSeenTotalDamage = viewDmg;
+					lastSeenBlockedDamage = viewBlocked;
 					lastSeenMode = AugmentDamageTracker.ViewMode;
 					lastSeenOwnedCount = ownedCount;
 					PopulateRecords();
@@ -643,10 +653,13 @@ namespace Augments
 				return;
 
 			var ap = player.GetModPlayer<AugmentPlayer>();
-			var (viewDamage, sortedRecords) = AugmentDamageTracker.GetCurrentViewData(ap);
+			var (viewDamage, viewBlocked, sortedRecords) = AugmentDamageTracker.GetCurrentViewData(ap);
 
 			if (totalDmgValueText != null)
 				totalDmgValueText.SetText($"{viewDamage:N0}");
+
+			if (blockedValueText != null)
+				blockedValueText.SetText($"{viewBlocked:N0}");
 
 			int totalHits = 0;
 			int totalCrits = 0;
@@ -726,7 +739,7 @@ namespace Augments
 
 			foreach (var rec in filteredRecords)
 			{
-				var row = new AnalyticsRowEntry(rec, viewDamage);
+				var row = new AnalyticsRowEntry(rec, viewDamage, viewBlocked);
 				recordsList.Add(row);
 			}
 		}
@@ -1406,13 +1419,15 @@ namespace Augments
 	{
 		private readonly DamageSourceRecord record;
 		private readonly long totalSessionDamage;
+		private readonly long totalSessionBlocked;
 		private readonly Augment augmentRef;
 		private bool isHovered;
 
-		public AnalyticsRowEntry(DamageSourceRecord record, long totalSessionDamage)
+		public AnalyticsRowEntry(DamageSourceRecord record, long totalSessionDamage, long totalSessionBlocked)
 		{
 			this.record = record;
 			this.totalSessionDamage = totalSessionDamage;
+			this.totalSessionBlocked = totalSessionBlocked;
 			this.augmentRef = AugmentDatabase.GetById(record.Id);
 
 			SetPadding(0f);
@@ -1537,40 +1552,91 @@ namespace Augments
 				subTag = "[c/94A3B8:Combat Proc]";
 			}
 
+			if (record.DamageBlocked > 0)
+			{
+				subTag += $"  •  [c/34D399:◈ {record.DamageBlocked:N0} Blocked]";
+			}
+
 			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, subTag, new Vector2(textX, rect.Y + 26f), Color.White, 0f, Vector2.Zero, new Vector2(0.65f));
 
 			// 3. Hits & Crits (aligned to 330f)
 			float critRate = record.HitCount > 0 ? ((float)record.CritCount / record.HitCount) * 100f : 0f;
-			string hitsText = $"{record.HitCount:N0} Hits  •  {record.CritCount:N0} Crits ({critRate:0.0}%)";
-			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, hitsText, new Vector2(rect.X + 330f, rect.Y + 16f), new Color(200, 215, 235), 0f, Vector2.Zero, new Vector2(0.72f));
+			string hitsText;
+			Color hitsCol;
+			if (record.HitCount > 0 && record.BlockCount > 0)
+			{
+				hitsText = $"{record.HitCount:N0} Hits  •  {record.BlockCount:N0} Blocked";
+				hitsCol = new Color(200, 215, 235);
+			}
+			else if (record.HitCount > 0)
+			{
+				hitsText = $"{record.HitCount:N0} Hits  •  {record.CritCount:N0} Crits ({critRate:0.0}%)";
+				hitsCol = new Color(200, 215, 235);
+			}
+			else if (record.BlockCount > 0)
+			{
+				hitsText = $"{record.BlockCount:N0} Attacks Blocked";
+				hitsCol = new Color(52, 211, 153);
+			}
+			else
+			{
+				hitsText = "--";
+				hitsCol = new Color(148, 163, 184);
+			}
+			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, hitsText, new Vector2(rect.X + 330f, rect.Y + 16f), hitsCol, 0f, Vector2.Zero, new Vector2(0.72f));
 
 			// 4. Max Hit (aligned to 500f)
 			string maxHitText = record.MaxHit > 0 ? $"{record.MaxHit:N0}" : "--";
 			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, maxHitText, new Vector2(rect.X + 500f, rect.Y + 16f), new Color(253, 224, 71), 0f, Vector2.Zero, new Vector2(0.74f));
 
 			// 5. Total Damage & Share Percentage (aligned to 630f)
-			float sharePercent = totalSessionDamage > 0 ? (float)record.TotalDamage / totalSessionDamage : 0f;
-			string dmgText = $"{record.TotalDamage:N0}";
-			string shareText = $"({sharePercent * 100f:0.0}%)";
-
-			Vector2 dmgSz = ChatManager.GetStringSize(font, dmgText, new Vector2(0.82f));
 			float rightColX = rect.X + 630f;
-			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, dmgText, new Vector2(rightColX, rect.Y + 14f), new Color(245, 248, 255), 0f, Vector2.Zero, new Vector2(0.82f));
-			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, shareText, new Vector2(rightColX + dmgSz.X + 6f, rect.Y + 16f), (record.Color == Color.White ? new Color(56, 189, 248) : record.Color), 0f, Vector2.Zero, new Vector2(0.72f));
+			if (record.TotalDamage == 0 && record.DamageBlocked > 0)
+			{
+				float blockShare = totalSessionBlocked > 0 ? (float)record.DamageBlocked / totalSessionBlocked : 0f;
+				string blockText = $"{record.DamageBlocked:N0}";
+				string blockShareText = $"(Blocked {blockShare * 100f:0.0}%)";
+				Vector2 bSz = ChatManager.GetStringSize(font, blockText, new Vector2(0.82f));
+				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, blockText, new Vector2(rightColX, rect.Y + 14f), new Color(52, 211, 153), 0f, Vector2.Zero, new Vector2(0.82f));
+				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, blockShareText, new Vector2(rightColX + bSz.X + 6f, rect.Y + 16f), new Color(52, 211, 153) * 0.9f, 0f, Vector2.Zero, new Vector2(0.72f));
+			}
+			else
+			{
+				float sharePercent = totalSessionDamage > 0 ? (float)record.TotalDamage / totalSessionDamage : 0f;
+				string dmgText = $"{record.TotalDamage:N0}";
+				string shareText = $"({sharePercent * 100f:0.0}%)";
+				Vector2 dmgSz = ChatManager.GetStringSize(font, dmgText, new Vector2(0.82f));
+				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, dmgText, new Vector2(rightColX, rect.Y + 14f), new Color(245, 248, 255), 0f, Vector2.Zero, new Vector2(0.82f));
+				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, shareText, new Vector2(rightColX + dmgSz.X + 6f, rect.Y + 16f), (record.Color == Color.White ? new Color(56, 189, 248) : record.Color), 0f, Vector2.Zero, new Vector2(0.72f));
+			}
 
 			// 6. Sleek 2px Progress Fill Bar across the bottom of the row
-			Color barAccent = record.Color == Color.White ? new Color(56, 189, 248) : record.Color;
+			Color barAccent = (record.TotalDamage == 0 && record.DamageBlocked > 0)
+				? new Color(52, 211, 153)
+				: (record.Color == Color.White ? new Color(56, 189, 248) : record.Color);
+
+			float fillRatio = 0f;
+			if (record.TotalDamage > 0 && totalSessionDamage > 0)
+				fillRatio = (float)record.TotalDamage / totalSessionDamage;
+			else if (record.DamageBlocked > 0 && totalSessionBlocked > 0)
+				fillRatio = (float)record.DamageBlocked / totalSessionBlocked;
+
 			Rectangle barBg = new Rectangle(rect.X + 6, rect.Bottom - 3, rect.Width - 12, 2);
 			spriteBatch.Draw(TextureAssets.MagicPixel.Value, barBg, new Color(10, 14, 26, 200));
 
-			int fillW = Math.Max(record.TotalDamage > 0 ? 3 : 0, (int)((rect.Width - 12) * Math.Min(1f, sharePercent)));
+			int fillW = Math.Max((record.TotalDamage > 0 || record.DamageBlocked > 0) ? 3 : 0, (int)((rect.Width - 12) * Math.Min(1f, fillRatio)));
 			Rectangle barFill = new Rectangle(rect.X + 6, rect.Bottom - 3, fillW, 2);
 			spriteBatch.Draw(TextureAssets.MagicPixel.Value, barFill, barAccent * 0.85f);
 
-			// Tooltip for non-chip entries when hovered
+			// Tooltip for non-plugin entries when hovered
 			if (isHovered && augmentRef == null)
 			{
+				float sharePercent = totalSessionDamage > 0 ? (float)record.TotalDamage / totalSessionDamage : 0f;
 				string tip = $"{record.DisplayName}\nTotal Damage: {record.TotalDamage:N0} ({sharePercent * 100f:0.0}% of output)\nHits: {record.HitCount:N0}  •  Crits: {record.CritCount:N0}  •  Max Hit: {record.MaxHit:N0}";
+				if (record.DamageBlocked > 0)
+				{
+					tip += $"\nDamage Blocked: {record.DamageBlocked:N0} ({record.BlockCount:N0} blocks)";
+				}
 				Main.instance.MouseText(tip);
 			}
 		}

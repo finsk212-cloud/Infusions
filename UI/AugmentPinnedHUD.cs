@@ -17,7 +17,8 @@ namespace Augments
 		LiveDPS,
 		HitsAndCrits,
 		TotalDamage,
-		CombatTime
+		CombatTime,
+		DamageBlocked
 	}
 
 	public class PinnedWidgetData
@@ -62,6 +63,12 @@ namespace Augments
 				Type = PinnedStatType.CombatTime,
 				IsPinned = false,
 				Position = new Vector2(20f, 242f)
+			},
+			[PinnedStatType.DamageBlocked] = new PinnedWidgetData
+			{
+				Type = PinnedStatType.DamageBlocked,
+				IsPinned = false,
+				Position = new Vector2(20f, 286f)
 			}
 		};
 
@@ -211,7 +218,7 @@ namespace Augments
 
 			// Pre-fetch telemetry data
 			float currentDps = AugmentDamageTracker.GetCurrentDPS();
-			var (viewDamage, sortedRecords) = AugmentDamageTracker.GetCurrentViewData(ap);
+			var (viewDamage, viewBlocked, sortedRecords) = AugmentDamageTracker.GetCurrentViewData(ap);
 			int totalHits = 0;
 			int totalCrits = 0;
 			foreach (var r in sortedRecords)
@@ -257,6 +264,13 @@ namespace Augments
 						accentColor = new Color(56, 189, 248); // Electric Cyan
 						labelText = "RECORDED DMG";
 						valueText = $"{viewDamage:N0}";
+						break;
+
+					case PinnedStatType.DamageBlocked:
+						iconGlyph = "◈";
+						accentColor = new Color(52, 211, 153); // Shield Emerald
+						labelText = "DMG BLOCKED";
+						valueText = $"{viewBlocked:N0}";
 						break;
 
 					case PinnedStatType.CombatTime:

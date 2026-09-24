@@ -136,20 +136,25 @@
 
 ---
 
-### 6. New Feature: Chip Combat Analytics & Live DPS Monitor
+### 6. New Feature: Plugin Combat Analytics & Live DPS Monitor
 - **Real-Time Combat Telemetry**:
-  - Monitors all outgoing damage dealt by the player, breaking down contributions between primary weapon hits, individual plug-in chips, and active protocol procs.
+  - Monitors all outgoing damage dealt by the player, breaking down contributions between primary weapon hits, individual plugins, and active protocol procs.
   - **Live DPS & Sliding Window**: Real-time sliding 3-second window calculating continuous live DPS, updated dynamically on every frame.
   - **Dual View Modes**:
     - **[LAST 10M]**: Rolling 10-minute queue tracking recent performance during boss encounters or mob clearing.
-    - **[TOTAL]**: Full session accumulation tracking overall chip impact across the entire play session.
-  - **Owned Chip Breakdown**: Automatically lists every currently installed plug-in chip (even with 0 damage dealt), making it easy to spot underperforming or inactive chips.
+    - **[TOTAL]**: Full session accumulation tracking overall plugin impact across the entire play session.
+  - **Owned Plugin Breakdown**: Automatically lists every currently installed plugin (even with 0 damage dealt), making it easy to spot underperforming or inactive plugins.
+  - **Damage Blocked Tracking**:
+    - Full telemetry tracking for defensive plugins, including kinetic barrier absorptions (Bulwark, Type-D Dreadnought Protocol), dodge negations (Mirror Image, Void Step), lethal damage protections (PreKill death saves on Type-D barrier, Soul Martyr, Lifeline), and damage reduction percentages (Type-D 15% damage reduction, Martyr's Resolve aura mitigation).
+    - **Dedicated Metric Card**: Added a 5th header card ("DAMAGE BLOCKED") styled in shield emerald (`#34D399`).
+    - **Pinnable HUD Widget**: Players can pin the "DMG BLOCKED" stat to their live in-game HUD overlay alongside Live DPS, Total Damage, Combat Time, and Hits/Crits.
+    - **Telemetry List Integration**: Plugins display `◈ [Amount] Blocked` in their subtag, attacks blocked count in the hits column, and blocked share percentage in the damage column for zero-damage defensive plugins. Sorted by combined combat impact (`TotalDamage + DamageBlocked`).
   - **Interactive Controls & Draggable UI**:
     - Toggleable via hotkey (default: **L**, configurable in Terraria Controls) or via the docked **[DPS]** button directly above the Protocol HUD.
     - **Draggable Window**: High-tech cybernetic header allows moving the analytics window freely across the screen.
     - **[PAUSE]**: Freezes the display for post-combat review without losing accumulated data.
     - **[RESET]**: Clears the active damage queue and resets metrics to zero with a single click.
     - **Scrollable List**: Smooth mouse wheel scrolling with dynamic scroll thumb indicator.
-    - **Visual Percentage Bars**: Color-coded progress bars reflect each chip's percentage of total damage output using chip rarity palette colors.
-    - **Detailed Tooltips**: Hovering over any record displays total hits, critical strike count, crit rate percentage, and maximum single hit damage.
+    - **Visual Percentage Bars**: Color-coded progress bars reflect each plugin's percentage of total damage output or damage blocked using plugin rarity palette colors.
+    - **Detailed Tooltips**: Hovering over any record displays total hits, critical strike count, crit rate percentage, max hit, and total damage blocked with block count.
 

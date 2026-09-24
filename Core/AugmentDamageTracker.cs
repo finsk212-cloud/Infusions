@@ -21,6 +21,8 @@ namespace Augments.Core
 		public int HitCount { get; set; }
 		public int CritCount { get; set; }
 		public int MaxHit { get; set; }
+		public long DamageBlocked { get; set; }
+		public int BlockCount { get; set; }
 		public AugmentRarity? Rarity { get; set; }
 		public AugmentClass? SourceClass { get; set; }
 		public bool IsProtocol { get; set; }
@@ -35,6 +37,13 @@ namespace Augments.Core
 		public bool IsCrit;
 	}
 
+	public struct TimedBlockedHit
+	{
+		public float Timestamp;
+		public string SourceId;
+		public int DamageBlocked;
+	}
+
 	public static class AugmentDamageTracker
 	{
 		private const float InactivityTimeout = 4.0f;
@@ -44,11 +53,13 @@ namespace Augments.Core
 		public static bool IsPaused { get; set; } = false;
 		public static float SessionDuration { get; private set; } = 0f;
 		public static long TotalSessionDamage { get; private set; } = 0;
+		public static long TotalSessionDamageBlocked { get; private set; } = 0;
 		public static AnalyticsViewMode ViewMode { get; set; } = AnalyticsViewMode.Last10Minutes;
 
 		private static float timeSinceLastHit = 999f;
 		private static readonly Dictionary<string, DamageSourceRecord> totalRecords = new();
 		private static readonly Queue<TimedHit> historyQueue = new();
+		private static readonly Queue<TimedBlockedHit> historyBlockedQueue = new();
 		private static float globalTime = 0f;
 
 		public static IReadOnlyDictionary<string, DamageSourceRecord> TotalRecords => totalRecords;
@@ -72,6 +83,12 @@ namespace Augments.Core
 			while (historyQueue.Count > 0 && historyQueue.Peek().Timestamp < pruneCutoff)
 			{
 				historyQueue.Dequeue();
+			}
+
+			// Prune blocked hits older than 10 minutes (600 seconds)
+			while (historyBlockedQueue.Count > 0 && historyBlockedQueue.Peek().Timestamp < pruneCutoff)
+			{
+				historyBlockedQueue.Dequeue();
 			}
 		}
 
@@ -185,6 +202,85 @@ namespace Augments.Core
 			RecordHit($"proto_{protocolId}", protocolName, damage, isCrit, protocolColor, null, protoClass, isProtocol: true, isWeapon: false);
 		}
 
+		public static void RecordDamageBlocked(string sourceId, string displayName, int damageBlocked, AugmentRarity? rarity = null, AugmentClass? sourceClass = null, bool isProtocol = false)
+		{
+			if (IsPaused || damageBlocked <= 0)
+				return;
+
+			timeSinceLastHit = 0f;
+			TotalSessionDamageBlocked += damageBlocked;
+
+			historyBlockedQueue.Enqueue(new TimedBlockedHit
+			{
+				Timestamp = globalTime,
+				SourceId = sourceId,
+				DamageBlocked = damageBlocked
+			});
+
+			Color sourceColor = isProtocol ? new Color(255, 62, 165) : (rarity switch
+			{
+				AugmentRarity.Legendary => new Color(255, 200, 50),
+				AugmentRarity.Epic => new Color(185, 115, 255),
+				AugmentRarity.Rare => new Color(60, 195, 255),
+				_ => new Color(52, 211, 153)
+			});
+
+			if (!totalRecords.TryGetValue(sourceId, out var rec))
+			{
+				rec = new DamageSourceRecord
+				{
+					Id = sourceId,
+					DisplayName = displayName,
+					Color = sourceColor,
+					TotalDamage = 0,
+					HitCount = 0,
+					CritCount = 0,
+					MaxHit = 0,
+					DamageBlocked = 0,
+					BlockCount = 0,
+					Rarity = rarity,
+					SourceClass = sourceClass,
+					IsProtocol = isProtocol,
+					IsWeapon = false
+				};
+				totalRecords[sourceId] = rec;
+			}
+			else
+			{
+				if (sourceClass.HasValue && !rec.SourceClass.HasValue)
+					rec.SourceClass = sourceClass;
+				if (rarity.HasValue && !rec.Rarity.HasValue)
+					rec.Rarity = rarity;
+			}
+
+			rec.DamageBlocked += damageBlocked;
+			rec.BlockCount++;
+		}
+
+		public static void RecordDamageBlocked(Augment augment, int damageBlocked)
+		{
+			if (augment == null || damageBlocked <= 0)
+				return;
+
+			RecordDamageBlocked(augment.Id, augment.DisplayName, damageBlocked, augment.Rarity, augment.Class, isProtocol: false);
+		}
+
+		public static void RecordDamageBlocked(string sourceId, int damageBlocked)
+		{
+			if (string.IsNullOrEmpty(sourceId) || damageBlocked <= 0)
+				return;
+
+			Augment aug = AugmentDatabase.GetById(sourceId);
+			if (aug != null)
+			{
+				RecordDamageBlocked(aug, damageBlocked);
+			}
+			else
+			{
+				RecordDamageBlocked(sourceId, sourceId, damageBlocked, null, null, isProtocol: false);
+			}
+		}
+
 		public static float GetCurrentDPS()
 		{
 			if (historyQueue.Count == 0 || timeSinceLastHit >= InactivityTimeout)
@@ -210,7 +306,19 @@ namespace Augments.Core
 			return (float)TotalSessionDamage / SessionDuration;
 		}
 
-		public static (long totalDamage, List<DamageSourceRecord> records) GetCurrentViewData(AugmentPlayer ap)
+		public static long GetTenMinuteDamageBlocked()
+		{
+			float cutoff = globalTime - TenMinutesSeconds;
+			long total = 0;
+			foreach (var b in historyBlockedQueue)
+			{
+				if (b.Timestamp >= cutoff)
+					total += b.DamageBlocked;
+			}
+			return total;
+		}
+
+		public static (long totalDamage, long totalDamageBlocked, List<DamageSourceRecord> records) GetCurrentViewData(AugmentPlayer ap)
 		{
 			// Gather baseline records
 			var resultDict = new Dictionary<string, DamageSourceRecord>();
@@ -237,6 +345,8 @@ namespace Augments.Core
 						HitCount = 0,
 						CritCount = 0,
 						MaxHit = 0,
+						DamageBlocked = 0,
+						BlockCount = 0,
 						Rarity = a.Rarity,
 						SourceClass = a.Class,
 						IsProtocol = false,
@@ -246,10 +356,12 @@ namespace Augments.Core
 			}
 
 			long totalViewDamage = 0;
+			long totalViewBlocked = 0;
 
 			if (ViewMode == AnalyticsViewMode.TotalSession)
 			{
 				totalViewDamage = TotalSessionDamage;
+				totalViewBlocked = TotalSessionDamageBlocked;
 				foreach (var kvp in totalRecords)
 				{
 					if (!resultDict.TryGetValue(kvp.Key, out var existing))
@@ -271,6 +383,8 @@ namespace Augments.Core
 					existing.HitCount = kvp.Value.HitCount;
 					existing.CritCount = kvp.Value.CritCount;
 					existing.MaxHit = kvp.Value.MaxHit;
+					existing.DamageBlocked = kvp.Value.DamageBlocked;
+					existing.BlockCount = kvp.Value.BlockCount;
 				}
 			}
 			else
@@ -319,21 +433,61 @@ namespace Augments.Core
 					if (hit.Damage > rec.MaxHit)
 						rec.MaxHit = hit.Damage;
 				}
+
+				foreach (var block in historyBlockedQueue)
+				{
+					if (block.Timestamp < cutoff)
+						continue;
+
+					totalViewBlocked += block.DamageBlocked;
+
+					if (!resultDict.TryGetValue(block.SourceId, out var rec))
+					{
+						if (totalRecords.TryGetValue(block.SourceId, out var meta))
+						{
+							rec = new DamageSourceRecord
+							{
+								Id = meta.Id,
+								DisplayName = meta.DisplayName,
+								Color = meta.Color,
+								Rarity = meta.Rarity,
+								SourceClass = meta.SourceClass,
+								IsProtocol = meta.IsProtocol,
+								IsWeapon = meta.IsWeapon
+							};
+						}
+						else
+						{
+							rec = new DamageSourceRecord
+							{
+								Id = block.SourceId,
+								DisplayName = block.SourceId,
+								Color = Color.White
+							};
+						}
+						resultDict[block.SourceId] = rec;
+					}
+
+					rec.DamageBlocked += block.DamageBlocked;
+					rec.BlockCount++;
+				}
 			}
 
 			var sortedList = resultDict.Values
-				.OrderByDescending(r => r.TotalDamage)
+				.OrderByDescending(r => r.TotalDamage + r.DamageBlocked)
 				.ThenBy(r => r.DisplayName)
 				.ToList();
 
-			return (totalViewDamage, sortedList);
+			return (totalViewDamage, totalViewBlocked, sortedList);
 		}
 
 		public static void Reset()
 		{
 			totalRecords.Clear();
 			historyQueue.Clear();
+			historyBlockedQueue.Clear();
 			TotalSessionDamage = 0;
+			TotalSessionDamageBlocked = 0;
 			SessionDuration = 0f;
 			timeSinceLastHit = 999f;
 			globalTime = 0f;

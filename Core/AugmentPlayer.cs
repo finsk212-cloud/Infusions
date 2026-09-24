@@ -1955,7 +1955,10 @@ namespace Augments
 			foreach (var a in Owned)
 			{
 				if (a.FreeDodge(Player, info))
+				{
+					AugmentDamageTracker.RecordDamageBlocked(a.Id, a.DisplayName, Math.Max(1, info.Damage), a.Rarity, a.Class);
 					return true;
+				}
 			}
 			return false;
 		}
@@ -1989,6 +1992,8 @@ namespace Augments
 			// Type-D Bastion Protocol: Energy Barrier active completely prevents death
 			if (BastionBarrierTicks > 0)
 			{
+				int blocked = Math.Max(1, (int)damage);
+				AugmentDamageTracker.RecordDamageBlocked("type_d_dreadnought_protocol", "Type-D: Dreadnought Protocol", blocked, AugmentRarity.Epic, AugmentClass.Universal);
 				Player.statLife = 1;
 				Player.immune = true;
 				Player.immuneTime = Math.Max(Player.immuneTime, BastionBarrierTicks);
@@ -2001,6 +2006,8 @@ namespace Augments
 			{
 				if (BastionStoredDamage + (int)damage >= 120)
 				{
+					int blocked = Math.Max(1, (int)damage);
+					AugmentDamageTracker.RecordDamageBlocked("type_d_dreadnought_protocol", "Type-D: Dreadnought Protocol", blocked, AugmentRarity.Epic, AugmentClass.Universal);
 					BastionStoredDamage = 0;
 					BastionBarrierTicks = 90;
 					Player.statLife = 1;
@@ -2014,14 +2021,16 @@ namespace Augments
 			// Soul Martyr: Teammates inside your aura cannot die. Any lethal damage they take is absorbed and transferred to you instead (cannot drop you below 1 HP).
 			if (SupportEffects.TryFindSupportOwner(Player, "soul_martyr", AuraRadius, out Player martyrOwner))
 			{
+				int dmg = (int)damage;
+				if (dmg <= 0)
+					dmg = 1;
+
+				AugmentDamageTracker.RecordDamageBlocked("soul_martyr", "Soul Martyr", dmg, AugmentRarity.Rare, AugmentClass.Support);
+
 				Player.statLife = 1;
 				Player.immune = true;
 				Player.immuneTime = 60;
 				SoundEngine.PlaySound(SoundID.Item29, Player.Center);
-
-				int dmg = (int)damage;
-				if (dmg <= 0)
-					dmg = 1;
 
 				if (Main.netMode == NetmodeID.SinglePlayer)
 				{
@@ -2049,6 +2058,9 @@ namespace Augments
 				lifelineOwner.GetModPlayer<AugmentPlayer>().LifelineCooldown = 5400;
 				lifelineOwner.AddBuff(ModContent.BuffType<LifelineCooldownBuff>(), 5400);
 			}
+
+			int lethalBlocked = Math.Max(1, (int)damage);
+			AugmentDamageTracker.RecordDamageBlocked("lifeline", "Lifeline", lethalBlocked, AugmentRarity.Epic, AugmentClass.Support);
 
 			if (Main.netMode == NetmodeID.MultiplayerClient)
 			{
@@ -2163,6 +2175,39 @@ namespace Augments
 		{
 			foreach (var a in Owned)
 				a.OnHurt(Player, info);
+
+			// Track mitigated damage from Type-D Dreadnought Protocol (15% incoming damage reduction)
+			if (HasAugment("type_d_dreadnought_protocol") || HasAugment("type_d_bastion_protocol") || HasAugment("avatar_of_the_wall"))
+			{
+				if (BastionBarrierTicks <= 0 && info.Damage > 0)
+				{
+					int mitigated = (int)Math.Round(info.Damage * (0.15f / 0.85f));
+					if (mitigated > 0)
+					{
+						AugmentDamageTracker.RecordDamageBlocked("type_d_dreadnought_protocol", "Type-D: Dreadnought Protocol", mitigated, AugmentRarity.Epic, AugmentClass.Universal);
+					}
+				}
+			}
+
+			// Track mitigated damage from nearby Martyr's Resolve Support aura (15% incoming damage reduction)
+			for (int i = 0; i < Main.maxPlayers; i++)
+			{
+				Player other = Main.player[i];
+				if (!SupportEffects.IsAllyInRange(other, Player, AuraRadius))
+					continue;
+				var otherAP = other.GetModPlayer<AugmentPlayer>();
+				if (!otherAP.HasAugment("martyrs_resolve"))
+					continue;
+				if (info.Damage > 0)
+				{
+					int mitigated = (int)Math.Round(info.Damage * (0.15f / 0.85f));
+					if (mitigated > 0)
+					{
+						AugmentDamageTracker.RecordDamageBlocked("martyrs_resolve", "Martyr's Resolve", mitigated, AugmentRarity.Rare, AugmentClass.Support);
+					}
+				}
+				break;
+			}
 		}
 
 		public override void OnHitByNPC(NPC npc, Player.HurtInfo hurtInfo)
