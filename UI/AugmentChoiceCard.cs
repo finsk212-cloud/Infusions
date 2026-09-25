@@ -54,7 +54,38 @@ namespace Augments
 		private Rectangle specialTagRect;
 		private Rectangle familyTagRect;
 
-		public AugmentChoiceCard(Augment augment, float width, int cardIndex = 0)
+		public static float CalculateRequiredHeight(Augment augment, float width)
+		{
+			var font = FontAssets.MouseText.Value;
+			float contentWidth = width - 32f; // 16px left/right padding
+
+			var names = AugmentColorText.Wrap(font, augment.DisplayName, contentWidth, NameScale);
+			var descs = AugmentColorText.Wrap(font, augment.Description, contentWidth, DescScale);
+
+			float nameHeight = 0f;
+			foreach (var line in names)
+				nameHeight += ChatManager.GetStringSize(font, line, NameScale).Y + LineSpacing;
+
+			float divY = Math.Max(78f + nameHeight + 6f, 118f);
+			float descY = divY + 8f;
+
+			float descHeight = 0f;
+			foreach (var line in descs)
+				descHeight += ChatManager.GetStringSize(font, line, DescScale).Y + LineSpacing;
+
+			bool hasSpecialTag = augment.KeystoneFamily != null || augment.Class == AugmentClass.Support;
+			bool hasFamily = augment.FamilyId != null;
+
+			float bottomReserved = 38f;
+			if (hasSpecialTag && hasFamily)
+				bottomReserved = 96f;
+			else if (hasSpecialTag || hasFamily)
+				bottomReserved = 66f;
+
+			return descY + descHeight + bottomReserved + 12f;
+		}
+
+		public AugmentChoiceCard(Augment augment, float width, float height = MinCardHeight, int cardIndex = 0)
 		{
 			Augment = augment;
 			this.cardIndex = cardIndex;
@@ -65,7 +96,7 @@ namespace Augments
 			pulseSpeed = PulseSpeeds[(int)augment.Rarity];
 
 			Width.Set(width, 0f);
-			Height.Set(MinCardHeight, 0f);
+			Height.Set(Math.Max(MinCardHeight, height), 0f);
 
 			var font = FontAssets.MouseText.Value;
 			float contentWidth = width - 32f; // 16px left/right padding
@@ -222,36 +253,55 @@ namespace Augments
 			if (Augment.Rarity == AugmentRarity.Legendary)
 			{
 				// Radiant Golden Divine Aura
-				int auraDist = (int)(6f + pulse * 6f) + (isHovered ? 3 : 0);
+				int auraDist = (int)(6f + pulse * 6f) + (isHovered ? 4 : 0);
 				Rectangle auraRect = new Rectangle(rect.X - auraDist, rect.Y - auraDist, rect.Width + auraDist * 2, rect.Height + auraDist * 2);
-				Color auraCol = new Color(255, 160, 25) * ((0.12f + pulse * 0.16f) * (isHovered ? 1.4f : 1f));
+				Color auraCol = new Color(255, 160, 25) * ((0.12f + pulse * 0.16f) * (isHovered ? 1.6f : 1f));
 				spriteBatch.Draw(TextureAssets.MagicPixel.Value, auraRect, auraCol);
 
-				int midDist = (int)(2f + pulse * 3f);
+				int midDist = (int)(2f + pulse * 3f) + (isHovered ? 1 : 0);
 				Rectangle midRect = new Rectangle(rect.X - midDist, rect.Y - midDist, rect.Width + midDist * 2, rect.Height + midDist * 2);
-				Color midCol = new Color(255, 210, 60) * ((0.16f + pulse * 0.20f) * (isHovered ? 1.3f : 1f));
+				Color midCol = new Color(255, 210, 60) * ((0.16f + pulse * 0.20f) * (isHovered ? 1.4f : 1f));
 				spriteBatch.Draw(TextureAssets.MagicPixel.Value, midRect, midCol);
 			}
 			else if (Augment.Rarity == AugmentRarity.Epic)
 			{
 				// Mystical Amethyst Aura
-				int auraDist = (int)(5f + pulse * 5f) + (isHovered ? 3 : 0);
+				int auraDist = (int)(5f + pulse * 5f) + (isHovered ? 4 : 0);
 				Rectangle auraRect = new Rectangle(rect.X - auraDist, rect.Y - auraDist, rect.Width + auraDist * 2, rect.Height + auraDist * 2);
-				Color auraCol = new Color(175, 95, 245) * ((0.10f + pulse * 0.15f) * (isHovered ? 1.4f : 1f));
+				Color auraCol = new Color(175, 95, 245) * ((0.10f + pulse * 0.15f) * (isHovered ? 1.6f : 1f));
 				spriteBatch.Draw(TextureAssets.MagicPixel.Value, auraRect, auraCol);
 
-				int midDist = (int)(2f + pulse * 2f);
+				int midDist = (int)(2f + pulse * 2f) + (isHovered ? 1 : 0);
 				Rectangle midRect = new Rectangle(rect.X - midDist, rect.Y - midDist, rect.Width + midDist * 2, rect.Height + midDist * 2);
-				Color midCol = new Color(220, 150, 255) * ((0.14f + pulse * 0.18f) * (isHovered ? 1.3f : 1f));
+				Color midCol = new Color(220, 150, 255) * ((0.14f + pulse * 0.18f) * (isHovered ? 1.4f : 1f));
 				spriteBatch.Draw(TextureAssets.MagicPixel.Value, midRect, midCol);
 			}
 			else if (Augment.Rarity == AugmentRarity.Rare)
 			{
 				// Soft pulsing Cyan Edge Glow
-				int auraDist = (int)(2f + pulse * 2.5f) + (isHovered ? 2 : 0);
+				int auraDist = (int)(2f + pulse * 2.5f) + (isHovered ? 3 : 0);
 				Rectangle auraRect = new Rectangle(rect.X - auraDist, rect.Y - auraDist, rect.Width + auraDist * 2, rect.Height + auraDist * 2);
-				Color auraCol = new Color(60, 180, 255) * ((0.08f + pulse * 0.10f) * (isHovered ? 1.4f : 1f));
+				Color auraCol = new Color(60, 180, 255) * ((0.08f + pulse * 0.10f) * (isHovered ? 1.6f : 1f));
 				spriteBatch.Draw(TextureAssets.MagicPixel.Value, auraRect, auraCol);
+
+				if (isHovered)
+				{
+					Rectangle midRect = new Rectangle(rect.X - 1, rect.Y - 1, rect.Width + 2, rect.Height + 2);
+					Color midCol = new Color(120, 210, 255) * 0.22f;
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, midRect, midCol);
+				}
+			}
+			else if (Augment.Rarity == AugmentRarity.Common && isHovered)
+			{
+				// Sleek Cybernetic Silver-Cyan Glow for Common on hover
+				int auraDist = 3;
+				Rectangle auraRect = new Rectangle(rect.X - auraDist, rect.Y - auraDist, rect.Width + auraDist * 2, rect.Height + auraDist * 2);
+				Color auraCol = new Color(70, 130, 180) * 0.18f;
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, auraRect, auraCol);
+
+				Rectangle midRect = new Rectangle(rect.X - 1, rect.Y - 1, rect.Width + 2, rect.Height + 2);
+				Color midCol = new Color(140, 190, 240) * 0.25f;
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, midRect, midCol);
 			}
 		}
 
@@ -564,16 +614,31 @@ namespace Augments
 			if (slotsFull)
 			{
 				installText = isHovered ? $"▶  TRANSFER (+{coreRefund} CORE{(coreRefund > 1 ? "S" : "")})  ◀" : $"Transfer to 2B (+{coreRefund} Core{(coreRefund > 1 ? "s" : "")})";
-				installColor = isHovered ? new Color(255, 175, 120) : new Color(225, 120, 110) * 0.9f;
+				installColor = isHovered ? new Color(255, 185, 130) : new Color(225, 120, 110) * 0.9f;
 			}
 			else
 			{
-				installText = isHovered ? "▶  CLICK TO INSTALL  ◀" : "Click to select";
+				installText = isHovered ? "[ ◀ CLICK TO INSTALL ▶ ]" : "Click to select";
 				installColor = isHovered ? Color.White : new Color(130, 150, 185) * 0.85f;
 			}
 
 			Vector2 installScale = new Vector2(isHovered ? 0.74f : 0.68f);
 			Vector2 installSize = ChatManager.GetStringSize(font, installText, installScale);
+
+			if (isHovered)
+			{
+				int barW = (int)installSize.X + 24;
+				int barH = 22;
+				int barX = rect.X + (rect.Width - barW) / 2;
+				int barY = (int)textY - 2;
+				Color fillCol = (slotsFull ? new Color(255, 140, 80) : borderColor) * 0.16f;
+				Color borderCol = (slotsFull ? new Color(255, 160, 100) : borderColor) * 0.55f;
+
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(barX, barY, barW, barH), fillCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(barX, barY, barW, 1), borderCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(barX, barY + barH - 1, barW, 1), borderCol);
+			}
+
 			Vector2 installPos = new Vector2(rect.X + (rect.Width - installSize.X) * 0.5f, textY);
 			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, installText, installPos, installColor, 0f, Vector2.Zero, installScale);
 		}

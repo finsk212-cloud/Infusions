@@ -53,14 +53,14 @@ namespace Augments
 		private bool pendingSkipConfirm;
 
 		private const float PanelWidth = 880f;
-		private const float CardWidth = 270f;
-		private const float CardSpacing = 16f;
-		private const float CardsTop = 102f;
-		private const float BottomMargin = 20f;
+		private const float CardWidth = 268f;
+		private const float CardSpacing = 20f;
+		private const float CardsTop = 104f;
+		private const float BottomMargin = 18f;
 
-		// Dedicated strip below the cards for the reroll button
-		private const float RerollGap = 18f;
-		private const float RerollButtonHeight = 34f;
+		// Dedicated strip below the cards for the reroll and skip buttons
+		private const float RerollGap = 16f;
+		private const float RerollButtonHeight = 32f;
 
 		private const float ConfirmBoxWidth = 520f;
 		private const float ConfirmBoxHeight = 260f;
@@ -71,10 +71,10 @@ namespace Augments
 		{
 			backPanel = new ChoiceBackPanel();
 			backPanel.Width.Set(PanelWidth, 0f);
-			// Driven by AugmentChoiceCard.MinCardHeight
 			backPanel.Height.Set(CardsTop + AugmentChoiceCard.MinCardHeight + RerollGap + RerollButtonHeight + BottomMargin, 0f);
 			backPanel.HAlign = 0.5f;
 			backPanel.VAlign = 0.5f;
+			backPanel.SetPadding(0f);
 			backPanel.BackgroundColor = new Color(16, 22, 44);
 			backPanel.BorderColor = new Color(38, 52, 98);
 
@@ -83,7 +83,7 @@ namespace Augments
 				HAlign = 0.5f,
 				TextColor = new Color(255, 225, 150)
 			};
-			titleText.Top.Set(15f, 0f);
+			titleText.Top.Set(16f, 0f);
 			backPanel.Append(titleText);
 
 			UIText subtitle = new UIText("Select a plugin to install into your neural frame", 0.76f)
@@ -91,7 +91,7 @@ namespace Augments
 				HAlign = 0.5f,
 				TextColor = new Color(150, 170, 205)
 			};
-			subtitle.Top.Set(42f, 0f);
+			subtitle.Top.Set(44f, 0f);
 			backPanel.Append(subtitle);
 
 			capNoticeText = new UIText("", 0.76f)
@@ -101,6 +101,15 @@ namespace Augments
 			};
 			capNoticeText.Top.Set(68f, 0f);
 			backPanel.Append(capNoticeText);
+
+			// Minimize Button (ends at 862px, exact 18px buffer from right edge)
+			minimizeButton = new ModalButton("-", new Color(45, 52, 75), new Color(75, 88, 125));
+			minimizeButton.Width.Set(24f, 0f);
+			minimizeButton.Height.Set(24f, 0f);
+			minimizeButton.Left.Set(838f, 0f);
+			minimizeButton.Top.Set(10f, 0f);
+			minimizeButton.Clicked += HandleMinimizeClicked;
+			backPanel.Append(minimizeButton);
 
 			// Reroll and Skip sit side by side on the same row, centered as a pair
 			float rerollRowTop = CardsTop + AugmentChoiceCard.MinCardHeight + RerollGap;
@@ -117,7 +126,7 @@ namespace Augments
 			rerollButton.Clicked += HandleRerollClicked;
 			backPanel.Append(rerollButton);
 
-			skipButton = new RerollButton(new Color(110, 32, 32), new Color(160, 48, 48));
+			skipButton = new RerollButton(new Color(90, 28, 28), new Color(140, 42, 42));
 			skipButton.Width.Set(skipWidth, 0f);
 			skipButton.Height.Set(RerollButtonHeight, 0f);
 			skipButton.Left.Set(-pairWidth / 2f + rerollWidth + buttonGap, 0.5f);
@@ -125,14 +134,6 @@ namespace Augments
 			skipButton.SetEnabled(true, "Skip");
 			skipButton.Clicked += HandleSkipClicked;
 			backPanel.Append(skipButton);
-
-			minimizeButton = new ModalButton("-", new Color(45, 52, 75), new Color(75, 88, 125));
-			minimizeButton.Width.Set(24f, 0f);
-			minimizeButton.Height.Set(24f, 0f);
-			minimizeButton.Left.Set(-30f, 1f);
-			minimizeButton.Top.Set(10f, 0f);
-			minimizeButton.Clicked += HandleMinimizeClicked;
-			backPanel.Append(minimizeButton);
 
 			Append(backPanel);
 
@@ -263,17 +264,37 @@ namespace Augments
 			currentChoiceIds.Clear();
 
 			int count = choices.Count;
-			// Center against the panel's actual current inner width (post-padding),
-			// not the raw PanelWidth constant - children are positioned relative to
-			// GetInnerDimensions(), so centering against the outer width leaves the
-			// row off-center by the panel's padding.
-			float panelInnerWidth = backPanel.GetInnerDimensions().Width;
 			float totalWidth = count * CardWidth + (count - 1) * CardSpacing;
-			float startX = (panelInnerWidth - totalWidth) / 2f;
+			float startX = (PanelWidth - totalWidth) / 2f;
+
+			// Dynamically determine the maximum required height across all cards in this roll
+			float maxRequired = AugmentChoiceCard.MinCardHeight;
+			for (int i = 0; i < count; i++)
+			{
+				float reqH = AugmentChoiceCard.CalculateRequiredHeight(choices[i], CardWidth);
+				if (reqH > maxRequired)
+					maxRequired = reqH;
+			}
+
+			float cardHeight = maxRequired;
+			float desiredPanelHeight = CardsTop + cardHeight + RerollGap + RerollButtonHeight + BottomMargin;
+
+			// Responsive clamp for 720p / high UI scale
+			float maxAllowedHeight = Math.Max(480f, Main.screenHeight - 36f);
+			float finalPanelHeight = Math.Min(desiredPanelHeight, maxAllowedHeight);
+			backPanel.Height.Set(finalPanelHeight, 0f);
+
+			// Position Reroll and Skip buttons dynamically beneath the cards
+			float rerollRowTop = CardsTop + cardHeight + RerollGap;
+			if (rerollRowTop + RerollButtonHeight + BottomMargin > finalPanelHeight)
+				rerollRowTop = finalPanelHeight - BottomMargin - RerollButtonHeight;
+
+			rerollButton.Top.Set(rerollRowTop, 0f);
+			skipButton.Top.Set(rerollRowTop, 0f);
 
 			for (int i = 0; i < count; i++)
 			{
-				var card = new AugmentChoiceCard(choices[i], CardWidth, i);
+				var card = new AugmentChoiceCard(choices[i], CardWidth, cardHeight, i);
 				card.Left.Set(startX + i * (CardWidth + CardSpacing), 0f);
 				card.Top.Set(CardsTop, 0f);
 				card.OnAugmentChosen += HandleAugmentChosen;
@@ -498,14 +519,15 @@ namespace Augments
 		{
 			public event Action Clicked;
 
-			private static readonly Color DefaultIdleColor = new Color(60, 70, 110);
-			private static readonly Color DefaultHoverColor = new Color(90, 105, 160);
-			private static readonly Color DisabledColor = new Color(45, 45, 45);
+			private static readonly Color DefaultIdleColor = new Color(20, 28, 54);
+			private static readonly Color DefaultHoverColor = new Color(34, 48, 88);
+			private static readonly Color DisabledColor = new Color(16, 20, 34);
 
 			private readonly Color idleColor;
 			private readonly Color hoverColor;
 			private readonly UIText labelText;
 			private bool enabledState = true;
+			private bool isHovered = false;
 
 			public RerollButton() : this(DefaultIdleColor, DefaultHoverColor)
 			{
@@ -518,12 +540,13 @@ namespace Augments
 
 				SetPadding(0f);
 				BackgroundColor = idleColor;
-				BorderColor = Color.White * 0.4f;
+				BorderColor = new Color(50, 75, 130) * 0.8f;
 
-				labelText = new UIText("Reroll (1 Core)", 0.8f)
+				labelText = new UIText("Reroll (1 Core)", 0.82f)
 				{
 					HAlign = 0.5f,
-					VAlign = 0.5f
+					VAlign = 0.5f,
+					TextColor = new Color(230, 235, 245)
 				};
 				Append(labelText);
 			}
@@ -536,30 +559,41 @@ namespace Augments
 					return;
 
 				enabledState = enabled;
-				BackgroundColor = enabled ? idleColor : DisabledColor;
+				BackgroundColor = enabled ? (isHovered ? hoverColor : idleColor) : DisabledColor;
+				BorderColor = enabled ? (isHovered ? new Color(100, 160, 255) : new Color(50, 75, 130) * 0.8f) : new Color(35, 45, 65) * 0.6f;
+				labelText.TextColor = enabled ? (isHovered ? Color.White : new Color(230, 235, 245)) : new Color(110, 120, 140);
 			}
 
 			public override void LeftClick(UIMouseEvent evt)
 			{
 				base.LeftClick(evt);
-				// Always fires - HandleRerollClicked does the real rerollUsed/Essence
-				// checks and shows the insufficient-funds message itself; the grey
-				// styling here is just a visual hint, not the actual gate.
+				SoundEngine.PlaySound(SoundID.MenuTick);
 				Clicked?.Invoke();
 			}
 
 			public override void MouseOver(UIMouseEvent evt)
 			{
 				base.MouseOver(evt);
+				isHovered = true;
 				if (enabledState)
+				{
 					BackgroundColor = hoverColor;
+					BorderColor = new Color(100, 160, 255);
+					labelText.TextColor = Color.White;
+					SoundEngine.PlaySound(SoundID.MenuTick);
+				}
 			}
 
 			public override void MouseOut(UIMouseEvent evt)
 			{
 				base.MouseOut(evt);
+				isHovered = false;
 				if (enabledState)
+				{
 					BackgroundColor = idleColor;
+					BorderColor = new Color(50, 75, 130) * 0.8f;
+					labelText.TextColor = new Color(230, 235, 245);
+				}
 			}
 		}
 
@@ -674,13 +708,14 @@ namespace Augments
 
 				CalculatedStyle dims = GetDimensions();
 
-				// Header horizontal divider
-				int divY = (int)dims.Y + 84;
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle((int)dims.X + 24, divY, (int)dims.Width - 48, 1), new Color(45, 62, 105) * 0.7f);
+				// Header horizontal divider spanning X = 18f to X = 862f (exact 18px bilateral symmetry)
+				int divY = (int)dims.Y + 86;
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle((int)dims.X + 18, divY, (int)dims.Width - 36, 1), new Color(45, 62, 105) * 0.75f);
 
 				// Center diamond node
 				int midX = (int)dims.X + (int)(dims.Width * 0.5f);
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(midX - 1, divY - 1, 3, 3), new Color(80, 160, 240) * 0.8f);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(midX - 1, divY - 1, 3, 3), new Color(80, 160, 240) * 0.85f);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(midX, divY, 1, 1), Color.White * 0.9f);
 			}
 		}
 	}
