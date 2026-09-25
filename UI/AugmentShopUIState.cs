@@ -63,29 +63,25 @@ namespace Augments
 			backPanel.Height.Set(PanelHeight, 0f);
 			backPanel.HAlign = 0.5f;
 			backPanel.VAlign = 0.5f;
+			backPanel.SetPadding(0f);
 			backPanel.BackgroundColor = new Color(20, 28, 54);
 			backPanel.BorderColor = new Color(38, 52, 98);
 
-			// Navigation Tabs (Disabled for now - Decryption Chamber preserved in code)
-			// var decryptTab = new GlowTabButton("[c/4CA8D8:★]  [c/EAD8B0:Decrypt Chips]  [c/4CA8D8:★]", () => ModContent.GetInstance<AugmentUISystem>().ShowGacha());
-			// backPanel.Append(decryptTab);
-
-			// Close Button in top-right corner
+			// Close Button in top-right corner (ends at 782px, exact 18px buffer from right edge)
 			var closeButton = new CloseButton();
 			closeButton.Width.Set(24f, 0f);
 			closeButton.Height.Set(24f, 0f);
-			closeButton.HAlign = 1f;
 			closeButton.Top.Set(10f, 0f);
-			closeButton.Left.Set(-10f, 0f);
+			closeButton.Left.Set(758f, 0f);
 			closeButton.Clicked += () => ModContent.GetInstance<AugmentUISystem>().HideShop();
 			backPanel.Append(closeButton);
 
-			// Currency Badge pill in top right
+			// Currency Badge pill in top right (556f to 746f, 12px gap before close button)
 			UIPanel essenceBadge = new UIPanel();
 			essenceBadge.Width.Set(190f, 0f);
 			essenceBadge.Height.Set(26f, 0f);
-			essenceBadge.Left.Set(-240f, 1f);
-			essenceBadge.Top.Set(10f, 0f);
+			essenceBadge.Left.Set(556f, 0f);
+			essenceBadge.Top.Set(9f, 0f);
 			essenceBadge.SetPadding(0f);
 			essenceBadge.BackgroundColor = new Color(15, 22, 42) * 0.95f;
 			essenceBadge.BorderColor = new Color(80, 180, 255) * 0.7f;
@@ -100,7 +96,7 @@ namespace Augments
 				HAlign = 0.5f,
 				TextColor = new Color(255, 235, 175)
 			};
-			title.Top.Set(44f, 0f);
+			title.Top.Set(42f, 0f);
 			backPanel.Append(title);
 
 			// Subtitle
@@ -109,24 +105,24 @@ namespace Augments
 				HAlign = 0.5f,
 				TextColor = new Color(155, 170, 200)
 			};
-			subtitle.Top.Set(68f, 0f);
+			subtitle.Top.Set(66f, 0f);
 			backPanel.Append(subtitle);
 
-			// Optional Undo Reforge Bar
+			// Optional Undo Reforge Bar (spans 18f to 782f)
 			undoReforgeBar = new UndoReforgeBar(TryUndoReforge);
-			undoReforgeBar.Width.Set(-28f, 1f);
-			undoReforgeBar.HAlign = 0.5f;
-			undoReforgeBar.Top.Set(90f, 0f);
+			undoReforgeBar.Left.Set(18f, 0f);
+			undoReforgeBar.Width.Set(764f, 0f);
+			undoReforgeBar.Top.Set(88f, 0f);
 			undoReforgeBar.Height.Set(26f, 0f);
 
-			// Column Headers
+			// Column Headers (symmetrical at Left = 18f and Left = 410f)
 			UIText buyBackHeader = new UIText("Re-acquire (Buy Back)", 0.85f)
 			{
 				HAlign = 0f,
 				TextColor = new Color(150, 225, 255)
 			};
-			buyBackHeader.Left.Set(14f, 0f);
-			buyBackHeader.Top.Set(118f, 0f);
+			buyBackHeader.Left.Set(18f, 0f);
+			buyBackHeader.Top.Set(122f, 0f);
 			backPanel.Append(buyBackHeader);
 
 			UIText removeHeader = new UIText("Equipped (Dismantle)", 0.85f)
@@ -134,16 +130,16 @@ namespace Augments
 				HAlign = 0f,
 				TextColor = new Color(255, 185, 160)
 			};
-			removeHeader.Left.Set(18f, 0.5f);
-			removeHeader.Top.Set(118f, 0f);
+			removeHeader.Left.Set(410f, 0f);
+			removeHeader.Top.Set(122f, 0f);
 			backPanel.Append(removeHeader);
 
-			// Left List: Buy Back
+			// Left List: Buy Back (Left = 18f, Width = 356f, Scrollbar = 378f)
 			buyBackList = new UIList();
 			buyBackList.ManualSortMethod = _ => { };
 			buyBackList.Top.Set(ListsTop, 0f);
-			buyBackList.Left.Set(14f, 0f);
-			buyBackList.Width.Set(-46f, 0.5f);
+			buyBackList.Left.Set(18f, 0f);
+			buyBackList.Width.Set(356f, 0f);
 			buyBackList.Height.Set(-(ListsTop + 14f), 1f);
 			buyBackList.ListPadding = 6f;
 			backPanel.Append(buyBackList);
@@ -151,16 +147,17 @@ namespace Augments
 			ShopScrollbar buyBackScrollbar = new ShopScrollbar();
 			buyBackScrollbar.Top.Set(ListsTop, 0f);
 			buyBackScrollbar.Height.Set(-(ListsTop + 14f), 1f);
-			buyBackScrollbar.Left.Set(-22f, 0.5f);
+			buyBackScrollbar.Left.Set(378f, 0f);
+			buyBackScrollbar.Width.Set(8f, 0f);
 			buyBackList.SetScrollbar(buyBackScrollbar);
 			backPanel.Append(buyBackScrollbar);
 
-			// Right List: Remove
+			// Right List: Remove (Left = 410f, Width = 356f, Scrollbar = 770f)
 			removeList = new UIList();
 			removeList.ManualSortMethod = _ => { };
 			removeList.Top.Set(ListsTop, 0f);
-			removeList.Left.Set(18f, 0.5f);
-			removeList.Width.Set(-46f, 0.5f);
+			removeList.Left.Set(410f, 0f);
+			removeList.Width.Set(356f, 0f);
 			removeList.Height.Set(-(ListsTop + 14f), 1f);
 			removeList.ListPadding = 6f;
 			backPanel.Append(removeList);
@@ -168,7 +165,8 @@ namespace Augments
 			ShopScrollbar removeScrollbar = new ShopScrollbar();
 			removeScrollbar.Top.Set(ListsTop, 0f);
 			removeScrollbar.Height.Set(-(ListsTop + 14f), 1f);
-			removeScrollbar.Left.Set(-14f, 1f);
+			removeScrollbar.Left.Set(770f, 0f);
+			removeScrollbar.Width.Set(8f, 0f);
 			removeList.SetScrollbar(removeScrollbar);
 			backPanel.Append(removeScrollbar);
 
@@ -311,7 +309,6 @@ namespace Augments
 				Refresh();
 		}
 
-		// Custom background panel that draws a subtle dividing line between columns
 		private class ShopBackPanel : UIPanel
 		{
 			protected override void DrawSelf(SpriteBatch spriteBatch)
@@ -320,14 +317,14 @@ namespace Augments
 
 				CalculatedStyle dims = GetDimensions();
 
-				// Header horizontal divider
-				int divY = (int)dims.Y + 104;
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle((int)dims.X + 14, divY, (int)dims.Width - 28, 1), new Color(45, 62, 105) * 0.7f);
+				// Header horizontal divider (spans X = 18f to X = 782f)
+				int divY = (int)dims.Y + 118;
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle((int)dims.X + 18, divY, (int)dims.Width - 36, 1), new Color(45, 62, 105) * 0.7f);
 
 				// Center vertical divider between columns
 				int midX = (int)dims.X + (int)(dims.Width * 0.5f);
-				int listStartY = divY + 8;
-				int listHeight = (int)dims.Height - 128;
+				int listStartY = divY + 6;
+				int listHeight = (int)dims.Height - 138;
 				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(midX, listStartY, 1, listHeight), new Color(45, 62, 105) * 0.7f);
 			}
 		}
@@ -454,13 +451,21 @@ namespace Augments
 		{
 			public ShopScrollbar()
 			{
-				Width.Set(10f, 0f);
+				Width.Set(8f, 0f);
 			}
 
 			protected override void DrawSelf(SpriteBatch spriteBatch)
 			{
 				if (!CanScroll)
 					return;
+
+				CalculatedStyle dims = GetDimensions();
+				Rectangle trackRect = new Rectangle((int)dims.X, (int)dims.Y, (int)dims.Width, (int)dims.Height);
+
+				// Dark sleek cybernetic track backing
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, trackRect, new Color(10, 16, 32) * 0.92f);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(trackRect.X, trackRect.Y, 1, trackRect.Height), new Color(34, 48, 86) * 0.6f);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(trackRect.Right - 1, trackRect.Y, 1, trackRect.Height), new Color(34, 48, 86) * 0.6f);
 
 				base.DrawSelf(spriteBatch);
 			}

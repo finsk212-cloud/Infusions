@@ -33,6 +33,8 @@ namespace Augments
 			this.isPermanent = onAction == null;
 
 			SetPadding(0f);
+			Left.Set(2f, 0f);
+			Width.Set(-4f, 1f);
 			Height.Set(54f, 0f);
 
 			actionButton = new ActionButton(actionLabel, isBuyAction, isPermanent);
@@ -67,7 +69,12 @@ namespace Augments
 		protected override void DrawSelf(SpriteBatch spriteBatch)
 		{
 			CalculatedStyle dims = GetDimensions();
-			Rectangle rect = new Rectangle((int)dims.X, (int)dims.Y, (int)dims.Width, (int)dims.Height);
+			int rx = (int)dims.X;
+			int ry = (int)dims.Y;
+			int rw = (int)dims.Width;
+			int rh = (int)dims.Height;
+
+			Rectangle rect = new Rectangle(rx, ry, rw, rh);
 
 			Color rarityColor = AugmentListEntry.RarityColor(augment.Rarity);
 			if (augment.Rarity == AugmentRarity.Common)
@@ -78,11 +85,11 @@ namespace Augments
 			Color borderColor = isHovered ? rarityColor * 0.9f : rarityColor * 0.45f;
 			spriteBatch.Draw(TextureAssets.MagicPixel.Value, rect, bgColor);
 
-			// 1px Border
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X, rect.Y, rect.Width, 1), borderColor);
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X, rect.Bottom - 1, rect.Width, 1), borderColor);
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X, rect.Y, 1, rect.Height), borderColor);
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right - 1, rect.Y, 1, rect.Height), borderColor);
+			// Clean 1px Border (Top, Bottom, Left, Right)
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rx, ry, rw, 1), borderColor);
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rx, ry + rh - 1, rw, 1), borderColor);
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rx, ry, 1, rh), borderColor);
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rx + rw - 1, ry, 1, rh), borderColor);
 
 			// 2. Class Icon Box on the Left
 			Rectangle iconBox = new Rectangle(rect.X + 8, rect.Y + 9, 36, 36);

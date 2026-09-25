@@ -108,6 +108,7 @@ namespace Augments
 			backPanel.Height.Set(PanelHeight, 0f);
 			backPanel.HAlign = 0.5f;
 			backPanel.VAlign = 0.5f;
+			backPanel.SetPadding(0f);
 			backPanel.BackgroundColor = new Color(28, 38, 70) * 0.96f;
 			backPanel.BorderColor = new Color(14, 20, 42);
 
@@ -136,61 +137,61 @@ namespace Augments
 
 			backPanel.Append(titleContainer);
 
-			// Close Button in top-right corner
+			// Close Button in top-right corner (ends at 862f, exact 18px buffer from right edge)
 			var closeButton = new CloseButton();
 			closeButton.Width.Set(24f, 0f);
 			closeButton.Height.Set(24f, 0f);
-			closeButton.HAlign = 1f;
 			closeButton.Top.Set(8f, 0f);
-			closeButton.Left.Set(-8f, 0f);
+			closeButton.Left.Set(838f, 0f);
 			closeButton.Clicked += () => ModContent.GetInstance<AugmentUISystem>().HideList();
 			backPanel.Append(closeButton);
 
-			// Search Bar in top-left corner
+			// Search Bar in top-left corner (Left = 18f, Width = 210f)
 			searchBar = new CodexSearchBar();
-			searchBar.Left.Set(14f, 0f);
+			searchBar.Left.Set(18f, 0f);
 			searchBar.Top.Set(8f, 0f);
 			searchBar.Width.Set(210f, 0f);
 			searchBar.Height.Set(24f, 0f);
 			searchBar.OnSearchChanged += OnSearchInputChanged;
 			backPanel.Append(searchBar);
 
-			// Tab Buttons Bar across top
+			// Tab Buttons Bar across top (Left = 18f)
 			CreateTabButtons();
 
-			// Filter & Sort Controls above Detail Panel (Left = 568f, Width = 288f, Top = 38f)
+			// Filter & Sort Controls above Detail Panel (Left = 556f, Width = 306f, Top = 38f)
 			CreateFilterBarControls();
 
-			// Left: Grid List Container for Inventory Slot Boxes
+			// Left: Grid List Container for Inventory Slot Boxes (Left = 18f, Width = 504f)
 			gridList = new UIList();
 			gridList.ManualSortMethod = _ => { };
 			gridList.Top.Set(74f, 0f);
-			gridList.Left.Set(12f, 0f);
-			gridList.Width.Set(515f, 0f);
+			gridList.Left.Set(18f, 0f);
+			gridList.Width.Set(504f, 0f);
 			gridList.Height.Set(-125f, 1f);
 			gridList.ListPadding = 6f;
 			backPanel.Append(gridList);
 
-			// Scrollbar for Grid
-			gridScrollbar = new UIScrollbar();
+			// Scrollbar for Grid (Left = 528f, Width = 8f)
+			gridScrollbar = new PluginListScrollbar();
 			gridScrollbar.Top.Set(74f, 0f);
 			gridScrollbar.Height.Set(-125f, 1f);
-			gridScrollbar.Left.Set(534f, 0f);
+			gridScrollbar.Left.Set(528f, 0f);
+			gridScrollbar.Width.Set(8f, 0f);
 			gridList.SetScrollbar(gridScrollbar);
 			backPanel.Append(gridScrollbar);
 
-			// Right: Detailed Info Inspector Panel
+			// Right: Detailed Info Inspector Panel (Left = 556f, Width = 306f, ends at 862f)
 			detailPanel = new AugmentDetailPanel(this);
 			detailPanel.Top.Set(74f, 0f);
-			detailPanel.Left.Set(568f, 0f);
-			detailPanel.Width.Set(288f, 0f);
+			detailPanel.Left.Set(556f, 0f);
+			detailPanel.Width.Set(306f, 0f);
 			detailPanel.Height.Set(-125f, 1f);
 			backPanel.Append(detailPanel);
 
-			// Bottom-Right: Support Class Tag
+			// Bottom-Right: Support Class Tag (Left = 556f, Width = 306f, ends at 862f)
 			supportTag = new SupportClassTagElement();
-			supportTag.Left.Set(568f, 0f);
-			supportTag.Width.Set(288f, 0f);
+			supportTag.Left.Set(556f, 0f);
+			supportTag.Width.Set(306f, 0f);
 			supportTag.Height.Set(30f, 0f);
 			supportTag.Top.Set(556f, 0f);
 			backPanel.Append(supportTag);
@@ -206,9 +207,9 @@ namespace Augments
 		private void CreateTabButtons()
 		{
 			string[] tabs = { "All", "Common", "Rare", "Epic", "Legendary", "Equipped" };
-			float startLeft = 14f;
-			float buttonWidth = 82f;
-			float gap = 5f;
+			float startLeft = 18f;
+			float buttonWidth = 79f;
+			float gap = 6f;
 
 			for (int i = 0; i < tabs.Length; i++)
 			{
@@ -239,38 +240,38 @@ namespace Augments
 
 		private void CreateFilterBarControls()
 		{
-			// 1. Class Button (Left = 568f, Width = 110f)
+			// 1. Class Button (Left = 556f, Width = 114f)
 			classBtn = new CodexFilterButton(GetClassBtnText());
 			classBtn.Top.Set(38f, 0f);
-			classBtn.Left.Set(568f, 0f);
-			classBtn.Width.Set(110f, 0f);
+			classBtn.Left.Set(556f, 0f);
+			classBtn.Width.Set(114f, 0f);
 			classBtn.Height.Set(26f, 0f);
 			classBtn.Clicked += CycleClassForward;
 			classBtn.RightClicked += CycleClassBackward;
 			backPanel.Append(classBtn);
 
-			// 2. Sort Button (Left = 682f, Width = 110f)
+			// 2. Sort Button (Left = 676f, Width = 114f)
 			sortBtn = new CodexFilterButton(GetSortBtnText());
 			sortBtn.Top.Set(38f, 0f);
-			sortBtn.Left.Set(682f, 0f);
-			sortBtn.Width.Set(110f, 0f);
+			sortBtn.Left.Set(676f, 0f);
+			sortBtn.Width.Set(114f, 0f);
 			sortBtn.Height.Set(26f, 0f);
 			sortBtn.Clicked += CycleSortForward;
 			sortBtn.RightClicked += CycleSortBackward;
 			backPanel.Append(sortBtn);
 
-			// 3. Filter Button (Left = 796f, Width = 60f)
+			// 3. Filter Button (Left = 796f, Width = 66f, ends at 862f)
 			filterBtn = new CodexFilterButton("⚙ Filter");
 			filterBtn.Top.Set(38f, 0f);
 			filterBtn.Left.Set(796f, 0f);
-			filterBtn.Width.Set(60f, 0f);
+			filterBtn.Width.Set(66f, 0f);
 			filterBtn.Height.Set(26f, 0f);
 			filterBtn.Clicked += ToggleFilterMenu;
 			backPanel.Append(filterBtn);
 
 			// Floating Filter & Sort Panel
 			filterPanel = new AugmentFilterPanel(this);
-			filterPanel.Left.Set(540f, 0f);
+			filterPanel.Left.Set(542f, 0f);
 			filterPanel.Top.Set(68f, 0f);
 			filterPanel.Width.Set(320f, 0f);
 			filterPanel.Height.Set(330f, 0f);
@@ -279,9 +280,9 @@ namespace Augments
 		private void CreateDevBarControls()
 		{
 			devBarContainer = new UIElement();
-			devBarContainer.Left.Set(14f, 0f);
+			devBarContainer.Left.Set(18f, 0f);
 			devBarContainer.Top.Set(556f, 0f);
-			devBarContainer.Width.Set(640f, 0f);
+			devBarContainer.Width.Set(518f, 0f);
 			devBarContainer.Height.Set(28f, 0f);
 
 			var clearAllBtn = new CodexFilterButton("🗑 Clear All", 0.72f);
@@ -1489,6 +1490,30 @@ namespace Augments
 			{
 				base.MouseOut(evt);
 				BackgroundColor = IdleColor;
+			}
+		}
+
+		private class PluginListScrollbar : UIScrollbar
+		{
+			public PluginListScrollbar()
+			{
+				Width.Set(8f, 0f);
+			}
+
+			protected override void DrawSelf(SpriteBatch spriteBatch)
+			{
+				if (!CanScroll)
+					return;
+
+				CalculatedStyle dims = GetDimensions();
+				Rectangle trackRect = new Rectangle((int)dims.X, (int)dims.Y, (int)dims.Width, (int)dims.Height);
+
+				// Dark sleek cybernetic track backing
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, trackRect, new Color(10, 16, 32) * 0.92f);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(trackRect.X, trackRect.Y, 1, trackRect.Height), new Color(34, 48, 86) * 0.6f);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(trackRect.Right - 1, trackRect.Y, 1, trackRect.Height), new Color(34, 48, 86) * 0.6f);
+
+				base.DrawSelf(spriteBatch);
 			}
 		}
 
