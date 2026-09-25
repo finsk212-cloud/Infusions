@@ -2302,19 +2302,34 @@ namespace Augments
 		{
 			if (Main.netMode != NetmodeID.Server && Player.whoAmI == Main.myPlayer)
 			{
-				if (ModContent.GetInstance<AugmentUISystem>()?.IsChoiceOpenAndActive == true)
+				if (ModContent.GetInstance<AugmentUISystem>()?.IsPlayerInputBlocked() == true)
 				{
 					Player.controlUseItem = false;
 					Player.controlUseTile = false;
+					Player.mouseInterface = true;
 				}
 			}
+		}
+
+		public override bool PreItemCheck()
+		{
+			if (Main.netMode != NetmodeID.Server && Player.whoAmI == Main.myPlayer)
+			{
+				if (ModContent.GetInstance<AugmentUISystem>()?.IsPlayerInputBlocked() == true)
+				{
+					Player.mouseInterface = true;
+					return false;
+				}
+			}
+
+			return base.PreItemCheck();
 		}
 
 		public override bool CanUseItem(Item item)
 		{
 			if (Main.netMode != NetmodeID.Server && Player.whoAmI == Main.myPlayer)
 			{
-				if (ModContent.GetInstance<AugmentUISystem>()?.IsChoiceOpenAndActive == true)
+				if (ModContent.GetInstance<AugmentUISystem>()?.IsPlayerInputBlocked() == true)
 					return false;
 			}
 

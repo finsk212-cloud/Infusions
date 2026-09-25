@@ -80,6 +80,14 @@ namespace Augments
 
 			AugmentFamilyHUD.Update(gameTime);
 			AugmentPinnedHUD.Update(gameTime);
+
+			if (IsPlayerInputBlocked())
+			{
+				if (Main.LocalPlayer != null && Main.LocalPlayer.active)
+				{
+					Main.LocalPlayer.mouseInterface = true;
+				}
+			}
 		}
 
 		// Slots both panels into Terraria's actual draw order.
@@ -129,7 +137,11 @@ namespace Augments
 				delegate
 				{
 					if (lastUpdateUiGameTime != null && analyticsInterface?.CurrentState != null)
+					{
 						analyticsInterface.Draw(Main.spriteBatch, lastUpdateUiGameTime);
+						if (Main.LocalPlayer != null && Main.LocalPlayer.active)
+							Main.LocalPlayer.mouseInterface = true;
+					}
 					return true;
 				},
 				InterfaceScaleType.UI)
@@ -258,6 +270,42 @@ namespace Augments
 
 		public bool IsOpen => augmentInterface?.CurrentState != null;
 		public bool IsChoiceOpenAndActive => augmentInterface?.CurrentState != null && choiceState != null && !choiceState.IsMinimized;
+
+		public bool IsPlayerInputBlocked()
+		{
+			if (Main.dedServ)
+				return false;
+
+			// Boss choice popup (active modal selection)
+			if (IsChoiceOpenAndActive)
+				return true;
+
+			// Choice popup minimized, hovering over restore icon
+			if (choiceState != null && choiceState.IsMouseOverRestore)
+				return true;
+
+			// Plugins Menu (active modal window)
+			if (IsListOpen)
+				return true;
+
+			// Vendor Shop (active modal window)
+			if (IsShopOpen)
+				return true;
+
+			// Decryption Chamber (active modal window)
+			if (IsGachaOpen)
+				return true;
+
+			// Combat Analytics (active modal dashboard)
+			if (IsAnalyticsOpen)
+				return true;
+
+			// Pinned HUD being dragged or manipulated with Alt/Shift
+			if (AugmentPinnedHUD.IsInteractingAny)
+				return true;
+
+			return false;
+		}
 
 		public void RefreshOpenPlayerPanels()
 		{

@@ -226,6 +226,8 @@ namespace Augments
 			}
 		}
 
+		public bool IsMouseOverRestore => isMinimized && restoreIcon != null && restoreIcon.ContainsPoint(Main.MouseScreen);
+
 		private RarityBracket currentBracket;
 
 		// Call this right before showing the panel - replaces whatever cards

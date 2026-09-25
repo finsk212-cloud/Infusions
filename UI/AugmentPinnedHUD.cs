@@ -106,6 +106,34 @@ namespace Augments
 			}
 		}
 
+		public static bool IsInteractingAny
+		{
+			get
+			{
+				if (Main.dedServ || Main.gameMenu)
+					return false;
+
+				bool isAltDown = Main.keyState.IsKeyDown(Keys.LeftAlt)
+				              || Main.keyState.IsKeyDown(Keys.RightAlt)
+				              || Main.keyState.IsKeyDown(Keys.LeftShift);
+				if (!isAltDown)
+					return false;
+
+				Vector2 mouse = new Vector2(Main.mouseX, Main.mouseY);
+				foreach (var w in widgets.Values)
+				{
+					if (!w.IsPinned)
+						continue;
+					if (w.IsDragging)
+						return true;
+					Rectangle rect = new Rectangle((int)w.Position.X, (int)w.Position.Y, (int)w.Width, (int)w.Height);
+					if (rect.Contains((int)mouse.X, (int)mouse.Y))
+						return true;
+				}
+				return false;
+			}
+		}
+
 		public static void Update(GameTime gameTime)
 		{
 			if (Main.dedServ || Main.gameMenu)
