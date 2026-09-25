@@ -227,6 +227,12 @@ namespace Augments
 			}
 		}
 
+		public override void Draw(SpriteBatch spriteBatch)
+		{
+			base.Draw(spriteBatch);
+			AugmentChoiceCard.DrawActiveTooltip(spriteBatch);
+		}
+
 		public bool IsMouseOverRestore => isMinimized && restoreIcon != null && restoreIcon.ContainsPoint(Main.MouseScreen);
 
 		private RarityBracket currentBracket;

@@ -232,19 +232,19 @@ namespace Augments
 			// =================================================================
 			DrawInstallActionBar(spriteBatch, font, rect, borderColor);
 
-			// Tooltips for tags if mouse is hovering over them
+			// Tooltips for tags - queue for deferred top-level drawing so no sibling cards clip it
 			if (familyTagRect.Contains(Main.MouseScreen.ToPoint()))
 			{
 				var family = AugmentFamilyRegistry.Get(Augment.FamilyId);
 				if (family != null)
-					DrawFamilyTooltip(spriteBatch, font, family);
+					activeTooltipDrawer = sb => DrawFamilyTooltip(sb, font, family);
 			}
 			else if (specialTagRect.Contains(Main.MouseScreen.ToPoint()))
 			{
 				if (isSupport)
-					DrawSupportTooltip(spriteBatch, font);
+					activeTooltipDrawer = sb => DrawSupportTooltip(sb, font);
 				else if (isKeystone)
-					DrawKeystoneTooltip(spriteBatch, font);
+					activeTooltipDrawer = sb => DrawKeystoneTooltip(sb, font);
 			}
 		}
 
@@ -613,32 +613,17 @@ namespace Augments
 
 			if (slotsFull)
 			{
-				installText = isHovered ? $"▶  TRANSFER (+{coreRefund} CORE{(coreRefund > 1 ? "S" : "")})  ◀" : $"Transfer to 2B (+{coreRefund} Core{(coreRefund > 1 ? "s" : "")})";
-				installColor = isHovered ? new Color(255, 185, 130) : new Color(225, 120, 110) * 0.9f;
+				installText = isHovered ? $"Transfer (+{coreRefund} Core{(coreRefund > 1 ? "s" : "")})" : $"Transfer (+{coreRefund} Core{(coreRefund > 1 ? "s" : "")})";
+				installColor = isHovered ? new Color(255, 205, 140) : new Color(225, 130, 120) * 0.9f;
 			}
 			else
 			{
-				installText = isHovered ? "[ ◀ CLICK TO INSTALL ▶ ]" : "Click to select";
-				installColor = isHovered ? Color.White : new Color(130, 150, 185) * 0.85f;
+				installText = isHovered ? "Click to Install" : "Click to select";
+				installColor = isHovered ? Color.White : new Color(145, 165, 200) * 0.85f;
 			}
 
-			Vector2 installScale = new Vector2(isHovered ? 0.74f : 0.68f);
+			Vector2 installScale = new Vector2(isHovered ? 0.76f : 0.70f);
 			Vector2 installSize = ChatManager.GetStringSize(font, installText, installScale);
-
-			if (isHovered)
-			{
-				int barW = (int)installSize.X + 24;
-				int barH = 22;
-				int barX = rect.X + (rect.Width - barW) / 2;
-				int barY = (int)textY - 2;
-				Color fillCol = (slotsFull ? new Color(255, 140, 80) : borderColor) * 0.16f;
-				Color borderCol = (slotsFull ? new Color(255, 160, 100) : borderColor) * 0.55f;
-
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(barX, barY, barW, barH), fillCol);
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(barX, barY, barW, 1), borderCol);
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(barX, barY + barH - 1, barW, 1), borderCol);
-			}
-
 			Vector2 installPos = new Vector2(rect.X + (rect.Width - installSize.X) * 0.5f, textY);
 			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, installText, installPos, installColor, 0f, Vector2.Zero, installScale);
 		}
@@ -690,6 +675,36 @@ namespace Augments
 			return y;
 		}
 
+		public static Action<SpriteBatch> activeTooltipDrawer;
+
+		public static void DrawActiveTooltip(SpriteBatch spriteBatch)
+		{
+			activeTooltipDrawer?.Invoke(spriteBatch);
+			activeTooltipDrawer = null;
+		}
+
+		private static Vector2 GetSmartTooltipPosition(float boxWidth, float boxHeight)
+		{
+			float targetX;
+			if (Main.MouseScreen.X < Main.screenWidth * 0.5f)
+			{
+				targetX = Main.MouseScreen.X + 24f;
+				if (targetX + boxWidth > Main.screenWidth - 10f)
+					targetX = Main.MouseScreen.X - 24f - boxWidth;
+			}
+			else
+			{
+				targetX = Main.MouseScreen.X - 24f - boxWidth;
+				if (targetX < 10f)
+					targetX = Main.MouseScreen.X + 24f;
+			}
+
+			return new Vector2(
+				Math.Clamp(targetX, 10f, Math.Max(10f, Main.screenWidth - boxWidth - 10f)),
+				Math.Clamp(Main.MouseScreen.Y - boxHeight / 2f, 10f, Math.Max(10f, Main.screenHeight - boxHeight - 10f))
+			);
+		}
+
 		internal static void DrawKeystoneTooltip(SpriteBatch spriteBatch, DynamicSpriteFont font)
 		{
 			const float padding = 12f;
@@ -718,10 +733,7 @@ namespace Augments
 			float boxWidth = maxWidth + padding * 2f;
 			float boxHeight = totalHeight + padding * 2f;
 
-			Vector2 boxPos = new Vector2(
-				Math.Clamp(Main.MouseScreen.X - 24f - boxWidth, 10f, Main.screenWidth - boxWidth - 10f),
-				Math.Clamp(Main.MouseScreen.Y - boxHeight / 2f, 10f, Main.screenHeight - boxHeight - 10f)
-			);
+			Vector2 boxPos = GetSmartTooltipPosition(boxWidth, boxHeight);
 
 			var boxRect = new Rectangle((int)boxPos.X, (int)boxPos.Y, (int)boxWidth, (int)boxHeight);
 			spriteBatch.Draw(TextureAssets.MagicPixel.Value, boxRect, new Color(12, 18, 34) * 0.96f);
@@ -765,10 +777,7 @@ namespace Augments
 			float boxWidth = maxWidth + padding * 2f;
 			float boxHeight = totalHeight + padding * 2f;
 
-			Vector2 boxPos = new Vector2(
-				Math.Clamp(Main.MouseScreen.X - 24f - boxWidth, 10f, Main.screenWidth - boxWidth - 10f),
-				Math.Clamp(Main.MouseScreen.Y - boxHeight / 2f, 10f, Main.screenHeight - boxHeight - 10f)
-			);
+			Vector2 boxPos = GetSmartTooltipPosition(boxWidth, boxHeight);
 
 			var boxRect = new Rectangle((int)boxPos.X, (int)boxPos.Y, (int)boxWidth, (int)boxHeight);
 			spriteBatch.Draw(TextureAssets.MagicPixel.Value, boxRect, new Color(12, 18, 34) * 0.96f);
@@ -853,10 +862,7 @@ namespace Augments
 			float boxWidth = maxWidth + padding * 2f;
 			float boxHeight = totalHeight + padding * 2f;
 
-			Vector2 boxPos = new Vector2(
-				Math.Clamp(Main.MouseScreen.X - 24f - boxWidth, 10f, Main.screenWidth - boxWidth - 10f),
-				Math.Clamp(Main.MouseScreen.Y - boxHeight / 2f, 10f, Main.screenHeight - boxHeight - 10f)
-			);
+			Vector2 boxPos = GetSmartTooltipPosition(boxWidth, boxHeight);
 
 			var boxRect = new Rectangle((int)boxPos.X, (int)boxPos.Y, (int)boxWidth, (int)boxHeight);
 			spriteBatch.Draw(TextureAssets.MagicPixel.Value, boxRect, new Color(12, 18, 34) * 0.96f);
