@@ -1299,16 +1299,16 @@ namespace Augments
 			Vector2 itemScale = new Vector2(0.76f);
 			Vector2 perkScale = new Vector2(0.72f);
 
-			string titleText = "SUPPORT STANCE ARCHITECTURE";
+			string titleText = "SUPPORT CLASS";
 			string statusText = isActive
 				? (count >= 5
-					? "STANCE ACTIVE (MAX TIER)  •  +60 DEFENSE, -5% DAMAGE"
+					? "CLASS ACTIVE (MAX TIER)  •  +60 DEFENSE, -5% DAMAGE"
 					: (count == 4
-						? $"STANCE ACTIVE  •  +40 DEFENSE, -16% DAMAGE ({count}/5 PLUGINS)"
+						? $"CLASS ACTIVE  •  +40 DEFENSE, -16% DAMAGE ({count}/5 PLUGINS)"
 						: (count == 3
-							? $"STANCE ACTIVE  •  +30 DEFENSE, -23% DAMAGE ({count}/5 PLUGINS)"
-							: $"STANCE ACTIVE  •  +20 DEFENSE, -30% DAMAGE ({count}/5 PLUGINS)")))
-				: $"INACTIVE  •  {count}/2 REQUIRED TO ACTIVATE STANCE";
+							? $"CLASS ACTIVE  •  +30 DEFENSE, -23% DAMAGE ({count}/5 PLUGINS)"
+							: $"CLASS ACTIVE  •  +20 DEFENSE, -30% DAMAGE ({count}/5 PLUGINS)")))
+				: $"INACTIVE  •  {count}/2 REQUIRED FOR CLASS BONUSES";
 
 			string descText = "Sacrifices direct offensive output to amplify armor matrix defenses.";
 
@@ -1339,7 +1339,7 @@ namespace Augments
 			curHeight += 6f;
 
 			// Threshold Matrix Section
-			string bSectionHeader = "STANCE THRESHOLD MATRIX";
+			string bSectionHeader = "CLASS THRESHOLD MATRIX";
 			curHeight += ChatManager.GetStringSize(font, bSectionHeader, sectionScale).Y + 6f;
 			Measure(bSectionHeader, sectionScale, 36f);
 
@@ -1403,7 +1403,7 @@ namespace Augments
 				}
 			}
 
-			string footerNote = "• Autonomous calibration: Stance adapts dynamically.";
+			string footerNote = "• Autonomous calibration: Class adapts dynamically as plugins change.";
 			curHeight += 4f + ChatManager.GetStringSize(font, footerNote, perkScale).Y + lineSpacing;
 			Measure(footerNote, perkScale, 48f);
 

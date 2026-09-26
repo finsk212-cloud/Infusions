@@ -790,7 +790,7 @@ namespace Augments
 
 			var lines = new List<(string Text, Color Color)>
 			{
-				("SUPPORT STANCE ARCHITECTURE", SupportTagColor),
+				("SUPPORT CLASS", SupportTagColor),
 				("Sacrifices direct offensive output to amplify armor matrix defenses.", new Color(200, 220, 245)),
 			};
 
@@ -798,15 +798,15 @@ namespace Augments
 			{
 				int defBonus = ownedCount == 2 ? 20 : (ownedCount == 3 ? 30 : (ownedCount == 4 ? 40 : 60));
 				int dmgPenalty = ownedCount == 2 ? -30 : (ownedCount == 3 ? -23 : (ownedCount == 4 ? -16 : -5));
-				lines.Add(($"Active Stance: +{defBonus} Defense, {dmgPenalty}% Damage ({ownedCount}/5 Plugins)", AugmentTextColors.Healing));
+				lines.Add(($"Active Class: +{defBonus} Defense, {dmgPenalty}% Damage ({ownedCount}/5 Plugins)", AugmentTextColors.Healing));
 			}
 			else
 			{
-				lines.Add(($"Status: INACTIVE ({ownedCount}/2 Required to activate stance)", new Color(148, 163, 184)));
+				lines.Add(($"Status: INACTIVE ({ownedCount}/2 Required for class bonuses)", new Color(148, 163, 184)));
 			}
 
 			lines.Add(("---DIVIDER---", Color.Transparent));
-			lines.Add(("Stance Threshold Matrix:", new Color(250, 204, 21)));
+			lines.Add(("Class Threshold Matrix:", new Color(250, 204, 21)));
 
 			var thresholds = new (int Threshold, string Label, int Defense, int Damage, string Note)[]
 			{
@@ -847,7 +847,7 @@ namespace Augments
 			}
 
 			lines.Add(("---DIVIDER---", Color.Transparent));
-			lines.Add(("Autonomous calibration: Stance adapts dynamically as plugins change.", new Color(148, 163, 184)));
+			lines.Add(("Autonomous calibration: Class adapts dynamically as plugins change.", new Color(148, 163, 184)));
 
 			var scale = new Vector2(0.80f);
 			float maxWidth = 0f;
