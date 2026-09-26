@@ -98,57 +98,28 @@ namespace Augments
 			spriteBatch.Draw(pixel, new Rectangle(rx + 1, ry + 1, 1, rh - 2), innerHairline);
 			spriteBatch.Draw(pixel, new Rectangle(rx + rw - 2, ry + 1, 1, rh - 2), innerHairline);
 
-			// 4. 1px Outer Border
-			Color borderColor = isHovered ? rarityColor * 0.85f : Color.Lerp(new Color(30, 41, 59), rarityColor, 0.40f) * 0.70f;
+			// 4. 1px Outer Border (clean, no corner ticks)
+			Color borderColor = isHovered ? rarityColor * 0.75f : Color.Lerp(new Color(30, 41, 59), rarityColor, 0.30f) * 0.70f;
 			spriteBatch.Draw(pixel, new Rectangle(rx, ry, rw, 1), borderColor);
 			spriteBatch.Draw(pixel, new Rectangle(rx, ry + rh - 1, rw, 1), borderColor);
 			spriteBatch.Draw(pixel, new Rectangle(rx, ry, 1, rh), borderColor);
 			spriteBatch.Draw(pixel, new Rectangle(rx + rw - 1, ry, 1, rh), borderColor);
 
-			// 5. Flush Corner Accent Notches (4x2 / 2x4)
-			Color cornerCol = rarityColor * (isHovered ? 0.95f : 0.75f);
-			spriteBatch.Draw(pixel, new Rectangle(rx, ry, 4, 2), cornerCol);
-			spriteBatch.Draw(pixel, new Rectangle(rx, ry, 2, 4), cornerCol);
-			spriteBatch.Draw(pixel, new Rectangle(rx + rw - 4, ry, 4, 2), cornerCol);
-			spriteBatch.Draw(pixel, new Rectangle(rx + rw - 2, ry, 2, 4), cornerCol);
-			spriteBatch.Draw(pixel, new Rectangle(rx, ry + rh - 2, 4, 2), cornerCol);
-			spriteBatch.Draw(pixel, new Rectangle(rx, ry + rh - 4, 2, 4), cornerCol);
-			spriteBatch.Draw(pixel, new Rectangle(rx + rw - 4, ry + rh - 2, 4, 2), cornerCol);
-			spriteBatch.Draw(pixel, new Rectangle(rx + rw - 2, ry + rh - 4, 2, 4), cornerCol);
-
-			// 6. Class Icon Box on the Left
-			Rectangle iconBox = new Rectangle(rect.X + 8, rect.Y + 9, 36, 36);
-			Color boxBg = new Color(10, 16, 28) * 0.95f;
-			spriteBatch.Draw(pixel, iconBox, boxBg);
-
-			// Icon box 1px border
-			Color boxBorder = isHovered ? rarityColor * 0.80f : new Color(30, 42, 66);
-			spriteBatch.Draw(pixel, new Rectangle(iconBox.X, iconBox.Y, iconBox.Width, 1), boxBorder);
-			spriteBatch.Draw(pixel, new Rectangle(iconBox.X, iconBox.Bottom - 1, iconBox.Width, 1), boxBorder);
-			spriteBatch.Draw(pixel, new Rectangle(iconBox.X, iconBox.Y, 1, iconBox.Height), boxBorder);
-			spriteBatch.Draw(pixel, new Rectangle(iconBox.Right - 1, iconBox.Y, 1, iconBox.Height), boxBorder);
-
-			// Icon box 2px corner ticks
-			spriteBatch.Draw(pixel, new Rectangle(iconBox.X, iconBox.Y, 2, 2), boxBorder);
-			spriteBatch.Draw(pixel, new Rectangle(iconBox.Right - 2, iconBox.Y, 2, 2), boxBorder);
-			spriteBatch.Draw(pixel, new Rectangle(iconBox.X, iconBox.Bottom - 2, 2, 2), boxBorder);
-			spriteBatch.Draw(pixel, new Rectangle(iconBox.Right - 2, iconBox.Bottom - 2, 2, 2), boxBorder);
-
-			// Draw Class Icon inside the box
+			// 5. Unboxed Class Icon (floated directly, perfectly centered vertically)
 			Texture2D iconTex = AugmentSlotElement.GetClassIcon(augment.Class);
 			if (iconTex != null)
 			{
-				float iconScale = Math.Min(26f / iconTex.Width, 26f / iconTex.Height);
+				float iconScale = Math.Min(24f / iconTex.Width, 24f / iconTex.Height);
 				Vector2 iconPos = new Vector2(
-					iconBox.X + (iconBox.Width - iconTex.Width * iconScale) * 0.5f,
-					iconBox.Y + (iconBox.Height - iconTex.Height * iconScale) * 0.5f
+					rect.X + 14f,
+					rect.Y + (rect.Height - iconTex.Height * iconScale) * 0.5f
 				);
 				spriteBatch.Draw(iconTex, iconPos, null, rarityColor, 0f, Vector2.Zero, iconScale, SpriteEffects.None, 0f);
 			}
 
-			// 7. Name & Subtitle
+			// 6. Name & Subtitle
 			var font = FontAssets.MouseText.Value;
-			float textLeft = iconBox.Right + 10f;
+			float textLeft = rect.X + 46f;
 
 			// Display Name
 			Color nameColor = isHovered ? Color.Lerp(rarityColor, Color.White, 0.35f) : rarityColor;
@@ -166,7 +137,7 @@ namespace Augments
 			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, rarName, subPos, rarityColor * 0.85f, 0f, Vector2.Zero, subScale);
 			float curSubX = subPos.X + ChatManager.GetStringSize(font, rarName, subScale).X;
 
-			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, "  •  ", new Vector2(curSubX, subPos.Y), new Color(110, 130, 160), 0f, Vector2.Zero, subScale);
+			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, "  •  ", new Vector2(curSubX, subPos.Y), new Color(100, 116, 139), 0f, Vector2.Zero, subScale);
 			curSubX += ChatManager.GetStringSize(font, "  •  ", subScale).X;
 
 			Color clsCol = AugmentTooltipDrawer.GetClassColor(augment.Class);
@@ -261,18 +232,11 @@ namespace Augments
 				spriteBatch.Draw(pixel, new Rectangle(rect.X + 1, rect.Y + 1, 1, rect.Height - 2), innerHairline);
 				spriteBatch.Draw(pixel, new Rectangle(rect.Right - 2, rect.Y + 1, 1, rect.Height - 2), innerHairline);
 
-				// 1px Outer Border
+				// 1px Outer Border (clean, no corner ticks)
 				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, rect.Width, 1), border);
 				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Bottom - 1, rect.Width, 1), border);
 				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, 1, rect.Height), border);
 				spriteBatch.Draw(pixel, new Rectangle(rect.Right - 1, rect.Y, 1, rect.Height), border);
-
-				// Corner 2px accent ticks
-				Color cornerTick = border * (isHovered ? 1.0f : 0.70f);
-				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, 2, 2), cornerTick);
-				spriteBatch.Draw(pixel, new Rectangle(rect.Right - 2, rect.Y, 2, 2), cornerTick);
-				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Bottom - 2, 2, 2), cornerTick);
-				spriteBatch.Draw(pixel, new Rectangle(rect.Right - 2, rect.Bottom - 2, 2, 2), cornerTick);
 
 				// Text label
 				var font = FontAssets.MouseText.Value;

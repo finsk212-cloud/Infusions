@@ -957,17 +957,16 @@ namespace Augments
 			{
 				int thresh = kv.Key;
 				var bonus = kv.Value;
-				string bonusTitle = bonus.Title;
-				string bonusTag = "  •  ACTIVE";
+				string bonusLine = $"✓ ({thresh}) {bonus.Title}  •  Active";
 
-				curHeight += Math.Max(16f, ChatManager.GetStringSize(font, bonusTitle + bonusTag, itemScale).Y) + lineSpacing;
-				Measure(bonusTitle + bonusTag, itemScale, 60f);
+				curHeight += ChatManager.GetStringSize(font, bonusLine, itemScale).Y + lineSpacing;
+				Measure(bonusLine, itemScale, 36f);
 
 				foreach (var desc in bonus.Descriptions)
 				{
 					string perkLine = $"• {desc.Trim()}";
 					curHeight += ChatManager.GetStringSize(font, perkLine, perkScale).Y + lineSpacing;
-					Measure(perkLine, perkScale, 60f);
+					Measure(perkLine, perkScale, 48f);
 				}
 				curHeight += 4f;
 			}
@@ -1005,8 +1004,8 @@ namespace Augments
 			// Ambient drop shadow (2px expansion)
 			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(panelRect.X - 2, panelRect.Y - 2, panelRect.Width + 4, panelRect.Height + 4), new Color(0, 0, 0, (int)(160 * progress)));
 
-			// Cybernetic chassis background with subtle ambient underglow
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, panelRect, new Color(10, 16, 28) * (0.96f * progress));
+			// Cybernetic chassis background with subtle ambient underglow - fully opaque fill so underlying panels don't bleed through
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, panelRect, new Color(10, 16, 28) * progress);
 			spriteBatch.Draw(TextureAssets.MagicPixel.Value, panelRect, fam.ThemeColor * (0.04f * progress));
 
 			// High-tech panel border
@@ -1052,51 +1051,45 @@ namespace Augments
 				var bonus = kv.Value;
 				bool unlocked = ownedCount >= thresh;
 
-				float nodeY = drawY + 1f;
+				string sym = unlocked ? "✓" : "•";
+				Color symCol = unlocked ? AugmentTextColors.Healing : new Color(100, 116, 139);
+				string threshStr = $" ({thresh}) ";
+				Color threshCol = unlocked ? new Color(56, 189, 248) : new Color(100, 116, 139);
+				string title = bonus.Title;
+				Color titleCol = unlocked ? Color.White : new Color(148, 163, 184);
+				string tag = unlocked ? "Active" : "Locked";
+				Color tagCol = unlocked ? AugmentTextColors.Healing : new Color(100, 116, 139);
 
-				// Milestone Node Badge (18x14px rounded cybernetic pill)
-				Rectangle nodeRect = new Rectangle((int)leftX, (int)nodeY, 18, 14);
-				Color nodeBg = unlocked ? fam.ThemeColor * (0.24f * progress) : new Color(16, 22, 34) * (0.90f * progress);
-				Color nodeBorder = unlocked ? AugmentTextColors.Healing * (0.90f * progress) : new Color(45, 55, 75) * (0.80f * progress);
+				float curX = leftX;
 
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, nodeRect, nodeBg);
-				// 1px node border
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(nodeRect.X, nodeRect.Y, nodeRect.Width, 1), nodeBorder);
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(nodeRect.X, nodeRect.Bottom - 1, nodeRect.Width, 1), nodeBorder);
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(nodeRect.X, nodeRect.Y, 1, nodeRect.Height), nodeBorder);
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(nodeRect.Right - 1, nodeRect.Y, 1, nodeRect.Height), nodeBorder);
+				// Symbol (✓ or •)
+				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, sym, new Vector2(curX, drawY), symCol * progress, 0f, Vector2.Zero, itemScale);
+				curX += ChatManager.GetStringSize(font, sym, itemScale).X;
 
-				// Node text: "{thresh}"
-				string threshStr = thresh.ToString();
-				Vector2 threshSz = ChatManager.GetStringSize(font, threshStr, new Vector2(0.62f));
-				Vector2 threshPos = new Vector2(
-					nodeRect.X + (nodeRect.Width - threshSz.X) * 0.5f,
-					nodeRect.Y + (nodeRect.Height - threshSz.Y) * 0.5f + 1f
-				);
-				Color threshCol = unlocked ? Color.White * progress : new Color(130, 145, 170) * progress;
-				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, threshStr, threshPos, threshCol, 0f, Vector2.Zero, new Vector2(0.62f));
+				// Threshold (e.g. " (2) ")
+				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, threshStr, new Vector2(curX, drawY), threshCol * progress, 0f, Vector2.Zero, itemScale);
+				curX += ChatManager.GetStringSize(font, threshStr, itemScale).X;
 
-				// Title text and inline status
-				float textX = leftX + 24f;
-				Color titleCol = unlocked ? Color.White * progress : new Color(148, 163, 184) * progress;
-				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, bonus.Title, new Vector2(textX, drawY), titleCol, 0f, Vector2.Zero, itemScale);
-				float titleW = ChatManager.GetStringSize(font, bonus.Title, itemScale).X;
+				// Title
+				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, title, new Vector2(curX, drawY), titleCol * progress, 0f, Vector2.Zero, itemScale);
+				curX += ChatManager.GetStringSize(font, title, itemScale).X;
 
-				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, "  •  ", new Vector2(textX + titleW, drawY), new Color(100, 116, 139) * progress, 0f, Vector2.Zero, itemScale);
-				float dotW = ChatManager.GetStringSize(font, "  •  ", itemScale).X;
+				// Separator
+				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, "  •  ", new Vector2(curX, drawY), new Color(71, 85, 105) * progress, 0f, Vector2.Zero, itemScale);
+				curX += ChatManager.GetStringSize(font, "  •  ", itemScale).X;
 
-				string statusBadge = unlocked ? "ACTIVE" : "LOCKED";
-				Color statusBadgeCol = unlocked ? AugmentTextColors.Healing * progress : new Color(100, 116, 139) * progress;
-				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, statusBadge, new Vector2(textX + titleW + dotW, drawY), statusBadgeCol, 0f, Vector2.Zero, itemScale);
+				// Status Tag (Active or Locked)
+				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, tag, new Vector2(curX, drawY), tagCol * progress, 0f, Vector2.Zero, itemScale);
 
-				drawY += Math.Max(16f, ChatManager.GetStringSize(font, bonus.Title, itemScale).Y) + lineSpacing;
+				drawY += ChatManager.GetStringSize(font, title, itemScale).Y + lineSpacing;
 
 				// Indented perk descriptions
+				float perkIndent = leftX + 16f;
 				foreach (var desc in bonus.Descriptions)
 				{
 					string perkLine = $"• {desc.Trim()}";
-					Color perkCol = unlocked ? new Color(210, 238, 225) * progress : new Color(125, 138, 158) * progress;
-					ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, perkLine, new Vector2(textX, drawY), perkCol, 0f, Vector2.Zero, perkScale);
+					Color perkCol = unlocked ? new Color(210, 238, 225) : new Color(125, 138, 158);
+					ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, perkLine, new Vector2(perkIndent, drawY), perkCol * progress, 0f, Vector2.Zero, perkScale);
 					drawY += ChatManager.GetStringSize(font, perkLine, perkScale).Y + lineSpacing;
 				}
 

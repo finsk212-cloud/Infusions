@@ -25,7 +25,7 @@ namespace Augments
 
 		private const float PanelWidth = 800f;
 		private const float PanelHeight = 520f;
-		private const float ListsTop = 142f;
+		private const float ListsTop = 126f;
 
 		public override void Update(GameTime gameTime)
 		{
@@ -64,24 +64,24 @@ namespace Augments
 			backPanel.HAlign = 0.5f;
 			backPanel.VAlign = 0.5f;
 			backPanel.SetPadding(0f);
-			backPanel.BackgroundColor = new Color(20, 28, 54);
-			backPanel.BorderColor = new Color(38, 52, 98);
+			backPanel.BackgroundColor = new Color(10, 16, 28, 250);
+			backPanel.BorderColor = new Color(30, 41, 59);
 
-			// Close Button in top-right corner (ends at 782px, exact 18px buffer from right edge)
+			// Close Button in top-right corner
 			var closeButton = new CloseButton();
 			closeButton.Width.Set(24f, 0f);
 			closeButton.Height.Set(24f, 0f);
 			closeButton.Top.Set(10f, 0f);
-			closeButton.Left.Set(758f, 0f);
+			closeButton.Left.Set(762f, 0f);
 			closeButton.Clicked += () => ModContent.GetInstance<AugmentUISystem>().HideShop();
 			backPanel.Append(closeButton);
 
-			// Currency Badge pill in top right (556f to 746f, 12px gap before close button)
+			// Currency Badge (pure unboxed typography in top-right)
 			var essenceBadge = new EssenceBadge();
-			essenceBadge.Width.Set(190f, 0f);
-			essenceBadge.Height.Set(26f, 0f);
-			essenceBadge.Left.Set(556f, 0f);
-			essenceBadge.Top.Set(9f, 0f);
+			essenceBadge.Width.Set(210f, 0f);
+			essenceBadge.Height.Set(22f, 0f);
+			essenceBadge.Left.Set(544f, 0f);
+			essenceBadge.Top.Set(12f, 0f);
 
 			essenceLabel = new ColoredLabel("[c/D4B872:Machine Cores:] [c/68C2D8:0]", 0.82f);
 			essenceBadge.Append(essenceLabel);
@@ -91,44 +91,44 @@ namespace Augments
 			UIText title = new UIText("Plugin Storage", 1.15f)
 			{
 				HAlign = 0.5f,
-				TextColor = new Color(255, 235, 175)
+				TextColor = new Color(248, 250, 252)
 			};
-			title.Top.Set(42f, 0f);
+			title.Top.Set(18f, 0f);
 			backPanel.Append(title);
 
 			// Subtitle
 			UIText subtitle = new UIText("Mistress 2B's Archive — Re-acquire archived plugins or dismantle equipped plugins", 0.76f)
 			{
 				HAlign = 0.5f,
-				TextColor = new Color(155, 170, 200)
+				TextColor = new Color(148, 163, 184)
 			};
-			subtitle.Top.Set(66f, 0f);
+			subtitle.Top.Set(42f, 0f);
 			backPanel.Append(subtitle);
 
 			// Optional Undo Reforge Bar (spans 18f to 782f)
 			undoReforgeBar = new UndoReforgeBar(TryUndoReforge);
 			undoReforgeBar.Left.Set(18f, 0f);
 			undoReforgeBar.Width.Set(764f, 0f);
-			undoReforgeBar.Top.Set(88f, 0f);
-			undoReforgeBar.Height.Set(26f, 0f);
+			undoReforgeBar.Top.Set(71f, 0f);
+			undoReforgeBar.Height.Set(22f, 0f);
 
 			// Column Headers (symmetrical at Left = 18f and Left = 410f)
 			UIText buyBackHeader = new UIText("Re-acquire (Buy Back)", 0.85f)
 			{
 				HAlign = 0f,
-				TextColor = new Color(150, 225, 255)
+				TextColor = new Color(148, 210, 255)
 			};
 			buyBackHeader.Left.Set(18f, 0f);
-			buyBackHeader.Top.Set(122f, 0f);
+			buyBackHeader.Top.Set(98f, 0f);
 			backPanel.Append(buyBackHeader);
 
 			UIText removeHeader = new UIText("Equipped (Dismantle)", 0.85f)
 			{
 				HAlign = 0f,
-				TextColor = new Color(255, 185, 160)
+				TextColor = new Color(251, 146, 60)
 			};
 			removeHeader.Left.Set(410f, 0f);
-			removeHeader.Top.Set(122f, 0f);
+			removeHeader.Top.Set(98f, 0f);
 			backPanel.Append(removeHeader);
 
 			// Left List: Buy Back (Left = 18f, Width = 356f, Scrollbar = 378f)
@@ -313,133 +313,22 @@ namespace Augments
 				base.DrawSelf(spriteBatch);
 
 				CalculatedStyle dims = GetDimensions();
+				Texture2D pixel = TextureAssets.MagicPixel.Value;
+				Color divColor = new Color(30, 41, 59) * 0.90f;
 
-				// Header horizontal divider (spans X = 18f to X = 782f)
-				int divY = (int)dims.Y + 118;
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle((int)dims.X + 18, divY, (int)dims.Width - 36, 1), new Color(45, 62, 105) * 0.7f);
+				// Header horizontal divider under subtitle
+				int divY1 = (int)dims.Y + 66;
+				spriteBatch.Draw(pixel, new Rectangle((int)dims.X + 18, divY1, (int)dims.Width - 36, 1), divColor);
+
+				// Column headers horizontal divider under headers
+				int divY2 = (int)dims.Y + 120;
+				spriteBatch.Draw(pixel, new Rectangle((int)dims.X + 18, divY2, (int)dims.Width - 36, 1), divColor);
 
 				// Center vertical divider between columns
 				int midX = (int)dims.X + (int)(dims.Width * 0.5f);
-				int listStartY = divY + 6;
-				int listHeight = (int)dims.Height - 138;
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(midX, listStartY, 1, listHeight), new Color(45, 62, 105) * 0.7f);
-			}
-		}
-
-		private class GlowTabButton : UIElement
-		{
-			private readonly string text;
-			private readonly Action onClick;
-			private bool isHovered;
-
-			public GlowTabButton(string text, Action onClick)
-			{
-				this.text = text;
-				this.onClick = onClick;
-			}
-
-			public override void LeftClick(UIMouseEvent evt)
-			{
-				base.LeftClick(evt);
-				SoundEngine.PlaySound(SoundID.MenuTick);
-				onClick?.Invoke();
-			}
-
-			public override void MouseOver(UIMouseEvent evt)
-			{
-				base.MouseOver(evt);
-				isHovered = true;
-			}
-
-			public override void MouseOut(UIMouseEvent evt)
-			{
-				base.MouseOut(evt);
-				isHovered = false;
-			}
-
-			protected override void DrawSelf(SpriteBatch spriteBatch)
-			{
-				CalculatedStyle d = GetDimensions();
-				Texture2D pixel = TextureAssets.MagicPixel.Value;
-
-				float pulse = 0.6f + 0.4f * (float)Math.Sin(Main.timeForVisualEffects * 0.12f);
-				Color borderCol = isHovered
-					? new Color(88, 164, 208)
-					: Color.Lerp(new Color(46, 72, 108), new Color(212, 184, 114), pulse * 0.5f);
-
-				Color bgCol = isHovered ? new Color(22, 32, 54) : new Color(14, 18, 34);
-
-				Rectangle rect = new Rectangle((int)d.X, (int)d.Y, (int)d.Width, (int)d.Height);
-				spriteBatch.Draw(pixel, rect, bgCol * 0.95f);
-
-				// Glowing border
-				int th = isHovered ? 2 : 1;
-				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, rect.Width, th), borderCol);
-				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Bottom - th, rect.Width, th), borderCol);
-				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, th, rect.Height), borderCol);
-				spriteBatch.Draw(pixel, new Rectangle(rect.Right - th, rect.Y, th, rect.Height), borderCol);
-
-				if (isHovered)
-				{
-					spriteBatch.Draw(pixel, new Rectangle(rect.X + 2, rect.Y + 2, rect.Width - 4, rect.Height - 4), borderCol * 0.12f);
-				}
-
-				var font = FontAssets.MouseText.Value;
-				Vector2 textSize = ChatManager.GetStringSize(font, text, new Vector2(0.80f));
-				Vector2 textPos = new Vector2(d.X + (d.Width - textSize.X) * 0.5f, d.Y + (d.Height - textSize.Y) * 0.5f);
-				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, text, textPos, Color.White, 0f, Vector2.Zero, new Vector2(0.80f));
-			}
-		}
-
-		private class TabButton : UIPanel
-		{
-			private readonly Action onClick;
-			private readonly bool isActive;
-
-			public TabButton(string text, bool isActive, Action onClick)
-			{
-				this.isActive = isActive;
-				this.onClick = onClick;
-
-				SetPadding(0f);
-				BackgroundColor = isActive ? new Color(25, 38, 72) : new Color(14, 18, 34);
-				BorderColor = isActive ? new Color(0, 200, 255) : new Color(45, 60, 95);
-
-				var label = new UIText(text, 0.80f)
-				{
-					HAlign = 0.5f,
-					VAlign = 0.5f,
-					TextColor = isActive ? Color.White : new Color(140, 160, 190)
-				};
-				Append(label);
-			}
-
-			public override void LeftClick(UIMouseEvent evt)
-			{
-				base.LeftClick(evt);
-				if (!isActive)
-				{
-					SoundEngine.PlaySound(SoundID.MenuTick);
-					onClick?.Invoke();
-				}
-			}
-
-			public override void MouseOver(UIMouseEvent evt)
-			{
-				base.MouseOver(evt);
-				if (!isActive)
-				{
-					BackgroundColor = new Color(22, 30, 56);
-				}
-			}
-
-			public override void MouseOut(UIMouseEvent evt)
-			{
-				base.MouseOut(evt);
-				if (!isActive)
-				{
-					BackgroundColor = new Color(14, 18, 34);
-				}
+				int listStartY = divY1 + 1;
+				int listHeight = (int)dims.Height - (divY1 - (int)dims.Y) - 16;
+				spriteBatch.Draw(pixel, new Rectangle(midX, listStartY, 1, listHeight), divColor);
 			}
 		}
 
@@ -477,36 +366,8 @@ namespace Augments
 
 			protected override void DrawSelf(SpriteBatch spriteBatch)
 			{
-				CalculatedStyle dims = GetDimensions();
-				var rect = new Rectangle((int)dims.X, (int)dims.Y, (int)dims.Width, (int)dims.Height);
-				Texture2D pixel = TextureAssets.MagicPixel.Value;
-
-				// Ambient subtle cyan underglow
-				spriteBatch.Draw(pixel, new Rectangle(rect.X - 1, rect.Y - 1, rect.Width + 2, rect.Height + 2), new Color(56, 189, 248) * 0.06f);
-
-				// Chassis Fill (#0A101C)
-				spriteBatch.Draw(pixel, rect, new Color(10, 16, 28, 248));
-
-				// 1px Inner Hairline
-				Color innerHairline = Color.White * 0.05f;
-				spriteBatch.Draw(pixel, new Rectangle(rect.X + 1, rect.Y + 1, rect.Width - 2, 1), innerHairline);
-				spriteBatch.Draw(pixel, new Rectangle(rect.X + 1, rect.Bottom - 2, rect.Width - 2, 1), innerHairline);
-				spriteBatch.Draw(pixel, new Rectangle(rect.X + 1, rect.Y + 1, 1, rect.Height - 2), innerHairline);
-				spriteBatch.Draw(pixel, new Rectangle(rect.Right - 2, rect.Y + 1, 1, rect.Height - 2), innerHairline);
-
-				// 1px Outer Border
-				Color border = new Color(56, 189, 248) * 0.65f;
-				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, rect.Width, 1), border);
-				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Bottom - 1, rect.Width, 1), border);
-				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, 1, rect.Height), border);
-				spriteBatch.Draw(pixel, new Rectangle(rect.Right - 1, rect.Y, 1, rect.Height), border);
-
-				// 2px Corner Accent Ticks
-				Color cornerTick = new Color(56, 189, 248) * 0.85f;
-				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, 2, 2), cornerTick);
-				spriteBatch.Draw(pixel, new Rectangle(rect.Right - 2, rect.Y, 2, 2), cornerTick);
-				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Bottom - 2, 2, 2), cornerTick);
-				spriteBatch.Draw(pixel, new Rectangle(rect.Right - 2, rect.Bottom - 2, 2, 2), cornerTick);
+				// Pure unboxed typography: no borders, fills, or corner ticks
+				base.DrawSelf(spriteBatch);
 			}
 		}
 
@@ -541,40 +402,19 @@ namespace Augments
 				var rect = new Rectangle((int)dims.X, (int)dims.Y, (int)dims.Width, (int)dims.Height);
 				Texture2D pixel = TextureAssets.MagicPixel.Value;
 
-				Color bg = isHovered ? new Color(76, 24, 30) : new Color(36, 14, 18);
-				Color border = isHovered ? new Color(248, 113, 113) : new Color(140, 45, 55);
-
 				if (isHovered)
 				{
-					spriteBatch.Draw(pixel, new Rectangle(rect.X - 1, rect.Y - 1, rect.Width + 2, rect.Height + 2), border * 0.15f);
+					// Subtle soft red hover wash, NO harsh outline box
+					spriteBatch.Draw(pixel, rect, new Color(239, 68, 68, 35));
 				}
 
-				spriteBatch.Draw(pixel, rect, bg);
-
-				Color innerHairline = Color.White * (isHovered ? 0.10f : 0.04f);
-				spriteBatch.Draw(pixel, new Rectangle(rect.X + 1, rect.Y + 1, rect.Width - 2, 1), innerHairline);
-				spriteBatch.Draw(pixel, new Rectangle(rect.X + 1, rect.Bottom - 2, rect.Width - 2, 1), innerHairline);
-				spriteBatch.Draw(pixel, new Rectangle(rect.X + 1, rect.Y + 1, 1, rect.Height - 2), innerHairline);
-				spriteBatch.Draw(pixel, new Rectangle(rect.Right - 2, rect.Y + 1, 1, rect.Height - 2), innerHairline);
-
-				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, rect.Width, 1), border);
-				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Bottom - 1, rect.Width, 1), border);
-				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, 1, rect.Height), border);
-				spriteBatch.Draw(pixel, new Rectangle(rect.Right - 1, rect.Y, 1, rect.Height), border);
-
-				Color cornerTick = border * (isHovered ? 1.0f : 0.70f);
-				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, 2, 2), cornerTick);
-				spriteBatch.Draw(pixel, new Rectangle(rect.Right - 2, rect.Y, 2, 2), cornerTick);
-				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Bottom - 2, 2, 2), cornerTick);
-				spriteBatch.Draw(pixel, new Rectangle(rect.Right - 2, rect.Bottom - 2, 2, 2), cornerTick);
-
 				var font = FontAssets.MouseText.Value;
-				Vector2 xSize = ChatManager.GetStringSize(font, "✕", new Vector2(0.80f));
+				Vector2 xSize = ChatManager.GetStringSize(font, "✕", new Vector2(0.85f));
 				Vector2 xPos = new Vector2(
 					rect.X + (rect.Width - xSize.X) * 0.5f,
 					rect.Y + (rect.Height - xSize.Y) * 0.5f + 1f
 				);
-				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, "✕", xPos, isHovered ? Color.White : new Color(254, 202, 202), 0f, Vector2.Zero, new Vector2(0.80f));
+				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, "✕", xPos, isHovered ? new Color(248, 113, 113) : new Color(148, 163, 184), 0f, Vector2.Zero, new Vector2(0.85f));
 			}
 		}
 
@@ -675,16 +515,11 @@ namespace Augments
 				spriteBatch.Draw(pixel, new Rectangle(rect.X + 1, rect.Y + 1, 1, rect.Height - 2), innerHairline);
 				spriteBatch.Draw(pixel, new Rectangle(rect.Right - 2, rect.Y + 1, 1, rect.Height - 2), innerHairline);
 
+				// 1px Outer Border (clean, no corner ticks)
 				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, rect.Width, 1), border);
 				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Bottom - 1, rect.Width, 1), border);
 				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, 1, rect.Height), border);
 				spriteBatch.Draw(pixel, new Rectangle(rect.Right - 1, rect.Y, 1, rect.Height), border);
-
-				Color cornerTick = border * (isHovered ? 1.0f : 0.70f);
-				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, 2, 2), cornerTick);
-				spriteBatch.Draw(pixel, new Rectangle(rect.Right - 2, rect.Y, 2, 2), cornerTick);
-				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Bottom - 2, 2, 2), cornerTick);
-				spriteBatch.Draw(pixel, new Rectangle(rect.Right - 2, rect.Bottom - 2, 2, 2), cornerTick);
 
 				var font = FontAssets.MouseText.Value;
 				Vector2 textSize = ChatManager.GetStringSize(font, text, new Vector2(0.75f));
