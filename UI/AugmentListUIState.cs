@@ -120,7 +120,7 @@ namespace Augments
 			titleContainer.HAlign = 0.5f;
 			titleContainer.Top.Set(8f, 0f);
 
-			UIText title = new UIText("✦  Plugins  ✦", 1.12f)
+			UIText title = new UIText("Plugins", 1.12f)
 			{
 				HAlign = 0.44f,
 				VAlign = 0.5f,
@@ -262,7 +262,7 @@ namespace Augments
 			backPanel.Append(sortBtn);
 
 			// 3. Filter Button (Left = 796f, Width = 66f, ends at 862f)
-			filterBtn = new CodexFilterButton("⚙ Filter");
+			filterBtn = new CodexFilterButton("Filters");
 			filterBtn.Top.Set(38f, 0f);
 			filterBtn.Left.Set(796f, 0f);
 			filterBtn.Width.Set(66f, 0f);
@@ -286,7 +286,7 @@ namespace Augments
 			devBarContainer.Width.Set(518f, 0f);
 			devBarContainer.Height.Set(28f, 0f);
 
-			var clearAllBtn = new CodexFilterButton("🗑 Clear All", 0.72f);
+			var clearAllBtn = new CodexFilterButton("Clear All", 0.72f);
 			clearAllBtn.Left.Set(0f, 0f);
 			clearAllBtn.Top.Set(0f, 0f);
 			clearAllBtn.Width.Set(86f, 0f);
@@ -300,14 +300,14 @@ namespace Augments
 					AugmentNet.ApplyDebugCommand(Main.LocalPlayer, DebugAugmentCommandType.Clear);
 
 				SoundEngine.PlaySound(SoundID.Shatter);
-				Main.NewText("✦ [DEV] All equipped plugins cleared! ✦", Color.Yellow);
+				Main.NewText("All equipped plugins cleared!", Color.Yellow);
 				PopulateGrid();
 				if (selectedAugment != null)
 					detailPanel.SetAugment(selectedAugment, false);
 			};
 			devBarContainer.Append(clearAllBtn);
 
-			var resetCdsBtn = new CodexFilterButton("⏱ Reset CDs", 0.72f);
+			var resetCdsBtn = new CodexFilterButton("Reset CDs", 0.72f);
 			resetCdsBtn.Left.Set(90f, 0f);
 			resetCdsBtn.Top.Set(0f, 0f);
 			resetCdsBtn.Width.Set(94f, 0f);
@@ -317,11 +317,11 @@ namespace Augments
 			{
 				Main.LocalPlayer.GetModPlayer<AugmentPlayer>().ResetAllCooldowns();
 				SoundEngine.PlaySound(SoundID.MaxMana, Main.LocalPlayer.Center);
-				Main.NewText("✦ [DEV] All plugin cooldowns have been reset to 0! ✦", Color.Cyan);
+				Main.NewText("All plugin cooldowns have been reset to 0!", Color.Cyan);
 			};
 			devBarContainer.Append(resetCdsBtn);
 
-			critToggleBtn = new CodexFilterButton(IsDevCritMode ? "💥 Crit: ON" : "💥 100% Crit", 0.72f);
+			critToggleBtn = new CodexFilterButton(IsDevCritMode ? "Crit: ON" : "100% Crit", 0.72f);
 			critToggleBtn.Left.Set(188f, 0f);
 			critToggleBtn.Top.Set(0f, 0f);
 			critToggleBtn.Width.Set(100f, 0f);
@@ -333,16 +333,16 @@ namespace Augments
 			{
 				IsDevCritMode = !IsDevCritMode;
 				critToggleBtn.IsActiveHighlight = IsDevCritMode;
-				critToggleBtn.SetText(IsDevCritMode ? "💥 Crit: ON" : "💥 100% Crit");
+				critToggleBtn.SetText(IsDevCritMode ? "Crit: ON" : "100% Crit");
 				SoundEngine.PlaySound(IsDevCritMode ? SoundID.Item4 : SoundID.MenuClose);
 				Main.NewText(IsDevCritMode
-					? "✦ [DEV] 100% Crit Mode ACTIVATED! (All damage will critically strike) ✦"
-					: "✦ [DEV] 100% Crit Mode DEACTIVATED. ✦",
+					? "100% Crit Mode ACTIVATED! (All damage will critically strike)"
+					: "100% Crit Mode DEACTIVATED.",
 					IsDevCritMode ? Color.OrangeRed : Color.Orange);
 			};
 			devBarContainer.Append(critToggleBtn);
 
-			var spawnDummyBtn = new CodexFilterButton("🎯 Spawn Dummy", 0.72f);
+			var spawnDummyBtn = new CodexFilterButton("Spawn Dummy", 0.72f);
 			spawnDummyBtn.Left.Set(292f, 0f);
 			spawnDummyBtn.Top.Set(0f, 0f);
 			spawnDummyBtn.Width.Set(108f, 0f);
@@ -405,7 +405,7 @@ namespace Augments
 			};
 			devBarContainer.Append(spawnDummyBtn);
 
-			var testRollBtn = new CodexFilterButton("🎲 Test Roll", 0.72f);
+			var testRollBtn = new CodexFilterButton("Test Roll", 0.72f);
 			testRollBtn.Left.Set(404f, 0f);
 			testRollBtn.Top.Set(0f, 0f);
 			testRollBtn.Width.Set(111f, 0f);
@@ -423,7 +423,7 @@ namespace Augments
 			};
 			devBarContainer.Append(testRollBtn);
 
-			var spawnVendorBtn = new CodexFilterButton("👩 2B Vendor", 0.72f);
+			var spawnVendorBtn = new CodexFilterButton("2B Vendor", 0.72f);
 			spawnVendorBtn.Left.Set(519f, 0f);
 			spawnVendorBtn.Top.Set(0f, 0f);
 			spawnVendorBtn.Width.Set(108f, 0f);
@@ -903,20 +903,20 @@ namespace Augments
 		}
 
 		// Tab button for tier category filters
-		private class CodexTabButton : UIPanel
+		private class CodexTabButton : UIElement
 		{
 			public readonly string TabName;
 			public bool IsActive { get; set; }
 			public event Action<string> Clicked;
 
 			private bool isHovered;
+			private readonly UIText label;
 
 			public CodexTabButton(string tabName)
 			{
 				TabName = tabName;
-				SetPadding(0f);
 
-				UIText label = new UIText(tabName, 0.75f)
+				label = new UIText(tabName, 0.75f)
 				{
 					HAlign = 0.5f,
 					VAlign = 0.5f
@@ -946,10 +946,66 @@ namespace Augments
 
 			protected override void DrawSelf(SpriteBatch spriteBatch)
 			{
-				BackgroundColor = IsActive ? new Color(42, 58, 110) : (isHovered ? new Color(34, 46, 88) : new Color(20, 28, 54));
-				BorderColor = IsActive ? new Color(255, 220, 80) : (isHovered ? Color.White * 0.7f : new Color(45, 60, 105));
+				CalculatedStyle dims = GetDimensions();
+				var rect = new Rectangle((int)dims.X, (int)dims.Y, (int)dims.Width, (int)dims.Height);
+				Texture2D pixel = TextureAssets.MagicPixel.Value;
 
-				base.DrawSelf(spriteBatch);
+				Color bg;
+				Color border;
+				if (IsActive)
+				{
+					bg = isHovered ? new Color(18, 30, 56) * 0.98f : new Color(14, 24, 46) * 0.96f;
+					border = new Color(56, 189, 248);
+					label.TextColor = Color.White;
+				}
+				else if (isHovered)
+				{
+					bg = new Color(14, 22, 38) * 0.95f;
+					border = new Color(56, 189, 248) * 0.75f;
+					label.TextColor = new Color(240, 245, 255);
+				}
+				else
+				{
+					bg = new Color(10, 16, 28) * 0.92f;
+					border = new Color(30, 42, 66);
+					label.TextColor = new Color(160, 175, 205);
+				}
+
+				// Ambient underglow when active/hovered
+				if (IsActive || isHovered)
+				{
+					float underglowAlpha = IsActive ? (isHovered ? 0.12f : 0.08f) : 0.05f;
+					spriteBatch.Draw(pixel, new Rectangle(rect.X - 1, rect.Y - 1, rect.Width + 2, rect.Height + 2), border * underglowAlpha);
+				}
+
+				// Chassis Fill
+				spriteBatch.Draw(pixel, rect, bg);
+
+				// 1px Inner Hairline Highlight Accent
+				Color innerHairline = Color.White * (isHovered ? 0.08f : 0.04f);
+				spriteBatch.Draw(pixel, new Rectangle(rect.X + 1, rect.Y + 1, rect.Width - 2, 1), innerHairline);
+				spriteBatch.Draw(pixel, new Rectangle(rect.X + 1, rect.Bottom - 2, rect.Width - 2, 1), innerHairline);
+				spriteBatch.Draw(pixel, new Rectangle(rect.X + 1, rect.Y + 1, 1, rect.Height - 2), innerHairline);
+				spriteBatch.Draw(pixel, new Rectangle(rect.Right - 2, rect.Y + 1, 1, rect.Height - 2), innerHairline);
+
+				// 1px Outer Border
+				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, rect.Width, 1), border);
+				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Bottom - 1, rect.Width, 1), border);
+				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, 1, rect.Height), border);
+				spriteBatch.Draw(pixel, new Rectangle(rect.Right - 1, rect.Y, 1, rect.Height), border);
+
+				// Bottom active bar indicator (2px high-tech cyan runner when active)
+				if (IsActive)
+				{
+					spriteBatch.Draw(pixel, new Rectangle(rect.X + 2, rect.Bottom - 2, rect.Width - 4, 2), new Color(56, 189, 248));
+				}
+
+				// Corner 2px accent ticks
+				Color cornerTick = border * (isHovered ? 1.0f : 0.70f);
+				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, 2, 2), cornerTick);
+				spriteBatch.Draw(pixel, new Rectangle(rect.Right - 2, rect.Y, 2, 2), cornerTick);
+				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Bottom - 2, 2, 2), cornerTick);
+				spriteBatch.Draw(pixel, new Rectangle(rect.Right - 2, rect.Bottom - 2, 2, 2), cornerTick);
 			}
 		}
 
@@ -999,10 +1055,10 @@ namespace Augments
 			{
 				this.parentState = parentState;
 				SetPadding(10f);
-				BackgroundColor = new Color(18, 24, 46) * 0.95f;
-				BorderColor = new Color(38, 50, 92);
+				BackgroundColor = Color.Transparent;
+				BorderColor = Color.Transparent;
 
-				devEquipBtn = new CodexFilterButton("[ + Equip ]", 0.72f);
+				devEquipBtn = new CodexFilterButton("+ Install", 0.72f);
 				devEquipBtn.Width.Set(95f, 0f);
 				devEquipBtn.Height.Set(20f, 0f);
 				devEquipBtn.Left.Set(-9999f, 0f);
@@ -1048,7 +1104,7 @@ namespace Augments
 				{
 					devEquipBtn.Left.Set(176f, 0f);
 					devEquipBtn.Top.Set(48f, 0f);
-					devEquipBtn.SetText(currentIsOwned ? "[ - Unequip ]" : "[ + Equip ]");
+					devEquipBtn.SetText(currentIsOwned ? "- Uninstall" : "+ Install");
 					devEquipBtn.BorderColor = currentIsOwned ? new Color(255, 100, 100) : new Color(100, 255, 140);
 					devEquipBtn.SetTextColor(currentIsOwned ? new Color(255, 130, 130) : new Color(130, 255, 160));
 				}
@@ -1058,70 +1114,129 @@ namespace Augments
 			{
 				CalculatedStyle dims = GetDimensions();
 				var rect = new Rectangle((int)dims.X, (int)dims.Y, (int)dims.Width, (int)dims.Height);
+				Texture2D pixel = TextureAssets.MagicPixel.Value;
+
 				float time = (float)Main.GlobalTimeWrappedHourly;
+				float rarePulse = (float)Math.Sin(time * 2.5f + (rect.X + rect.Y) * 0.02f) * 0.5f + 0.5f;
 				float epicPulse = (float)Math.Sin(time * 3f + (rect.X + rect.Y) * 0.02f) * 0.5f + 0.5f;
 				float legPulse = (float)Math.Sin(time * 4f + (rect.X + rect.Y) * 0.02f) * 0.5f + 0.5f;
 
+				Color rarityColor = currentAugment != null 
+					? AugmentListEntry.RarityColor(currentAugment.Rarity) 
+					: new Color(30, 42, 66);
+				if (currentAugment?.Rarity == AugmentRarity.Common)
+					rarityColor = new Color(225, 230, 240);
+
+				// Outer Stepped Halos for Epic & Legendary (clean hairline falloff, no solid boxes)
+				if (currentAugment?.Rarity == AugmentRarity.Epic)
+				{
+					Color epicGlow = new Color(185, 110, 255);
+					float eGlowA = 0.12f + epicPulse * 0.08f;
+					spriteBatch.Draw(pixel, new Rectangle(rect.X - 1, rect.Y - 1, rect.Width + 2, 1), epicGlow * eGlowA);
+					spriteBatch.Draw(pixel, new Rectangle(rect.X - 1, rect.Bottom, rect.Width + 2, 1), epicGlow * eGlowA);
+					spriteBatch.Draw(pixel, new Rectangle(rect.X - 1, rect.Y - 1, 1, rect.Height + 2), epicGlow * eGlowA);
+					spriteBatch.Draw(pixel, new Rectangle(rect.Right, rect.Y - 1, 1, rect.Height + 2), epicGlow * eGlowA);
+
+					spriteBatch.Draw(pixel, new Rectangle(rect.X - 2, rect.Y - 2, rect.Width + 4, 1), epicGlow * (eGlowA * 0.40f));
+					spriteBatch.Draw(pixel, new Rectangle(rect.X - 2, rect.Bottom + 1, rect.Width + 4, 1), epicGlow * (eGlowA * 0.40f));
+					spriteBatch.Draw(pixel, new Rectangle(rect.X - 2, rect.Y - 2, 1, rect.Height + 4), epicGlow * (eGlowA * 0.40f));
+					spriteBatch.Draw(pixel, new Rectangle(rect.Right + 1, rect.Y - 2, 1, rect.Height + 4), epicGlow * (eGlowA * 0.40f));
+				}
+				else if (currentAugment?.Rarity == AugmentRarity.Legendary)
+				{
+					Color legGlow = new Color(255, 180, 45);
+					float lGlowA = 0.14f + legPulse * 0.10f;
+					spriteBatch.Draw(pixel, new Rectangle(rect.X - 1, rect.Y - 1, rect.Width + 2, 1), legGlow * lGlowA);
+					spriteBatch.Draw(pixel, new Rectangle(rect.X - 1, rect.Bottom, rect.Width + 2, 1), legGlow * lGlowA);
+					spriteBatch.Draw(pixel, new Rectangle(rect.X - 1, rect.Y - 1, 1, rect.Height + 2), legGlow * lGlowA);
+					spriteBatch.Draw(pixel, new Rectangle(rect.Right, rect.Y - 1, 1, rect.Height + 2), legGlow * lGlowA);
+
+					spriteBatch.Draw(pixel, new Rectangle(rect.X - 2, rect.Y - 2, rect.Width + 4, 1), legGlow * (lGlowA * 0.45f));
+					spriteBatch.Draw(pixel, new Rectangle(rect.X - 2, rect.Bottom + 1, rect.Width + 4, 1), legGlow * (lGlowA * 0.45f));
+					spriteBatch.Draw(pixel, new Rectangle(rect.X - 2, rect.Y - 2, 1, rect.Height + 4), legGlow * (lGlowA * 0.45f));
+					spriteBatch.Draw(pixel, new Rectangle(rect.Right + 1, rect.Y - 2, 1, rect.Height + 4), legGlow * (lGlowA * 0.45f));
+				}
+
+				// Chassis Background (#0A101C at 94% opacity with subtle ambient underglow)
+				float underglowA = currentAugment != null 
+					? (currentAugment.Rarity == AugmentRarity.Legendary ? 0.05f : (currentAugment.Rarity == AugmentRarity.Epic ? 0.04f : 0.03f)) 
+					: 0.02f;
+				spriteBatch.Draw(pixel, rect, rarityColor * underglowA);
+				spriteBatch.Draw(pixel, rect, new Color(10, 16, 28) * 0.94f);
+
+				// 1px Inner Hairline Highlight Accent
+				Color innerHairline = Color.White * 0.06f;
+				spriteBatch.Draw(pixel, new Rectangle(rect.X + 1, rect.Y + 1, rect.Width - 2, 1), innerHairline);
+				spriteBatch.Draw(pixel, new Rectangle(rect.X + 1, rect.Bottom - 2, rect.Width - 2, 1), innerHairline);
+				spriteBatch.Draw(pixel, new Rectangle(rect.X + 1, rect.Y + 1, 1, rect.Height - 2), innerHairline);
+				spriteBatch.Draw(pixel, new Rectangle(rect.Right - 2, rect.Y + 1, 1, rect.Height - 2), innerHairline);
+
+				// Border Color
+				Color borderColor;
 				if (currentAugment != null)
 				{
-					// Outer Aura Glow behind description card for Epic & Legendary
-					if (currentAugment.Rarity == AugmentRarity.Epic)
-					{
-						int glowDist = 2 + (int)(epicPulse * 4f);
-						Color epicGlow = new Color(170, 90, 255) * (0.10f + epicPulse * 0.18f);
-						Rectangle auraRect = new Rectangle(rect.X - glowDist, rect.Y - glowDist, rect.Width + glowDist * 2, rect.Height + glowDist * 2);
-						spriteBatch.Draw(TextureAssets.MagicPixel.Value, auraRect, epicGlow);
-
-						BorderColor = Color.Lerp(new Color(155, 115, 225), new Color(215, 180, 255), epicPulse * 0.45f);
-					}
+					if (currentAugment.Rarity == AugmentRarity.Rare)
+						borderColor = Color.Lerp(new Color(75, 175, 250), new Color(145, 225, 255), rarePulse * 0.35f);
+					else if (currentAugment.Rarity == AugmentRarity.Epic)
+						borderColor = Color.Lerp(new Color(155, 115, 225), new Color(215, 180, 255), epicPulse * 0.45f);
 					else if (currentAugment.Rarity == AugmentRarity.Legendary)
-					{
-						int glowDist = 3 + (int)(legPulse * 5f);
-						Color legGlow = new Color(255, 170, 30) * (0.15f + legPulse * 0.25f);
-						Rectangle auraRect = new Rectangle(rect.X - glowDist, rect.Y - glowDist, rect.Width + glowDist * 2, rect.Height + glowDist * 2);
-						spriteBatch.Draw(TextureAssets.MagicPixel.Value, auraRect, legGlow);
-
-						BorderColor = Color.Lerp(new Color(255, 160, 20), new Color(255, 210, 60), legPulse * 0.45f);
-					}
-					else if (currentAugment.Rarity == AugmentRarity.Common)
-					{
-						BorderColor = new Color(225, 230, 240);
-					}
+						borderColor = Color.Lerp(new Color(255, 160, 20), new Color(255, 210, 60), legPulse * 0.45f);
 					else
-					{
-						BorderColor = Color.SkyBlue;
-					}
+						borderColor = new Color(225, 230, 240);
 				}
 				else
 				{
-					BorderColor = new Color(38, 50, 92);
+					borderColor = new Color(30, 42, 66);
 				}
 
-				base.DrawSelf(spriteBatch);
+				// 1px Outer Border
+				Color finalBorderCol = borderColor * 0.70f;
+				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, rect.Width, 1), finalBorderCol);
+				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Bottom - 1, rect.Width, 1), finalBorderCol);
+				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, 1, rect.Height), finalBorderCol);
+				spriteBatch.Draw(pixel, new Rectangle(rect.Right - 1, rect.Y, 1, rect.Height), finalBorderCol);
+
+				// Flush corner accent notches (6x2 and 2x6, strictly inside panel bounds)
+				const int cLen = 6;
+				const int cThick = 2;
+				Color cornerCol = borderColor * 0.90f;
+
+				// Top-Left notch
+				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, cLen, cThick), cornerCol);
+				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, cThick, cLen), cornerCol);
+				// Top-Right notch
+				spriteBatch.Draw(pixel, new Rectangle(rect.Right - cLen, rect.Y, cLen, cThick), cornerCol);
+				spriteBatch.Draw(pixel, new Rectangle(rect.Right - cThick, rect.Y, cThick, cLen), cornerCol);
+				// Bottom-Left notch
+				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Bottom - cThick, cLen, cThick), cornerCol);
+				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Bottom - cLen, cThick, cLen), cornerCol);
+				// Bottom-Right notch
+				spriteBatch.Draw(pixel, new Rectangle(rect.Right - cLen, rect.Bottom - cThick, cLen, cThick), cornerCol);
+				spriteBatch.Draw(pixel, new Rectangle(rect.Right - cThick, rect.Bottom - cLen, cThick, cLen), cornerCol);
 
 				if (currentAugment == null)
 				{
 					var emptyFont = FontAssets.MouseText.Value;
-					string prompt = "Click any augment slot\nto inspect details.";
-					Vector2 pSize = ChatManager.GetStringSize(emptyFont, prompt, new Vector2(0.85f));
-					Vector2 pPos = new Vector2(dims.X + (dims.Width - pSize.X) * 0.5f, dims.Y + (dims.Height - pSize.Y) * 0.4f);
-					ChatManager.DrawColorCodedStringWithShadow(spriteBatch, emptyFont, prompt, pPos, Color.Gray, 0f, Vector2.Zero, new Vector2(0.85f));
+					string prompt = "Select any plugin slot\nto view specifications.";
+					Vector2 pSize = ChatManager.GetStringSize(emptyFont, prompt, new Vector2(0.82f));
+					Vector2 pPos = new Vector2(dims.X + (dims.Width - pSize.X) * 0.5f, dims.Y + (dims.Height - pSize.Y) * 0.42f);
+					ChatManager.DrawColorCodedStringWithShadow(spriteBatch, emptyFont, prompt, pPos, new Color(148, 163, 184) * 0.75f, 0f, Vector2.Zero, new Vector2(0.82f));
 					return;
 				}
 
-				// Diagonal Light Gleam (Shine Sweep) across card for Legendary tier
+				// Subtle Glass Sheen Sweep for Legendary tier
 				if (currentAugment.Rarity == AugmentRarity.Legendary)
 				{
-					float sweepPeriod = 4.0f;
-					float sweepProgress = (time * 0.6f + (rect.X + rect.Y) * 0.003f) % sweepPeriod;
-					if (sweepProgress < 1.8f)
+					float sweepPeriod = 6.0f;
+					float sweepProgress = (time * 0.75f + (rect.X + rect.Y) * 0.002f) % sweepPeriod;
+					if (sweepProgress < 1.1f)
 					{
-						float t = sweepProgress / 1.8f;
+						float t = sweepProgress / 1.1f;
 						float sweepCenter = (rect.Width + rect.Height) * t;
-						int beamWidth = 22;
-						Color beamColor = new Color(255, 245, 215);
+						int beamWidth = 18;
+						Color sheenColor = new Color(255, 230, 160);
 
-						for (int py = 4; py < rect.Height - 4; py += 3)
+						for (int py = 4; py < rect.Height - 4; py += 2)
 						{
 							int centerPx = (int)(sweepCenter - py);
 							int startPx = Math.Max(4, centerPx - beamWidth / 2);
@@ -1129,90 +1244,59 @@ namespace Augments
 							if (endPx > startPx)
 							{
 								float dist = Math.Abs((startPx + endPx) * 0.5f - centerPx);
-								float beamA = (1f - dist / (beamWidth * 0.6f)) * 0.26f;
-								if (beamA > 0.03f)
+								float normDist = dist / (beamWidth * 0.5f);
+								if (normDist < 1f)
 								{
-									spriteBatch.Draw(TextureAssets.MagicPixel.Value,
-										new Rectangle(rect.X + startPx, rect.Y + py, endPx - startPx, 3),
-										beamColor * beamA);
+									float falloff = (float)Math.Cos(normDist * MathHelper.PiOver2);
+									float beamA = falloff * 0.07f;
+									if (beamA > 0.01f)
+									{
+										spriteBatch.Draw(pixel,
+											new Rectangle(rect.X + startPx, rect.Y + py, endPx - startPx, 2),
+											sheenColor * beamA);
+									}
 								}
 							}
 						}
 					}
 				}
 
-				// Corner Ornaments & Trims for description card
-				if (currentAugment.Rarity == AugmentRarity.Epic)
+				// Subtle occasional micro-glint sparkles on panel border
+				if (currentAugment.Rarity == AugmentRarity.Legendary)
 				{
-					// 4 Luminous Amethyst Corner Studs (4x4 pixels)
-					Color gemColor = new Color(225, 185, 255) * (0.8f + epicPulse * 0.2f);
-					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X - 1, rect.Y - 1, 4, 4), gemColor);
-					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right - 3, rect.Y - 1, 4, 4), gemColor);
-					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X - 1, rect.Bottom - 3, 4, 4), gemColor);
-					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right - 3, rect.Bottom - 3, 4, 4), gemColor);
-
-					// Twinkling Amethyst Star Sparkles along the card borders
 					(int x, int y, float offset)[] spPoints = new (int, int, float)[]
 					{
-						(rect.Right - 2, rect.Y, 0.0f),
-						(rect.X + 2, rect.Bottom - 2, 1.2f),
-						(rect.X, rect.Y + (int)(rect.Height * 0.35f), 2.2f),
-						(rect.Right - 1, rect.Y + (int)(rect.Height * 0.65f), 0.7f),
-						(rect.X + (int)(rect.Width * 0.5f), rect.Y + 1, 1.7f)
+						(rect.Right - 3, rect.Y + 2, 0.0f),
+						(rect.X + 2, rect.Bottom - 2, 2.5f)
 					};
 
 					foreach (var sp in spPoints)
 					{
-						float spPhase = (time * 1.0f + sp.offset + (rect.X * 0.02f)) % 3.8f;
-						if (spPhase < 1.4f)
+						float spPhase = (time * 0.85f + sp.offset + (rect.X * 0.015f)) % 5.0f;
+						if (spPhase < 1.0f)
 						{
-							float prog = spPhase / 1.4f;
+							float prog = spPhase / 1.0f;
 							float intensity = (float)Math.Sin(prog * MathHelper.Pi);
-							AugmentSlotElement.DrawAmethystSparkle(spriteBatch, sp.x, sp.y, intensity);
+							AugmentSlotElement.DrawSubtleStarSparkle(spriteBatch, sp.x, sp.y, intensity, new Color(255, 225, 120));
 						}
 					}
 				}
-				else if (currentAugment.Rarity == AugmentRarity.Legendary)
+				else if (currentAugment.Rarity == AugmentRarity.Epic)
 				{
-					// Inner Gold Hairline
-					Color innerGold = new Color(255, 225, 90) * (0.75f + legPulse * 0.25f);
-					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X + 2, rect.Y + 2, rect.Width - 4, 1), innerGold);
-					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X + 2, rect.Y + 2, 1, rect.Height - 4), innerGold);
-
-					// 4 Ornate Royal Gold Corner Brackets (8x2 and 2x8 L-shapes)
-					Color cornerGold = new Color(255, 220, 80);
-					// Top-Left
-					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X - 2, rect.Y - 2, 8, 2), cornerGold);
-					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X - 2, rect.Y - 2, 2, 8), cornerGold);
-					// Top-Right
-					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right - 6, rect.Y - 2, 8, 2), cornerGold);
-					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right, rect.Y - 2, 2, 8), cornerGold);
-					// Bottom-Left
-					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X - 2, rect.Bottom, 8, 2), cornerGold);
-					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X - 2, rect.Bottom - 6, 2, 8), cornerGold);
-					// Bottom-Right
-					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right - 6, rect.Bottom, 8, 2), cornerGold);
-					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right, rect.Bottom - 6, 2, 8), cornerGold);
-
-					// Multi-Point Twinkling Star Sparkles along the card borders
 					(int x, int y, float offset)[] spPoints = new (int, int, float)[]
 					{
-						(rect.Right - 2, rect.Y, 0.0f),
-						(rect.X + 2, rect.Bottom - 2, 1.0f),
-						(rect.X, rect.Y + (int)(rect.Height * 0.35f), 2.0f),
-						(rect.Right - 1, rect.Y + (int)(rect.Height * 0.65f), 3.0f),
-						(rect.X + (int)(rect.Width * 0.7f), rect.Y + 1, 1.5f),
-						(rect.X + (int)(rect.Width * 0.3f), rect.Bottom - 1, 2.5f)
+						(rect.Right - 3, rect.Y + 2, 0.0f),
+						(rect.X + 2, rect.Bottom - 2, 2.5f)
 					};
 
 					foreach (var sp in spPoints)
 					{
-						float spPhase = (time * 1.0f + sp.offset + (rect.X * 0.02f)) % 4.0f;
-						if (spPhase < 1.4f)
+						float spPhase = (time * 0.85f + sp.offset + (rect.X * 0.015f)) % 5.0f;
+						if (spPhase < 1.0f)
 						{
-							float prog = spPhase / 1.4f;
+							float prog = spPhase / 1.0f;
 							float intensity = (float)Math.Sin(prog * MathHelper.Pi);
-							AugmentSlotElement.DrawStarSparkle(spriteBatch, sp.x, sp.y, intensity);
+							AugmentSlotElement.DrawSubtleStarSparkle(spriteBatch, sp.x, sp.y, intensity, new Color(215, 160, 255));
 						}
 					}
 				}
@@ -1323,24 +1407,24 @@ namespace Augments
 					y += ChatManager.GetStringSize(font, tierClassText, new Vector2(0.78f)).Y + 4f;
 				}
 
-				// 3. Ownership Status
-				string statusText = currentIsOwned ? "[ Equipped ]" : "[ Not Equipped ]";
-				Color statusColor = currentIsOwned ? new Color(100, 255, 120) : new Color(140, 140, 150);
+				// 3. Ownership Status (Clean unboxed indicator)
+				string statusText = currentIsOwned ? "✓ Installed" : "• Not Installed";
+				Color statusColor = currentIsOwned ? AugmentTextColors.Healing : new Color(148, 163, 184);
 				ChatManager.DrawColorCodedStringWithShadow(
-					spriteBatch, font, statusText, new Vector2(x, y), statusColor, 0f, Vector2.Zero, new Vector2(0.78f)
+					spriteBatch, font, statusText, new Vector2(x, y), statusColor, 0f, Vector2.Zero, new Vector2(0.80f)
 				);
-				y += ChatManager.GetStringSize(font, statusText, new Vector2(0.78f)).Y + 8f;
+				y += ChatManager.GetStringSize(font, statusText, new Vector2(0.80f)).Y + 8f;
 
 				// 4. Subtle Divider Line (matches rarity tier)
-				Color divColor = AugmentListEntry.RarityColor(currentAugment.Rarity) * 0.45f;
+				Color divColor = AugmentListEntry.RarityColor(currentAugment.Rarity) * 0.35f;
 				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle((int)x, (int)y, (int)maxTextWidth, 1), divColor);
 				y += 8f;
 
-				// 5. Description Header
+				// 5. Description Header (Clean high-tech uppercase)
 				ChatManager.DrawColorCodedStringWithShadow(
-					spriteBatch, font, "Effect:", new Vector2(x, y), Color.Gold, 0f, Vector2.Zero, new Vector2(0.78f)
+					spriteBatch, font, "EFFECT", new Vector2(x, y), new Color(250, 204, 21), 0f, Vector2.Zero, new Vector2(0.72f)
 				);
-				y += ChatManager.GetStringSize(font, "Effect:", new Vector2(0.78f)).Y + 4f;
+				y += ChatManager.GetStringSize(font, "EFFECT", new Vector2(0.72f)).Y + 4f;
 
 				// 6. Wrapped Description with chat colors (stripping inline cooldown clause)
 				ExtractDescriptionAndCooldown(currentAugment, out string effectText, out string cooldownText);
@@ -1366,16 +1450,16 @@ namespace Augments
 					);
 				}
 
-				// 8. Cooldown footer displayed at bottom of card with stopwatch icon matching "⏱ Reset CDs"
+				// 8. Cooldown footer displayed at bottom of card with clean telemetry layout
 				if (!string.IsNullOrEmpty(cooldownText))
 				{
-					float cdY = dims.Y + dims.Height - 30f;
+					float cdY = dims.Y + dims.Height - 28f;
 					// Subtle divider line
-					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle((int)x, (int)(cdY - 5f), (int)maxTextWidth, 1), new Color(100, 220, 255) * 0.35f);
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle((int)x, (int)(cdY - 6f), (int)maxTextWidth, 1), new Color(56, 189, 248) * 0.35f);
 
-					string cdDisplay = $"⏱  {cooldownText}";
+					string cdDisplay = $"COOLDOWN  •  {cooldownText}";
 					ChatManager.DrawColorCodedStringWithShadow(
-						spriteBatch, font, cdDisplay, new Vector2(x + 2f, cdY), new Color(100, 220, 255), 0f, Vector2.Zero, new Vector2(0.82f)
+						spriteBatch, font, cdDisplay, new Vector2(x + 2f, cdY), new Color(56, 189, 248), 0f, Vector2.Zero, new Vector2(0.78f)
 					);
 				}
 			}
@@ -1453,24 +1537,19 @@ namespace Augments
 			}
 		}
 
-		// Close button (matching AugmentShopUIState)
-		private class CloseButton : UIPanel
+		// Close button (cybernetic chassis)
+		private class CloseButton : UIElement
 		{
 			public event Action Clicked;
-
-			private static readonly Color IdleColor = new Color(110, 40, 40);
-			private static readonly Color HoverColor = new Color(160, 60, 60);
+			private bool isHovered;
 
 			public CloseButton()
 			{
-				SetPadding(0f);
-				BackgroundColor = IdleColor;
-				BorderColor = Color.White * 0.4f;
-
-				UIText labelText = new UIText("x", 0.85f)
+				UIText labelText = new UIText("✕", 0.75f)
 				{
 					HAlign = 0.5f,
-					VAlign = 0.5f
+					VAlign = 0.5f,
+					TextColor = new Color(240, 160, 160)
 				};
 				Append(labelText);
 			}
@@ -1484,13 +1563,38 @@ namespace Augments
 			public override void MouseOver(UIMouseEvent evt)
 			{
 				base.MouseOver(evt);
-				BackgroundColor = HoverColor;
+				isHovered = true;
+				SoundEngine.PlaySound(SoundID.MenuTick);
 			}
 
 			public override void MouseOut(UIMouseEvent evt)
 			{
 				base.MouseOut(evt);
-				BackgroundColor = IdleColor;
+				isHovered = false;
+			}
+
+			protected override void DrawSelf(SpriteBatch spriteBatch)
+			{
+				CalculatedStyle dims = GetDimensions();
+				var rect = new Rectangle((int)dims.X, (int)dims.Y, (int)dims.Width, (int)dims.Height);
+				Texture2D pixel = TextureAssets.MagicPixel.Value;
+
+				Color bg = isHovered ? new Color(110, 28, 36) * 0.95f : new Color(60, 18, 24) * 0.90f;
+				Color border = isHovered ? new Color(255, 100, 100) : new Color(140, 45, 55);
+
+				// Ambient hover glow
+				if (isHovered)
+				{
+					spriteBatch.Draw(pixel, new Rectangle(rect.X - 1, rect.Y - 1, rect.Width + 2, rect.Height + 2), border * 0.15f);
+				}
+
+				spriteBatch.Draw(pixel, rect, bg);
+
+				// 1px border
+				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, rect.Width, 1), border);
+				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Bottom - 1, rect.Width, 1), border);
+				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, 1, rect.Height), border);
+				spriteBatch.Draw(pixel, new Rectangle(rect.Right - 1, rect.Y, 1, rect.Height), border);
 			}
 		}
 
@@ -1638,23 +1742,60 @@ namespace Augments
 						_textBlinkerCount = 0;
 					}
 
-					BackgroundColor = new Color(18, 26, 56) * 0.98f;
-					BorderColor = new Color(110, 185, 255);
+				}
+
+				CalculatedStyle dims = GetDimensions();
+				var rect = new Rectangle((int)dims.X, (int)dims.Y, (int)dims.Width, (int)dims.Height);
+				Texture2D pixel = TextureAssets.MagicPixel.Value;
+
+				Color bg;
+				Color border;
+				if (IsFocused)
+				{
+					bg = new Color(14, 22, 38) * 0.98f;
+					border = new Color(56, 189, 248);
 				}
 				else if (isHovered)
 				{
-					BackgroundColor = new Color(22, 30, 60) * 0.95f;
-					BorderColor = new Color(75, 115, 185);
+					bg = new Color(12, 18, 32) * 0.96f;
+					border = new Color(56, 189, 248) * 0.70f;
 				}
 				else
 				{
-					BackgroundColor = new Color(16, 22, 44) * 0.95f;
-					BorderColor = new Color(45, 60, 105);
+					bg = new Color(10, 16, 28) * 0.94f;
+					border = new Color(30, 42, 66);
 				}
 
-				base.DrawSelf(spriteBatch);
+				// Ambient focus underglow
+				if (IsFocused || isHovered)
+				{
+					float underglowAlpha = IsFocused ? 0.12f : 0.05f;
+					spriteBatch.Draw(pixel, new Rectangle(rect.X - 1, rect.Y - 1, rect.Width + 2, rect.Height + 2), border * underglowAlpha);
+				}
 
-				var dims = GetDimensions();
+				// Chassis Fill
+				spriteBatch.Draw(pixel, rect, bg);
+
+				// 1px Inner Hairline Highlight Accent
+				Color innerHairline = Color.White * (isHovered ? 0.08f : 0.04f);
+				spriteBatch.Draw(pixel, new Rectangle(rect.X + 1, rect.Y + 1, rect.Width - 2, 1), innerHairline);
+				spriteBatch.Draw(pixel, new Rectangle(rect.X + 1, rect.Bottom - 2, rect.Width - 2, 1), innerHairline);
+				spriteBatch.Draw(pixel, new Rectangle(rect.X + 1, rect.Y + 1, 1, rect.Height - 2), innerHairline);
+				spriteBatch.Draw(pixel, new Rectangle(rect.Right - 2, rect.Y + 1, 1, rect.Height - 2), innerHairline);
+
+				// 1px Outer Border
+				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, rect.Width, 1), border);
+				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Bottom - 1, rect.Width, 1), border);
+				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, 1, rect.Height), border);
+				spriteBatch.Draw(pixel, new Rectangle(rect.Right - 1, rect.Y, 1, rect.Height), border);
+
+				// Corner 2px accent ticks
+				Color cornerTick = border * (isHovered ? 1.0f : 0.70f);
+				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, 2, 2), cornerTick);
+				spriteBatch.Draw(pixel, new Rectangle(rect.Right - 2, rect.Y, 2, 2), cornerTick);
+				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Bottom - 2, 2, 2), cornerTick);
+				spriteBatch.Draw(pixel, new Rectangle(rect.Right - 2, rect.Bottom - 2, 2, 2), cornerTick);
+
 				Vector2 scale = new Vector2(0.72f);
 				var font = FontAssets.MouseText.Value;
 
@@ -1761,22 +1902,20 @@ namespace Augments
 		}
 
 		// Reusable interactive button/pill for filter bar and popup chips
-		private class CodexFilterButton : UIPanel
+		private class CodexFilterButton : UIElement
 		{
 			public readonly UIText Label;
 			public event Action Clicked;
 			public event Action RightClicked;
 			private bool isHovered;
 			public bool IsActiveHighlight { get; set; }
-			public Color CustomActiveBg { get; set; } = new Color(38, 54, 105);
-			public Color CustomActiveBorder { get; set; } = new Color(255, 215, 75);
+			public Color CustomActiveBg { get; set; } = new Color(18, 34, 62);
+			public Color CustomActiveBorder { get; set; } = new Color(56, 189, 248);
+			public Color BackgroundColor { get; set; } = new Color(10, 16, 28);
+			public Color BorderColor { get; set; } = new Color(30, 42, 66);
 
 			public CodexFilterButton(string initialText, float textScale = 0.72f)
 			{
-				SetPadding(0f);
-				BackgroundColor = new Color(20, 28, 54);
-				BorderColor = new Color(45, 60, 105);
-
 				Label = new UIText(initialText, textScale)
 				{
 					HAlign = 0.5f,
@@ -1824,18 +1963,54 @@ namespace Augments
 
 			protected override void DrawSelf(SpriteBatch spriteBatch)
 			{
+				CalculatedStyle dims = GetDimensions();
+				var rect = new Rectangle((int)dims.X, (int)dims.Y, (int)dims.Width, (int)dims.Height);
+				Texture2D pixel = TextureAssets.MagicPixel.Value;
+
+				Color bg;
+				Color border;
 				if (IsActiveHighlight)
 				{
-					BackgroundColor = isHovered ? Color.Lerp(CustomActiveBg, Color.White, 0.2f) : CustomActiveBg;
-					BorderColor = CustomActiveBorder;
+					bg = isHovered ? Color.Lerp(CustomActiveBg, Color.White, 0.12f) : CustomActiveBg;
+					border = CustomActiveBorder;
+					Label.TextColor = Color.White;
 				}
 				else
 				{
-					BackgroundColor = isHovered ? new Color(34, 46, 88) : new Color(20, 28, 54);
-					BorderColor = isHovered ? Color.White * 0.7f : new Color(45, 60, 105);
+					bg = isHovered ? new Color(16, 24, 42) * 0.96f : (BackgroundColor != new Color(10, 16, 28) ? BackgroundColor : new Color(10, 16, 28) * 0.94f);
+					border = isHovered ? new Color(56, 189, 248) * 0.85f : BorderColor;
+					Label.TextColor = isHovered ? Color.White : new Color(220, 230, 245);
 				}
 
-				base.DrawSelf(spriteBatch);
+				// Ambient hover underglow
+				if (isHovered || IsActiveHighlight)
+				{
+					float underglowAlpha = isHovered ? 0.12f : 0.05f;
+					spriteBatch.Draw(pixel, new Rectangle(rect.X - 1, rect.Y - 1, rect.Width + 2, rect.Height + 2), border * underglowAlpha);
+				}
+
+				// Chassis Fill
+				spriteBatch.Draw(pixel, rect, bg);
+
+				// 1px Inner Hairline Highlight Accent
+				Color innerHairline = Color.White * (isHovered ? 0.08f : 0.04f);
+				spriteBatch.Draw(pixel, new Rectangle(rect.X + 1, rect.Y + 1, rect.Width - 2, 1), innerHairline);
+				spriteBatch.Draw(pixel, new Rectangle(rect.X + 1, rect.Bottom - 2, rect.Width - 2, 1), innerHairline);
+				spriteBatch.Draw(pixel, new Rectangle(rect.X + 1, rect.Y + 1, 1, rect.Height - 2), innerHairline);
+				spriteBatch.Draw(pixel, new Rectangle(rect.Right - 2, rect.Y + 1, 1, rect.Height - 2), innerHairline);
+
+				// 1px Outer Border
+				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, rect.Width, 1), border);
+				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Bottom - 1, rect.Width, 1), border);
+				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, 1, rect.Height), border);
+				spriteBatch.Draw(pixel, new Rectangle(rect.Right - 1, rect.Y, 1, rect.Height), border);
+
+				// Corner 2px accent ticks
+				Color cornerTick = border * (isHovered ? 1.0f : 0.70f);
+				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, 2, 2), cornerTick);
+				spriteBatch.Draw(pixel, new Rectangle(rect.Right - 2, rect.Y, 2, 2), cornerTick);
+				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Bottom - 2, 2, 2), cornerTick);
+				spriteBatch.Draw(pixel, new Rectangle(rect.Right - 2, rect.Bottom - 2, 2, 2), cornerTick);
 			}
 		}
 
@@ -1852,15 +2027,15 @@ namespace Augments
 			{
 				this.state = state;
 				SetPadding(8f);
-				BackgroundColor = new Color(14, 18, 38) * 0.98f;
-				BorderColor = new Color(255, 215, 75);
+				BackgroundColor = Color.Transparent;
+				BorderColor = Color.Transparent;
 
 				// Title
-				UIText title = new UIText("Codex Filters & Sorting", 0.85f)
+				UIText title = new UIText("Filters & Sorting", 0.85f)
 				{
-					TextColor = Color.Gold,
-					Top = { Pixels = 2f },
-					Left = { Pixels = 4f }
+					TextColor = new Color(250, 204, 21),
+					Top = { Pixels = 4f },
+					Left = { Pixels = 6f }
 				};
 				Append(title);
 
@@ -2016,7 +2191,7 @@ namespace Augments
 			{
 				UIText label = new UIText(text, 0.72f)
 				{
-					TextColor = new Color(180, 190, 210),
+					TextColor = new Color(148, 163, 184),
 					Top = { Pixels = y },
 					Left = { Pixels = 4f }
 				};
@@ -2060,6 +2235,48 @@ namespace Augments
 			public override void LeftClick(UIMouseEvent evt)
 			{
 				base.LeftClick(evt);
+			}
+
+			protected override void DrawSelf(SpriteBatch spriteBatch)
+			{
+				CalculatedStyle dims = GetDimensions();
+				var rect = new Rectangle((int)dims.X, (int)dims.Y, (int)dims.Width, (int)dims.Height);
+				Texture2D pixel = TextureAssets.MagicPixel.Value;
+
+				// Ambient drop shadow
+				spriteBatch.Draw(pixel, new Rectangle(rect.X - 2, rect.Y - 2, rect.Width + 4, rect.Height + 4), new Color(0, 0, 0, 160));
+
+				// Cybernetic chassis fill (#0A101C)
+				spriteBatch.Draw(pixel, rect, new Color(10, 16, 28, 248));
+
+				// 1px Outer border (#1E293B)
+				Color outerBorder = new Color(30, 41, 59, 220);
+				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, rect.Width, 1), outerBorder);
+				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Bottom - 1, rect.Width, 1), outerBorder);
+				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, 1, rect.Height), outerBorder);
+				spriteBatch.Draw(pixel, new Rectangle(rect.Right - 1, rect.Y, 1, rect.Height), outerBorder);
+
+				// 1px Inner hairline highlight accent
+				Rectangle innerRect = new Rectangle(rect.X + 1, rect.Y + 1, rect.Width - 2, rect.Height - 2);
+				Color innerHairline = new Color(56, 189, 248, 35);
+				spriteBatch.Draw(pixel, new Rectangle(innerRect.X, innerRect.Y, innerRect.Width, 1), innerHairline);
+				spriteBatch.Draw(pixel, new Rectangle(innerRect.X, innerRect.Bottom - 1, innerRect.Width, 1), innerHairline);
+				spriteBatch.Draw(pixel, new Rectangle(innerRect.X, innerRect.Y, 1, innerRect.Height), innerHairline);
+				spriteBatch.Draw(pixel, new Rectangle(innerRect.Right - 1, innerRect.Y, 1, innerRect.Height), innerHairline);
+
+				// Flush corner notches (5x2 / 2x5) in cyan (#38BDF8)
+				Color cornerColor = new Color(56, 189, 248, 160);
+				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, 5, 2), cornerColor);
+				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, 2, 5), cornerColor);
+				spriteBatch.Draw(pixel, new Rectangle(rect.Right - 5, rect.Y, 5, 2), cornerColor);
+				spriteBatch.Draw(pixel, new Rectangle(rect.Right - 2, rect.Y, 2, 5), cornerColor);
+				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Bottom - 2, 5, 2), cornerColor);
+				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Bottom - 5, 2, 5), cornerColor);
+				spriteBatch.Draw(pixel, new Rectangle(rect.Right - 5, rect.Bottom - 2, 5, 2), cornerColor);
+				spriteBatch.Draw(pixel, new Rectangle(rect.Right - 2, rect.Bottom - 5, 2, 5), cornerColor);
+
+				// Hairline divider rail below header
+				spriteBatch.Draw(pixel, new Rectangle(rect.X + 6, rect.Y + 26, rect.Width - 12, 1), new Color(56, 189, 248, 40));
 			}
 		}
 	}
