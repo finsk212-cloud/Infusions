@@ -32,6 +32,42 @@ namespace Augments
 		private static readonly Dictionary<string, Rectangle> iconBounds = new();
 		private static readonly Dictionary<string, Rectangle> panelBounds = new();
 
+		private static (float startY, float spacing) GetDynamicLayout(AugmentPlayer ap)
+		{
+			int activeCount = 0;
+			foreach (var kv in AugmentFamilyRegistry.Families)
+			{
+				if (AugmentFamilyRegistry.GetOwnedCount(ap, kv.Key) > 0)
+					activeCount++;
+			}
+
+			float spacing = Spacing;
+			float totalHeight = 40f + activeCount * IconHeight + Math.Max(0, activeCount - 1) * spacing;
+			float desiredStartY = StartY;
+
+			// If default StartY pushes icons off the screen bottom, slide up smoothly
+			float bottomMargin = 16f;
+			if (desiredStartY + (totalHeight - 40f) > Main.screenHeight - bottomMargin)
+			{
+				desiredStartY = Main.screenHeight - bottomMargin - (totalHeight - 40f);
+			}
+
+			// Don't collide with minimap area at top right
+			const float minStartY = 240f;
+			if (desiredStartY < minStartY)
+			{
+				desiredStartY = minStartY;
+				// If still overflowing with minStartY, reduce spacing
+				float available = Main.screenHeight - bottomMargin - desiredStartY - 40f;
+				if (activeCount > 1 && totalHeight > available)
+				{
+					spacing = Math.Clamp((available - activeCount * IconHeight) / (activeCount - 1), 2f, Spacing);
+				}
+			}
+
+			return (desiredStartY, spacing);
+		}
+
 		public static void Update(GameTime gameTime)
 		{
 			if (Main.dedServ || Main.gameMenu)
@@ -50,9 +86,10 @@ namespace Augments
 
 			Point mouse = new Point(Main.mouseX, Main.mouseY);
 			float iconX = Main.screenWidth - IconWidth - RightMargin;
-			float currentY = StartY;
+			var (startY, spacing) = GetDynamicLayout(ap);
+			float currentY = startY;
 
-			Rectangle analyticsBtn = new Rectangle((int)iconX, (int)StartY - 40, (int)IconWidth, 32);
+			Rectangle analyticsBtn = new Rectangle((int)iconX, (int)startY - 40, (int)IconWidth, 32);
 			bool justClicked = Main.mouseLeft && !wasMouseLeft;
 			if (analyticsBtn.Contains(mouse) && justClicked)
 			{
@@ -80,7 +117,7 @@ namespace Augments
 				// Calculate exact icon rect for this family directly
 				Rectangle iRect = new Rectangle((int)iconX, (int)currentY, (int)IconWidth, (int)IconHeight);
 				iconBounds[id] = iRect;
-				currentY += IconHeight + Spacing;
+				currentY += IconHeight + spacing;
 
 				panelBounds.TryGetValue(id, out var pRect);
 
@@ -127,10 +164,11 @@ namespace Augments
 
 			var font = FontAssets.MouseText.Value;
 			float iconX = Main.screenWidth - IconWidth - RightMargin;
-			float currentY = StartY;
+			var (startY, spacing) = GetDynamicLayout(ap);
+			float currentY = startY;
 
 			Point mouse = new Point(Main.mouseX, Main.mouseY);
-			Rectangle analyticsBtn = new Rectangle((int)iconX, (int)StartY - 40, (int)IconWidth, 32);
+			Rectangle analyticsBtn = new Rectangle((int)iconX, (int)startY - 40, (int)IconWidth, 32);
 			bool btnHover = analyticsBtn.Contains(mouse);
 			bool isAnalyticsOpen = ModContent.GetInstance<AugmentUISystem>()?.IsAnalyticsOpen == true;
 			float dpsVal = AugmentDamageTracker.GetCurrentDPS();
@@ -178,7 +216,7 @@ namespace Augments
 
 			if (btnHover)
 			{
-				Main.instance.MouseText("✦ Combat Analytics & DPS [L] ✦\nClick to view full telemetry & breakdown\nTip: You can pin DPS & Crit stats to your HUD!");
+				Main.instance.MouseText("Combat Analytics [L]\nClick to view live DPS and damage breakdown\nAlt + Drag to move pinned widgets");
 			}
 
 			foreach (var kv in AugmentFamilyRegistry.Families)
@@ -209,7 +247,7 @@ namespace Augments
 				// 2. Draw Docked Icon Box
 				DrawDockedIcon(spriteBatch, font, fam, ownedCount, isActive, iconRect);
 
-				currentY += IconHeight + Spacing;
+				currentY += IconHeight + spacing;
 			}
 		}
 
@@ -875,7 +913,9 @@ namespace Augments
 			Vector2 perkScale = new Vector2(0.72f);
 
 			string titleText = $"{fam.DisplayName.ToUpper()} PROTOCOL";
-			string statusText = isActive ? "[ PROTOCOL ACTIVE ]" : $"[ PROGRESS: {ownedCount}/{fam.MaxMembers} INSTALLED ]";
+			string statusText = isActive 
+				? $"PROTOCOL ACTIVE  •  {fam.MaxMembers}/{fam.MaxMembers} INSTALLED" 
+				: $"IN PROGRESS  •  {ownedCount}/{fam.MaxMembers} INSTALLED";
 
 			float curHeight = pad;
 			float maxContentWidth = 320f;
@@ -897,7 +937,7 @@ namespace Augments
 			Measure(statusText, statusScale, 36f);
 
 			string fortuneStatLine = fam.Id == AugmentFamilyRegistry.FortuneId
-				? $"Active Fortune: +{(int)System.MathF.Round(ap.TotalFortune * 100f)}% (Trigger Boost)  •  World Luck: +{ap.Player.luck:0.00}"
+				? $"Active Fortune: +{(int)System.MathF.Round(ap.TotalFortune * 100f)}%  •  World Luck: +{ap.Player.luck:0.00}"
 				: null;
 			if (fortuneStatLine != null)
 			{
@@ -909,7 +949,7 @@ namespace Augments
 			curHeight += 6f;
 
 			// Set Bonuses Section
-			string bSectionHeader = "PROTOCOL SPECIFICATIONS:";
+			string bSectionHeader = "PROTOCOL SPECIFICATIONS";
 			curHeight += ChatManager.GetStringSize(font, bSectionHeader, sectionScale).Y + 4f;
 			Measure(bSectionHeader, sectionScale, 36f);
 
@@ -936,7 +976,7 @@ namespace Augments
 			curHeight += 8f;
 
 			// Synergy Members Section
-			string mSectionHeader = "ASSIGNED PLUGINS:";
+			string mSectionHeader = "ASSIGNED PLUGINS";
 			curHeight += ChatManager.GetStringSize(font, mSectionHeader, sectionScale).Y + 4f;
 			Measure(mSectionHeader, sectionScale, 36f);
 
@@ -946,7 +986,7 @@ namespace Augments
 				string mName = m?.DisplayName ?? memberId;
 				bool owned = ap.HasAugment(memberId);
 				string mSymbol = owned ? "✓ " : "• ";
-				string mStatus = owned ? " (Installed)" : " (Not Owned)";
+				string mStatus = owned ? " (Installed)" : " (Not Installed)";
 
 				curHeight += ChatManager.GetStringSize(font, mSymbol + mName + mStatus, itemScale).Y + lineSpacing;
 				Measure(mSymbol + mName + mStatus, itemScale, 36f);
@@ -959,13 +999,13 @@ namespace Augments
 			// Slide animation calculation - flush against icon edge (no gap), slides smoothly in from the left
 			float finalX = iconRect.X - panelWidth + 1f;
 			float currentX = finalX - (1f - progress) * 16f;
-			float panelY = Math.Clamp(iconRect.Y - 16f, 10f, Main.screenHeight - panelHeight - 10f);
+			float panelY = Math.Clamp(iconRect.Y - 16f, 10f, Math.Max(10f, Main.screenHeight - panelHeight - 10f));
 
 			Rectangle panelRect = new Rectangle((int)currentX, (int)panelY, (int)panelWidth, (int)panelHeight);
 			panelBounds[fam.Id] = panelRect;
 
-			// Solid opaque background so game text behind does NOT bleed through
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, panelRect, new Color(8, 12, 22) * (0.98f * progress));
+			// Cybernetic chassis background with subtle ambient underglow
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, panelRect, new Color(10, 16, 28) * (0.96f * progress));
 			spriteBatch.Draw(TextureAssets.MagicPixel.Value, panelRect, fam.ThemeColor * (0.04f * progress));
 
 			// High-tech panel border
@@ -981,10 +1021,10 @@ namespace Augments
 			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, titleText, titlePos, fam.ThemeColor * progress, 0f, Vector2.Zero, titleScale);
 			drawY += titleSz.Y + 2f;
 
-			// 2. Status Pill (Centered)
+			// 2. Status Subtitle (Centered, clean inline typography)
 			Vector2 statusSz = ChatManager.GetStringSize(font, statusText, statusScale);
 			Vector2 statusPos = new Vector2(panelRect.X + (panelRect.Width - statusSz.X) * 0.5f, drawY);
-			Color statusCol = isActive ? AugmentTextColors.Healing : new Color(170, 190, 215);
+			Color statusCol = isActive ? AugmentTextColors.Healing : new Color(148, 163, 184);
 			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, statusText, statusPos, statusCol * progress, 0f, Vector2.Zero, statusScale);
 			drawY += statusSz.Y + 6f;
 
@@ -992,16 +1032,16 @@ namespace Augments
 			{
 				Vector2 fSz = ChatManager.GetStringSize(font, fortuneStatLine, statusScale);
 				Vector2 fPos = new Vector2(panelRect.X + (panelRect.Width - fSz.X) * 0.5f, drawY);
-				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, fortuneStatLine, fPos, new Color(255, 220, 120) * progress, 0f, Vector2.Zero, statusScale);
+				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, fortuneStatLine, fPos, new Color(255, 215, 120) * progress, 0f, Vector2.Zero, statusScale);
 				drawY += fSz.Y + 6f;
 			}
 
-			// Divider 1 (Full width graphical rail)
+			// Divider 1 (Full width sleek hairline rail)
 			DrawDivider(spriteBatch, panelRect, drawY, fam.ThemeColor, progress);
 			drawY += 8f;
 
 			// 4. Set Bonuses Section
-			string bonusSectionHeader = "PROTOCOL SPECIFICATIONS:";
+			string bonusSectionHeader = "PROTOCOL SPECIFICATIONS";
 			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, bonusSectionHeader, new Vector2(leftX, drawY), new Color(130, 160, 200) * progress, 0f, Vector2.Zero, sectionScale);
 			drawY += ChatManager.GetStringSize(font, bonusSectionHeader, sectionScale).Y + 4f;
 
@@ -1015,12 +1055,13 @@ namespace Augments
 				string bonusTitle = $"{symbol} ({thresh}) {bonus.Title}";
 				string bonusTag = unlocked ? " (Active)" : " (Locked)";
 				Color headCol = unlocked ? AugmentTextColors.Healing : new Color(150, 165, 185);
+				Color tagCol = unlocked ? AugmentTextColors.Healing : new Color(115, 130, 150);
 
 				// Bonus Header Line
 				Vector2 headSz = ChatManager.GetStringSize(font, bonusTitle + bonusTag, itemScale);
 				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, bonusTitle, new Vector2(leftX, drawY), headCol * progress, 0f, Vector2.Zero, itemScale);
 				Vector2 titlePartSz = ChatManager.GetStringSize(font, bonusTitle, itemScale);
-				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, bonusTag, new Vector2(leftX + titlePartSz.X, drawY), (unlocked ? AugmentTextColors.Healing : new Color(125, 140, 160)) * progress, 0f, Vector2.Zero, itemScale);
+				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, bonusTag, new Vector2(leftX + titlePartSz.X, drawY), tagCol * progress, 0f, Vector2.Zero, itemScale);
 				drawY += headSz.Y + lineSpacing;
 
 				// Indented perk descriptions (aligned at leftX + 16f)
@@ -1028,19 +1069,19 @@ namespace Augments
 				foreach (var desc in bonus.Descriptions)
 				{
 					string perkLine = $"• {desc.Trim()}";
-					Color perkCol = unlocked ? new Color(220, 245, 230) : new Color(125, 140, 160);
+					Color perkCol = unlocked ? new Color(210, 238, 225) : new Color(125, 138, 158);
 					ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, perkLine, new Vector2(perkIndent, drawY), perkCol * progress, 0f, Vector2.Zero, perkScale);
 					drawY += ChatManager.GetStringSize(font, perkLine, perkScale).Y + lineSpacing;
 				}
 			}
 
 			drawY += 4f;
-			// Divider 2 (Full width graphical rail)
+			// Divider 2 (Full width sleek hairline rail)
 			DrawDivider(spriteBatch, panelRect, drawY, fam.ThemeColor, progress);
 			drawY += 8f;
 
 			// 5. Synergy Members Section
-			string membersSectionHeader = "ASSIGNED PLUGINS:";
+			string membersSectionHeader = "ASSIGNED PLUGINS";
 			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, membersSectionHeader, new Vector2(leftX, drawY), new Color(130, 160, 200) * progress, 0f, Vector2.Zero, sectionScale);
 			drawY += ChatManager.GetStringSize(font, membersSectionHeader, sectionScale).Y + 4f;
 
@@ -1051,10 +1092,10 @@ namespace Augments
 				bool owned = ap.HasAugment(memberId);
 
 				string mSymbol = owned ? "✓ " : "• ";
-				string mStatus = owned ? " (Installed)" : " (Not Owned)";
+				string mStatus = owned ? " (Installed)" : " (Not Installed)";
 				Color mSymbolCol = owned ? AugmentTextColors.Healing : new Color(130, 150, 175);
 				Color mNameCol = owned ? Color.White : new Color(165, 180, 205);
-				Color mStatusCol = owned ? AugmentTextColors.Healing : new Color(120, 135, 155);
+				Color mStatusCol = owned ? AugmentTextColors.Healing : new Color(115, 130, 150);
 
 				// Draw symbol
 				Vector2 symSz = ChatManager.GetStringSize(font, mSymbol, itemScale);
@@ -1076,13 +1117,8 @@ namespace Augments
 			int lineLeft = panelRect.X + 16;
 			int lineW = panelRect.Width - 32;
 
-			// Subtle full-width rail
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(lineLeft, (int)y, lineW, 1), new Color(60, 90, 135) * (0.55f * progress));
-
-			// Center diamond node
-			int midX = panelRect.X + panelRect.Width / 2;
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(midX - 1, (int)y - 1, 3, 3), themeCol * (0.80f * progress));
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(midX, (int)y, 1, 1), Color.White * (0.90f * progress));
+			// Subtle full-width hairline rail matching tooltip styling
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(lineLeft, (int)y, lineW, 1), themeCol * (0.35f * progress));
 		}
 
 		private static void DrawHighTechBorder(SpriteBatch spriteBatch, Rectangle rect, Color color)
@@ -1092,6 +1128,13 @@ namespace Augments
 			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X, rect.Bottom - 1, rect.Width, 1), color * 0.55f);
 			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X, rect.Y, 1, rect.Height), color * 0.55f);
 			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right - 1, rect.Y, 1, rect.Height), color * 0.55f);
+
+			// 1px inner hairline accent
+			Color innerHairline = Color.White * 0.06f;
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X + 1, rect.Y + 1, rect.Width - 2, 1), innerHairline);
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X + 1, rect.Bottom - 2, rect.Width - 2, 1), innerHairline);
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X + 1, rect.Y + 1, 1, rect.Height - 2), innerHairline);
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right - 2, rect.Y + 1, 1, rect.Height - 2), innerHairline);
 
 			// Corner brackets
 			const int cornerLen = 5;
