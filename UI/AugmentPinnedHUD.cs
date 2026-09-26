@@ -378,8 +378,8 @@ namespace Augments
 				float totalTextW = labelW + dotW + valW;
 
 				// Dynamic width adaptation: ensures zero text clipping even with huge damage numbers
-				float minWidth = isAltDown ? 172f : 160f;
-				w.Width = Math.Max(minWidth, (float)Math.Ceiling(totalTextW + (isAltDown ? 52f : 40f)));
+				float minWidth = isAltDown ? 168f : 156f;
+				w.Width = Math.Max(minWidth, (float)Math.Ceiling(totalTextW + (isAltDown ? 52f : 38f)));
 
 				Rectangle rect = new Rectangle((int)w.Position.X, (int)w.Position.Y, (int)w.Width, (int)w.Height);
 				bool hovered = rect.Contains((int)mouse.X, (int)mouse.Y);
@@ -400,20 +400,14 @@ namespace Augments
 
 				DrawCyberBorder(spriteBatch, rect, borderColor);
 
-				// 4. Left Icon Badge Box
-				int iconBoxSize = 22;
-				Rectangle iconBox = new Rectangle(rect.X + 5, rect.Y + (rect.Height - iconBoxSize) / 2, iconBoxSize, iconBoxSize);
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, iconBox, accentColor * 0.16f);
-				DrawMiniBorder(spriteBatch, iconBox, accentColor * 0.45f);
-
-				// Procedural high-tech pixel-art icon
-				int icx = iconBox.X + iconBox.Width / 2;
-				int icy = iconBox.Y + iconBox.Height / 2;
+				// 4. Floating Procedural Stat Icon (zero box outline)
+				int icx = rect.X + 15;
+				int icy = rect.Y + rect.Height / 2;
 				DrawStatIcon(spriteBatch, w.Type, icx, icy, accentColor, currentDps);
 
 				// 5. Clean Inline Metrics
-				float textX = iconBox.Right + 8f;
-				float textY = rect.Y + (rect.Height - 16f) * 0.5f;
+				float textX = rect.X + 27f;
+				float textY = rect.Y + (rect.Height - 12.2f) * 0.5f - 1.5f;
 
 				// Label
 				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, labelText, new Vector2(textX, textY), accentColor, 0f, Vector2.Zero, textScale);
@@ -514,15 +508,6 @@ namespace Augments
 			}
 		}
 
-		private static void DrawMiniBorder(SpriteBatch spriteBatch, Rectangle rect, Color color)
-		{
-			Texture2D pixel = TextureAssets.MagicPixel.Value;
-			spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, rect.Width, 1), color);
-			spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Bottom - 1, rect.Width, 1), color);
-			spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, 1, rect.Height), color);
-			spriteBatch.Draw(pixel, new Rectangle(rect.Right - 1, rect.Y, 1, rect.Height), color);
-		}
-
 		private static void DrawCyberBorder(SpriteBatch spriteBatch, Rectangle rect, Color color)
 		{
 			Texture2D pixel = TextureAssets.MagicPixel.Value;
@@ -540,25 +525,25 @@ namespace Augments
 			spriteBatch.Draw(pixel, new Rectangle(rect.X + 1, rect.Y + 1, 1, rect.Height - 2), innerHairline);
 			spriteBatch.Draw(pixel, new Rectangle(rect.Right - 2, rect.Y + 1, 1, rect.Height - 2), innerHairline);
 
-			// Corner brackets (4px long, 2px thick)
-			const int cLen = 4;
-			const int cThick = 2;
+			// Flush corner micro-accents (3x1 and 1x3 flush notches)
+			Color cornerCol = Color.Lerp(color, Color.White, 0.40f);
+			const int cLen = 3;
 
 			// Top-left
-			spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, cLen, cThick), color);
-			spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, cThick, cLen), color);
+			spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, cLen, 1), cornerCol);
+			spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, 1, cLen), cornerCol);
 
 			// Top-right
-			spriteBatch.Draw(pixel, new Rectangle(rect.Right - cLen, rect.Y, cLen, cThick), color);
-			spriteBatch.Draw(pixel, new Rectangle(rect.Right - cThick, rect.Y, cThick, cLen), color);
+			spriteBatch.Draw(pixel, new Rectangle(rect.Right - cLen, rect.Y, cLen, 1), cornerCol);
+			spriteBatch.Draw(pixel, new Rectangle(rect.Right - 1, rect.Y, 1, cLen), cornerCol);
 
 			// Bottom-left
-			spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Bottom - cThick, cLen, cThick), color);
-			spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Bottom - cLen, cThick, cLen), color);
+			spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Bottom - 1, cLen, 1), cornerCol);
+			spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Bottom - cLen, 1, cLen), cornerCol);
 
 			// Bottom-right
-			spriteBatch.Draw(pixel, new Rectangle(rect.Right - cLen, rect.Bottom - cThick, cLen, cThick), color);
-			spriteBatch.Draw(pixel, new Rectangle(rect.Right - cThick, rect.Bottom - cLen, cThick, cLen), color);
+			spriteBatch.Draw(pixel, new Rectangle(rect.Right - cLen, rect.Bottom - 1, cLen, 1), cornerCol);
+			spriteBatch.Draw(pixel, new Rectangle(rect.Right - 1, rect.Bottom - cLen, 1, cLen), cornerCol);
 		}
 	}
 }
