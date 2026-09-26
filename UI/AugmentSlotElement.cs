@@ -77,33 +77,54 @@ namespace Augments
 			float epicPulse = (float)Math.Sin(time * 3f + (rect.X + rect.Y) * 0.02f) * 0.5f + 0.5f;
 			float legPulse = (float)Math.Sin(time * 4f + (rect.X + rect.Y) * 0.02f) * 0.5f + 0.5f;
 
-			// 0. Outer Aura Glow for Rare, Epic & Legendary (drawn behind the slot box)
+			// 0. Soft Concentric Outer Glow Halo for Rare, Epic & Legendary (clean stepped falloff instead of harsh flat box)
 			if (Augment.Rarity == AugmentRarity.Rare)
 			{
-				int glowDist = 1 + (int)(rarePulse * 1.5f);
-				Color rareGlow = new Color(60, 175, 255) * (0.06f + rarePulse * 0.10f);
-				Rectangle auraRect = new Rectangle(rect.X - glowDist, rect.Y - glowDist, rect.Width + glowDist * 2, rect.Height + glowDist * 2);
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, auraRect, rareGlow);
+				Color rareGlow = new Color(60, 175, 255);
+				float rGlowA = 0.12f + rarePulse * 0.08f;
+				// 1px stepped outer aura
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X - 1, rect.Y - 1, rect.Width + 2, 1), rareGlow * rGlowA);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X - 1, rect.Bottom, rect.Width + 2, 1), rareGlow * rGlowA);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X - 1, rect.Y - 1, 1, rect.Height + 2), rareGlow * rGlowA);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right, rect.Y - 1, 1, rect.Height + 2), rareGlow * rGlowA);
 			}
 			else if (Augment.Rarity == AugmentRarity.Epic)
 			{
-				int glowDist = 1 + (int)(epicPulse * 3f);
-				Color epicGlow = new Color(170, 90, 255) * (0.10f + epicPulse * 0.20f);
-				Rectangle auraRect = new Rectangle(rect.X - glowDist, rect.Y - glowDist, rect.Width + glowDist * 2, rect.Height + glowDist * 2);
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, auraRect, epicGlow);
+				Color epicGlow = new Color(185, 110, 255);
+				float eGlowA = 0.16f + epicPulse * 0.10f;
+				// 1px stepped halo
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X - 1, rect.Y - 1, rect.Width + 2, 1), epicGlow * eGlowA);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X - 1, rect.Bottom, rect.Width + 2, 1), epicGlow * eGlowA);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X - 1, rect.Y - 1, 1, rect.Height + 2), epicGlow * eGlowA);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right, rect.Y - 1, 1, rect.Height + 2), epicGlow * eGlowA);
+
+				// 2px outer faint halo
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X - 2, rect.Y - 2, rect.Width + 4, 1), epicGlow * (eGlowA * 0.40f));
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X - 2, rect.Bottom + 1, rect.Width + 4, 1), epicGlow * (eGlowA * 0.40f));
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X - 2, rect.Y - 2, 1, rect.Height + 4), epicGlow * (eGlowA * 0.40f));
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right + 1, rect.Y - 2, 1, rect.Height + 4), epicGlow * (eGlowA * 0.40f));
 			}
 			else if (Augment.Rarity == AugmentRarity.Legendary)
 			{
-				int glowDist = 2 + (int)(legPulse * 4f);
-				Color legGlow = new Color(255, 170, 30) * (0.16f + legPulse * 0.28f);
-				Rectangle auraRect = new Rectangle(rect.X - glowDist, rect.Y - glowDist, rect.Width + glowDist * 2, rect.Height + glowDist * 2);
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, auraRect, legGlow);
+				Color legGlow = new Color(255, 180, 45);
+				float lGlowA = 0.20f + legPulse * 0.12f;
+				// 1px stepped halo
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X - 1, rect.Y - 1, rect.Width + 2, 1), legGlow * lGlowA);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X - 1, rect.Bottom, rect.Width + 2, 1), legGlow * lGlowA);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X - 1, rect.Y - 1, 1, rect.Height + 2), legGlow * lGlowA);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right, rect.Y - 1, 1, rect.Height + 2), legGlow * lGlowA);
+
+				// 2px outer faint halo
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X - 2, rect.Y - 2, rect.Width + 4, 1), legGlow * (lGlowA * 0.45f));
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X - 2, rect.Bottom + 1, rect.Width + 4, 1), legGlow * (lGlowA * 0.45f));
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X - 2, rect.Y - 2, 1, rect.Height + 4), legGlow * (lGlowA * 0.45f));
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right + 1, rect.Y - 2, 1, rect.Height + 4), legGlow * (lGlowA * 0.45f));
 			}
 
 			Color rarityColor = AugmentListEntry.RarityColor(Augment.Rarity);
 
 			// 1. Cybernetic Chassis Background (#0A101C at 94% opacity with subtle ambient underglow)
-			float underglowAlpha = isHovered ? 0.08f : 0.035f;
+			float underglowAlpha = isHovered ? 0.08f : (Augment.Rarity == AugmentRarity.Legendary ? 0.06f : (Augment.Rarity == AugmentRarity.Epic ? 0.05f : 0.035f));
 			spriteBatch.Draw(TextureAssets.MagicPixel.Value, rect, rarityColor * underglowAlpha);
 
 			Color bgColor = isHovered ? new Color(14, 22, 38) * 0.96f : new Color(10, 16, 28) * 0.94f;
@@ -115,38 +136,6 @@ namespace Augments
 			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X + 1, rect.Bottom - 2, rect.Width - 2, 1), innerHairline);
 			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X + 1, rect.Y + 1, 1, rect.Height - 2), innerHairline);
 			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right - 2, rect.Y + 1, 1, rect.Height - 2), innerHairline);
-
-			// 2.5. Diagonal Light Gleam (Shine Sweep) across slot for Legendary tier
-			if (Augment.Rarity == AugmentRarity.Legendary)
-			{
-				float sweepPeriod = 4.0f;
-				float sweepProgress = (time * 0.6f + (rect.X + rect.Y) * 0.003f) % sweepPeriod;
-				if (sweepProgress < 1.8f)
-				{
-					float t = sweepProgress / 1.8f;
-					float sweepCenter = (rect.Width + rect.Height) * t;
-					int beamWidth = 18;
-					Color beamColor = new Color(255, 245, 215);
-
-					for (int py = 2; py < rect.Height - 2; py += 2)
-					{
-						int centerPx = (int)(sweepCenter - py);
-						int startPx = Math.Max(2, centerPx - beamWidth / 2);
-						int endPx = Math.Min(rect.Width - 2, centerPx + beamWidth / 2);
-						if (endPx > startPx)
-						{
-							float dist = Math.Abs((startPx + endPx) * 0.5f - centerPx);
-							float beamA = (1f - dist / (beamWidth * 0.6f)) * 0.32f;
-							if (beamA > 0.04f)
-							{
-								spriteBatch.Draw(TextureAssets.MagicPixel.Value,
-									new Rectangle(rect.X + startPx, rect.Y + py, endPx - startPx, 2),
-									beamColor * beamA);
-							}
-						}
-					}
-				}
-			}
 
 			// 3. Border (Rarity colored, with Epic/Legendary custom effects)
 			Color borderColor = rarityColor;
@@ -187,97 +176,29 @@ namespace Augments
 			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X, rect.Y, borderWidth, rect.Height), finalBorderCol);
 			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right - borderWidth, rect.Y, borderWidth, rect.Height), finalBorderCol);
 
-			// Corner accent notches for high-tech aesthetic
+			// Corner accent notches: clean and flush inside tile bounds on all corners
 			const int cLen = 5;
 			const int cThick = 2;
-			Color cornerCol = IsSelected ? new Color(255, 220, 80) : (isHovered ? Color.Lerp(borderColor, Color.White, 0.35f) : borderColor * 0.90f);
+			Color cornerCol = IsSelected 
+				? new Color(255, 220, 80) 
+				: (isHovered ? Color.Lerp(borderColor, Color.White, 0.35f) : borderColor * 0.90f);
 
-			if (Augment.Rarity != AugmentRarity.Legendary)
-			{
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X, rect.Y, cLen, cThick), cornerCol);
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X, rect.Y, cThick, cLen), cornerCol);
+			// Top-Left notch
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X, rect.Y, cLen, cThick), cornerCol);
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X, rect.Y, cThick, cLen), cornerCol);
 
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right - cLen, rect.Y, cLen, cThick), cornerCol);
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right - cThick, rect.Y, cThick, cLen), cornerCol);
+			// Top-Right notch
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right - cLen, rect.Y, cLen, cThick), cornerCol);
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right - cThick, rect.Y, cThick, cLen), cornerCol);
 
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X, rect.Bottom - cThick, cLen, cThick), cornerCol);
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X, rect.Bottom - cLen, cThick, cLen), cornerCol);
+			// Bottom-Left notch
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X, rect.Bottom - cThick, cLen, cThick), cornerCol);
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X, rect.Bottom - cLen, cThick, cLen), cornerCol);
 
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right - cLen, rect.Bottom - cThick, cLen, cThick), cornerCol);
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right - cThick, rect.Bottom - cLen, cThick, cLen), cornerCol);
-			}
-			else if (Augment.Rarity == AugmentRarity.Epic)
-			{
-				// 4 Luminous Amethyst Corner Studs (3x3 pixels)
-				Color gemColor = new Color(225, 185, 255) * (0.8f + epicPulse * 0.2f);
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X - 1, rect.Y - 1, 3, 3), gemColor);
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right - 2, rect.Y - 1, 3, 3), gemColor);
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X - 1, rect.Bottom - 2, 3, 3), gemColor);
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right - 2, rect.Bottom - 2, 3, 3), gemColor);
+			// Bottom-Right notch
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right - cLen, rect.Bottom - cThick, cLen, cThick), cornerCol);
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right - cThick, rect.Bottom - cLen, cThick, cLen), cornerCol);
 
-				// Twinkling Amethyst Star Sparkles along the borders for Epic
-				(int x, int y, float offset)[] spPoints = new (int, int, float)[]
-				{
-					(rect.Right - 1, rect.Y, 0.0f),
-					(rect.X + 1, rect.Bottom - 1, 1.2f),
-					(rect.X, rect.Y + (int)(rect.Height * 0.45f), 2.4f),
-					(rect.Right - 1, rect.Y + (int)(rect.Height * 0.65f), 0.6f)
-				};
-
-				foreach (var sp in spPoints)
-				{
-					float spPhase = (time * 1.1f + sp.offset + (rect.X * 0.02f)) % 3.6f;
-					if (spPhase < 1.3f)
-					{
-						float prog = spPhase / 1.3f;
-						float intensity = (float)Math.Sin(prog * MathHelper.Pi);
-						DrawAmethystSparkle(spriteBatch, sp.x, sp.y, intensity);
-					}
-				}
-			}
-			else if (Augment.Rarity == AugmentRarity.Legendary)
-			{
-				// Inner Gold Hairline
-				Color innerGold = new Color(255, 225, 90) * (0.75f + legPulse * 0.25f);
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X + 2, rect.Y + 2, rect.Width - 4, 1), innerGold);
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X + 2, rect.Y + 2, 1, rect.Height - 4), innerGold);
-
-				// 4 Ornate Royal Gold Corner Brackets (6x2 and 2x6 L-shapes)
-				Color cornerGold = new Color(255, 220, 80);
-				// Top-Left
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X - 2, rect.Y - 2, 6, 2), cornerGold);
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X - 2, rect.Y - 2, 2, 6), cornerGold);
-				// Top-Right
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right - 4, rect.Y - 2, 6, 2), cornerGold);
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right, rect.Y - 2, 2, 6), cornerGold);
-				// Bottom-Left
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X - 2, rect.Bottom, 6, 2), cornerGold);
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X - 2, rect.Bottom - 4, 2, 6), cornerGold);
-				// Bottom-Right
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right - 4, rect.Bottom, 6, 2), cornerGold);
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right, rect.Bottom - 4, 2, 6), cornerGold);
-
-				// Multi-Point Twinkling Star Sparkles along the borders (graceful, relaxed pace)
-				(int x, int y, float offset)[] spPoints = new (int, int, float)[]
-				{
-					(rect.Right - 1, rect.Y, 0.0f),                     // Top-right corner
-					(rect.X + 1, rect.Bottom - 1, 1.0f),               // Bottom-left corner
-					(rect.X, rect.Y + (int)(rect.Height * 0.42f), 2.0f), // Left edge
-					(rect.Right - 1, rect.Y + (int)(rect.Height * 0.68f), 3.0f), // Right edge
-					(rect.X + (int)(rect.Width * 0.55f), rect.Y + 1, 1.5f) // Top edge
-				};
-
-				foreach (var sp in spPoints)
-				{
-					float spPhase = (time * 1.0f + sp.offset + (rect.X * 0.02f)) % 4.0f;
-					if (spPhase < 1.4f)
-					{
-						float prog = spPhase / 1.4f;
-						float intensity = (float)Math.Sin(prog * MathHelper.Pi);
-						DrawStarSparkle(spriteBatch, sp.x, sp.y, intensity);
-					}
-				}
-			}
 
 			var font = FontAssets.MouseText.Value;
 
@@ -326,31 +247,15 @@ namespace Augments
 				);
 			}
 
-			// 7. Installed Indicator Badge in top-right corner
+			// 7. Installed Indicator (Clean green checkmark, unboxed)
 			if (IsOwned)
 			{
-				Rectangle badgeRect = new Rectangle(rect.Right - 15, rect.Y + 3, 12, 12);
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, badgeRect, new Color(8, 14, 24) * 0.90f);
-				DrawMiniBorder(spriteBatch, badgeRect, AugmentTextColors.Healing * 0.70f);
-
-				Vector2 checkSz = ChatManager.GetStringSize(font, "✓", new Vector2(0.50f));
-				Vector2 checkPos = new Vector2(
-					badgeRect.X + (badgeRect.Width - checkSz.X) * 0.5f,
-					badgeRect.Y + (badgeRect.Height - checkSz.Y) * 0.5f - 1f
-				);
+				Vector2 checkSz = ChatManager.GetStringSize(font, "✓", new Vector2(0.55f));
+				Vector2 checkPos = new Vector2(rect.Right - checkSz.X - 4f, rect.Y + 3f);
 				ChatManager.DrawColorCodedStringWithShadow(
-					spriteBatch, font, "✓", checkPos, AugmentTextColors.Healing, 0f, Vector2.Zero, new Vector2(0.50f)
+					spriteBatch, font, "✓", checkPos, AugmentTextColors.Healing, 0f, Vector2.Zero, new Vector2(0.55f)
 				);
 			}
-		}
-
-		private static void DrawMiniBorder(SpriteBatch spriteBatch, Rectangle rect, Color color)
-		{
-			Texture2D pixel = TextureAssets.MagicPixel.Value;
-			spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, rect.Width, 1), color);
-			spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Bottom - 1, rect.Width, 1), color);
-			spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, 1, rect.Height), color);
-			spriteBatch.Draw(pixel, new Rectangle(rect.Right - 1, rect.Y, 1, rect.Height), color);
 		}
 
 		public static Texture2D GetClassIcon(AugmentClass augmentClass)
