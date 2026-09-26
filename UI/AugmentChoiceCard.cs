@@ -784,20 +784,81 @@ namespace Augments
 			const float padding = 12f;
 			const float lineSpacing = 3f;
 
-			var lines = new (string Text, Color Color)[]
+			var ap = Main.LocalPlayer?.GetModPlayer<AugmentPlayer>();
+			int ownedCount = ap != null ? ap.SupportAugmentCount : 0;
+			bool active = ownedCount >= 2;
+
+			var lines = new List<(string Text, Color Color)>
 			{
-				("SUPPORT STANCE",                        SupportTagColor),
-				("2 plugins: -30% damage, +20 defense",   new Color(220, 230, 245)),
-				("3 plugins: -23% damage, +30 defense",   new Color(220, 230, 245)),
-				("4 plugins: -16% damage, +40 defense",   new Color(220, 230, 245)),
-				("5 plugins: -5% damage, +60 defense",    new Color(220, 230, 245)),
+				("SUPPORT STANCE ARCHITECTURE", SupportTagColor),
+				("Sacrifices direct offensive output to amplify armor matrix defenses.", new Color(200, 220, 245)),
 			};
+
+			if (active)
+			{
+				int defBonus = ownedCount == 2 ? 20 : (ownedCount == 3 ? 30 : (ownedCount == 4 ? 40 : 60));
+				int dmgPenalty = ownedCount == 2 ? -30 : (ownedCount == 3 ? -23 : (ownedCount == 4 ? -16 : -5));
+				lines.Add(($"Active Stance: +{defBonus} Defense, {dmgPenalty}% Damage ({ownedCount}/5 Plugins)", AugmentTextColors.Healing));
+			}
+			else
+			{
+				lines.Add(($"Status: INACTIVE ({ownedCount}/2 Required to activate stance)", new Color(148, 163, 184)));
+			}
+
+			lines.Add(("---DIVIDER---", Color.Transparent));
+			lines.Add(("Stance Threshold Matrix:", new Color(250, 204, 21)));
+
+			var thresholds = new (int Threshold, string Label, int Defense, int Damage, string Note)[]
+			{
+				(2, "2 Plugins", 20, -30, "Initial Support Protocol"),
+				(3, "3 Plugins", 30, -23, "Reinforced Defensive Matrix"),
+				(4, "4 Plugins", 40, -16, "High-Output Shield Lattice"),
+				(5, "5+ Plugins", 60, -5, "Peak Operational Efficiency")
+			};
+
+			int activeTier = 0;
+			if (ownedCount >= 5) activeTier = 5;
+			else if (ownedCount >= 4) activeTier = 4;
+			else if (ownedCount >= 3) activeTier = 3;
+			else if (ownedCount >= 2) activeTier = 2;
+
+			foreach (var (req, label, def, dmg, note) in thresholds)
+			{
+				bool unlocked = ownedCount >= req;
+				bool isCurrent = (req == 5 && activeTier >= 5) || (req == activeTier);
+
+				string header;
+				Color headerCol;
+				if (unlocked)
+				{
+					header = isCurrent
+						? $"  ✓ ({label}) {note} (Active) [CURRENT]"
+						: $"  ✓ ({label}) {note} (Active)";
+					headerCol = isCurrent ? new Color(251, 191, 36) : AugmentTextColors.Healing;
+				}
+				else
+				{
+					header = $"  • ({label}) {note} (Locked)";
+					headerCol = new Color(148, 163, 184);
+				}
+
+				lines.Add((header, headerCol));
+				lines.Add(($"      +{def} Defense, {dmg}% Damage Output", unlocked ? new Color(220, 245, 230) : new Color(125, 140, 160)));
+			}
+
+			lines.Add(("---DIVIDER---", Color.Transparent));
+			lines.Add(("Autonomous calibration: Stance adapts dynamically as plugins change.", new Color(148, 163, 184)));
 
 			var scale = new Vector2(0.80f);
 			float maxWidth = 0f;
 			float totalHeight = 0f;
 			foreach (var (text, _) in lines)
 			{
+				if (text == "---DIVIDER---")
+				{
+					totalHeight += 9f;
+					continue;
+				}
 				Vector2 size = ChatManager.GetStringSize(font, text, scale);
 				if (size.X > maxWidth) maxWidth = size.X;
 				totalHeight += size.Y + lineSpacing;
@@ -816,6 +877,13 @@ namespace Augments
 			float x = boxRect.X + padding;
 			foreach (var (text, color) in lines)
 			{
+				if (text == "---DIVIDER---")
+				{
+					y += 3f;
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle((int)x, (int)y, (int)(boxWidth - padding * 2f), 1), SupportTagColor * 0.35f);
+					y += 5f;
+					continue;
+				}
 				Vector2 size = ChatManager.GetStringSize(font, text, scale);
 				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, text, new Vector2(x, y), color, 0f, Vector2.Zero, scale);
 				y += size.Y + lineSpacing;

@@ -193,7 +193,7 @@ namespace Augments
 			supportTag = new SupportClassTagElement();
 			supportTag.Left.Set(556f, 0f);
 			supportTag.Width.Set(306f, 0f);
-			supportTag.Height.Set(30f, 0f);
+			supportTag.Height.Set(28f, 0f);
 			supportTag.Top.Set(556f, 0f);
 			backPanel.Append(supportTag);
 
@@ -203,6 +203,18 @@ namespace Augments
 				backPanel.Append(devBarContainer);
 
 			Append(backPanel);
+		}
+
+		public override void Draw(SpriteBatch spriteBatch)
+		{
+			base.Draw(spriteBatch);
+
+			if (supportTag != null && supportTag.IsVisible && (supportTag.IsMouseHovering || supportTag.ContainsPoint(Main.MouseScreen)))
+			{
+				AugmentChoiceCard.DrawSupportTooltip(spriteBatch, FontAssets.MouseText.Value);
+			}
+
+			AugmentChoiceCard.DrawActiveTooltip(spriteBatch);
 		}
 
 		private void CreateTabButtons()
