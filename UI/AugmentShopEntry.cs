@@ -192,60 +192,38 @@ namespace Augments
 				var rect = new Rectangle((int)dims.X, (int)dims.Y, (int)dims.Width, (int)dims.Height);
 				Texture2D pixel = TextureAssets.MagicPixel.Value;
 
-				Color bg;
-				Color border;
 				Color textColor;
 
 				if (disabled)
 				{
-					bg = new Color(10, 16, 28) * 0.95f;
-					border = new Color(30, 42, 60);
-					textColor = new Color(120, 130, 150);
+					textColor = new Color(100, 116, 139);
 				}
 				else if (isBuy)
 				{
-					bg = isHovered ? new Color(18, 48, 32) * 0.98f : new Color(12, 32, 22) * 0.94f;
-					border = isHovered ? new Color(74, 222, 128) : new Color(34, 197, 94) * 0.80f;
-					textColor = isHovered ? Color.White : new Color(220, 252, 231);
+					textColor = isHovered ? Color.White : new Color(74, 222, 128);
 				}
 				else
 				{
 					// Dismantle / Refund
-					bg = isHovered ? new Color(48, 20, 24) * 0.98f : new Color(32, 14, 18) * 0.94f;
-					border = isHovered ? new Color(248, 113, 113) : new Color(220, 70, 70) * 0.80f;
-					textColor = isHovered ? Color.White : new Color(254, 226, 226);
+					textColor = isHovered ? Color.White : new Color(248, 113, 113);
 				}
 
-				// Ambient hover underglow
+				// Soft ambient hover wash — ZERO outline boxes or border lines
 				if (isHovered && !disabled)
 				{
-					spriteBatch.Draw(pixel, new Rectangle(rect.X - 1, rect.Y - 1, rect.Width + 2, rect.Height + 2), border * 0.12f);
+					Color washColor = isBuy ? new Color(34, 197, 94, 35) : new Color(239, 68, 68, 35);
+					spriteBatch.Draw(pixel, rect, washColor);
 				}
 
-				// Chassis Fill
-				spriteBatch.Draw(pixel, rect, bg);
-
-				// 1px Inner Hairline Highlight Accent
-				Color innerHairline = Color.White * (isHovered ? 0.08f : 0.04f);
-				spriteBatch.Draw(pixel, new Rectangle(rect.X + 1, rect.Y + 1, rect.Width - 2, 1), innerHairline);
-				spriteBatch.Draw(pixel, new Rectangle(rect.X + 1, rect.Bottom - 2, rect.Width - 2, 1), innerHairline);
-				spriteBatch.Draw(pixel, new Rectangle(rect.X + 1, rect.Y + 1, 1, rect.Height - 2), innerHairline);
-				spriteBatch.Draw(pixel, new Rectangle(rect.Right - 2, rect.Y + 1, 1, rect.Height - 2), innerHairline);
-
-				// 1px Outer Border (clean, no corner ticks)
-				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, rect.Width, 1), border);
-				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Bottom - 1, rect.Width, 1), border);
-				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, 1, rect.Height), border);
-				spriteBatch.Draw(pixel, new Rectangle(rect.Right - 1, rect.Y, 1, rect.Height), border);
-
-				// Text label
+				// Pure unboxed typography, perfectly centered vertically and horizontally
 				var font = FontAssets.MouseText.Value;
-				Vector2 textSize = ChatManager.GetStringSize(font, label, new Vector2(0.70f));
+				Vector2 scale = new Vector2(0.72f);
+				Vector2 textSize = ChatManager.GetStringSize(font, label, scale);
 				Vector2 textPos = new Vector2(
 					rect.X + (rect.Width - textSize.X) * 0.5f,
-					rect.Y + (rect.Height - textSize.Y) * 0.5f + 1f
+					rect.Y + (rect.Height - 12.2f) * 0.5f - 1.5f
 				);
-				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, label, textPos, textColor, 0f, Vector2.Zero, new Vector2(0.70f));
+				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, label, textPos, textColor, 0f, Vector2.Zero, scale);
 			}
 		}
 	}
