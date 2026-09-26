@@ -449,8 +449,8 @@ namespace Augments
 
 			// Clean micro-glint: 2-3px ray length, never protruding into neighbor tiles
 			int rayLen = 1 + (int)(intensity * 2.5f);
-			Color tintedRay = rayColor * (intensity * 0.45f);
-			Color coreColor = Color.Lerp(rayColor, Color.White, 0.70f) * (intensity * 0.65f);
+			Color tintedRay = rayColor * (intensity * 0.70f);
+			Color coreColor = Color.Lerp(rayColor, Color.White, 0.75f) * (intensity * 0.88f);
 
 			// Clean, delicate 1px hairline cross rays
 			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx, cy - rayLen, 1, rayLen * 2 + 1), tintedRay);
