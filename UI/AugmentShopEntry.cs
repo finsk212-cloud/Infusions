@@ -75,39 +75,70 @@ namespace Augments
 			int rh = (int)dims.Height;
 
 			Rectangle rect = new Rectangle(rx, ry, rw, rh);
+			Texture2D pixel = TextureAssets.MagicPixel.Value;
 
 			Color rarityColor = AugmentListEntry.RarityColor(augment.Rarity);
 			if (augment.Rarity == AugmentRarity.Common)
 				rarityColor = new Color(225, 230, 240);
 
-			// 1. Entry Row Background & Border
-			Color bgColor = isHovered ? new Color(30, 42, 76) * 0.96f : new Color(20, 28, 52) * 0.94f;
-			Color borderColor = isHovered ? rarityColor * 0.9f : rarityColor * 0.45f;
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, rect, bgColor);
+			// 1. Ambient underglow on hover
+			if (isHovered)
+			{
+				spriteBatch.Draw(pixel, new Rectangle(rx - 1, ry - 1, rw + 2, rh + 2), rarityColor * 0.05f);
+			}
 
-			// Clean 1px Border (Top, Bottom, Left, Right)
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rx, ry, rw, 1), borderColor);
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rx, ry + rh - 1, rw, 1), borderColor);
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rx, ry, 1, rh), borderColor);
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rx + rw - 1, ry, 1, rh), borderColor);
+			// 2. Cybernetic Chassis Fill (#0A101C)
+			Color bgColor = isHovered ? new Color(16, 24, 42) * 0.96f : new Color(10, 16, 28) * 0.94f;
+			spriteBatch.Draw(pixel, rect, bgColor);
 
-			// 2. Class Icon Box on the Left
+			// 3. 1px Inner Hairline Highlight Accent
+			Color innerHairline = Color.White * (isHovered ? 0.08f : 0.04f);
+			spriteBatch.Draw(pixel, new Rectangle(rx + 1, ry + 1, rw - 2, 1), innerHairline);
+			spriteBatch.Draw(pixel, new Rectangle(rx + 1, ry + rh - 2, rw - 2, 1), innerHairline);
+			spriteBatch.Draw(pixel, new Rectangle(rx + 1, ry + 1, 1, rh - 2), innerHairline);
+			spriteBatch.Draw(pixel, new Rectangle(rx + rw - 2, ry + 1, 1, rh - 2), innerHairline);
+
+			// 4. 1px Outer Border
+			Color borderColor = isHovered ? rarityColor * 0.85f : Color.Lerp(new Color(30, 41, 59), rarityColor, 0.40f) * 0.70f;
+			spriteBatch.Draw(pixel, new Rectangle(rx, ry, rw, 1), borderColor);
+			spriteBatch.Draw(pixel, new Rectangle(rx, ry + rh - 1, rw, 1), borderColor);
+			spriteBatch.Draw(pixel, new Rectangle(rx, ry, 1, rh), borderColor);
+			spriteBatch.Draw(pixel, new Rectangle(rx + rw - 1, ry, 1, rh), borderColor);
+
+			// 5. Flush Corner Accent Notches (4x2 / 2x4)
+			Color cornerCol = rarityColor * (isHovered ? 0.95f : 0.75f);
+			spriteBatch.Draw(pixel, new Rectangle(rx, ry, 4, 2), cornerCol);
+			spriteBatch.Draw(pixel, new Rectangle(rx, ry, 2, 4), cornerCol);
+			spriteBatch.Draw(pixel, new Rectangle(rx + rw - 4, ry, 4, 2), cornerCol);
+			spriteBatch.Draw(pixel, new Rectangle(rx + rw - 2, ry, 2, 4), cornerCol);
+			spriteBatch.Draw(pixel, new Rectangle(rx, ry + rh - 2, 4, 2), cornerCol);
+			spriteBatch.Draw(pixel, new Rectangle(rx, ry + rh - 4, 2, 4), cornerCol);
+			spriteBatch.Draw(pixel, new Rectangle(rx + rw - 4, ry + rh - 2, 4, 2), cornerCol);
+			spriteBatch.Draw(pixel, new Rectangle(rx + rw - 2, ry + rh - 4, 2, 4), cornerCol);
+
+			// 6. Class Icon Box on the Left
 			Rectangle iconBox = new Rectangle(rect.X + 8, rect.Y + 9, 36, 36);
-			Color boxBg = new Color(14, 20, 38) * 0.9f;
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, iconBox, boxBg);
+			Color boxBg = new Color(10, 16, 28) * 0.95f;
+			spriteBatch.Draw(pixel, iconBox, boxBg);
 
-			// Icon box border
-			Color boxBorder = isHovered ? rarityColor * 0.8f : new Color(40, 55, 95);
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(iconBox.X, iconBox.Y, iconBox.Width, 1), boxBorder);
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(iconBox.X, iconBox.Bottom - 1, iconBox.Width, 1), boxBorder);
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(iconBox.X, iconBox.Y, 1, iconBox.Height), boxBorder);
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(iconBox.Right - 1, iconBox.Y, 1, iconBox.Height), boxBorder);
+			// Icon box 1px border
+			Color boxBorder = isHovered ? rarityColor * 0.80f : new Color(30, 42, 66);
+			spriteBatch.Draw(pixel, new Rectangle(iconBox.X, iconBox.Y, iconBox.Width, 1), boxBorder);
+			spriteBatch.Draw(pixel, new Rectangle(iconBox.X, iconBox.Bottom - 1, iconBox.Width, 1), boxBorder);
+			spriteBatch.Draw(pixel, new Rectangle(iconBox.X, iconBox.Y, 1, iconBox.Height), boxBorder);
+			spriteBatch.Draw(pixel, new Rectangle(iconBox.Right - 1, iconBox.Y, 1, iconBox.Height), boxBorder);
+
+			// Icon box 2px corner ticks
+			spriteBatch.Draw(pixel, new Rectangle(iconBox.X, iconBox.Y, 2, 2), boxBorder);
+			spriteBatch.Draw(pixel, new Rectangle(iconBox.Right - 2, iconBox.Y, 2, 2), boxBorder);
+			spriteBatch.Draw(pixel, new Rectangle(iconBox.X, iconBox.Bottom - 2, 2, 2), boxBorder);
+			spriteBatch.Draw(pixel, new Rectangle(iconBox.Right - 2, iconBox.Bottom - 2, 2, 2), boxBorder);
 
 			// Draw Class Icon inside the box
 			Texture2D iconTex = AugmentSlotElement.GetClassIcon(augment.Class);
 			if (iconTex != null)
 			{
-				float iconScale = Math.Min(28f / iconTex.Width, 28f / iconTex.Height);
+				float iconScale = Math.Min(26f / iconTex.Width, 26f / iconTex.Height);
 				Vector2 iconPos = new Vector2(
 					iconBox.X + (iconBox.Width - iconTex.Width * iconScale) * 0.5f,
 					iconBox.Y + (iconBox.Height - iconTex.Height * iconScale) * 0.5f
@@ -115,7 +146,7 @@ namespace Augments
 				spriteBatch.Draw(iconTex, iconPos, null, rarityColor, 0f, Vector2.Zero, iconScale, SpriteEffects.None, 0f);
 			}
 
-			// 3. Name & Subtitle
+			// 7. Name & Subtitle
 			var font = FontAssets.MouseText.Value;
 			float textLeft = iconBox.Right + 10f;
 
@@ -126,66 +157,36 @@ namespace Augments
 				spriteBatch, font, augment.DisplayName, namePos, nameColor, 0f, Vector2.Zero, new Vector2(0.85f)
 			);
 
-			// Subtitle: [Tier] • Class
-			string subText = $"[{augment.Rarity}] • {augment.Class}";
+			// Subtitle: Unboxed RARITY • CLASS
+			string rarName = AugmentTooltipDrawer.GetRarityDisplayName(augment.Rarity);
+			string clsName = AugmentTooltipDrawer.GetClassDisplayName(augment.Class);
 			Vector2 subPos = new Vector2(textLeft, rect.Y + 28f);
-			Color subColor = new Color(165, 180, 205);
-			ChatManager.DrawColorCodedStringWithShadow(
-				spriteBatch, font, subText, subPos, subColor, 0f, Vector2.Zero, new Vector2(0.72f)
-			);
+			Vector2 subScale = new Vector2(0.72f);
+
+			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, rarName, subPos, rarityColor * 0.85f, 0f, Vector2.Zero, subScale);
+			float curSubX = subPos.X + ChatManager.GetStringSize(font, rarName, subScale).X;
+
+			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, "  •  ", new Vector2(curSubX, subPos.Y), new Color(110, 130, 160), 0f, Vector2.Zero, subScale);
+			curSubX += ChatManager.GetStringSize(font, "  •  ", subScale).X;
+
+			Color clsCol = AugmentTooltipDrawer.GetClassColor(augment.Class);
+			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, clsName, new Vector2(curSubX, subPos.Y), clsCol * 0.85f, 0f, Vector2.Zero, subScale);
 		}
 
-		private class ActionButton : UIPanel
+		private class ActionButton : UIElement
 		{
 			public event Action Clicked;
 
+			private readonly string label;
 			private readonly bool isBuy;
 			private readonly bool disabled;
-
-			private readonly Color idleBg;
-			private readonly Color hoverBg;
-			private readonly Color borderCol;
-			private readonly Color textCol;
+			private bool isHovered;
 
 			public ActionButton(string label, bool isBuy, bool disabled)
 			{
+				this.label = label;
 				this.isBuy = isBuy;
 				this.disabled = disabled;
-
-				SetPadding(0f);
-
-				if (disabled)
-				{
-					idleBg = new Color(34, 38, 48);
-					hoverBg = new Color(34, 38, 48);
-					borderCol = new Color(70, 76, 92);
-					textCol = new Color(140, 150, 170);
-				}
-				else if (isBuy)
-				{
-					idleBg = new Color(24, 52, 38);
-					hoverBg = new Color(36, 78, 56);
-					borderCol = new Color(60, 200, 120);
-					textCol = new Color(180, 255, 205);
-				}
-				else
-				{
-					idleBg = new Color(54, 26, 26);
-					hoverBg = new Color(82, 38, 38);
-					borderCol = new Color(220, 90, 90);
-					textCol = new Color(255, 195, 195);
-				}
-
-				BackgroundColor = idleBg;
-				BorderColor = borderCol;
-
-				UIText labelText = new UIText(label, 0.70f)
-				{
-					HAlign = 0.5f,
-					VAlign = 0.5f,
-					TextColor = textCol
-				};
-				Append(labelText);
 			}
 
 			public override void LeftClick(UIMouseEvent evt)
@@ -203,8 +204,7 @@ namespace Augments
 				base.MouseOver(evt);
 				if (!disabled)
 				{
-					BackgroundColor = hoverBg;
-					BorderColor = Color.Lerp(borderCol, Color.White, 0.35f);
+					isHovered = true;
 					SoundEngine.PlaySound(SoundID.MenuTick);
 				}
 			}
@@ -212,11 +212,76 @@ namespace Augments
 			public override void MouseOut(UIMouseEvent evt)
 			{
 				base.MouseOut(evt);
-				if (!disabled)
+				isHovered = false;
+			}
+
+			protected override void DrawSelf(SpriteBatch spriteBatch)
+			{
+				CalculatedStyle dims = GetDimensions();
+				var rect = new Rectangle((int)dims.X, (int)dims.Y, (int)dims.Width, (int)dims.Height);
+				Texture2D pixel = TextureAssets.MagicPixel.Value;
+
+				Color bg;
+				Color border;
+				Color textColor;
+
+				if (disabled)
 				{
-					BackgroundColor = idleBg;
-					BorderColor = borderCol;
+					bg = new Color(10, 16, 28) * 0.95f;
+					border = new Color(30, 42, 60);
+					textColor = new Color(120, 130, 150);
 				}
+				else if (isBuy)
+				{
+					bg = isHovered ? new Color(18, 48, 32) * 0.98f : new Color(12, 32, 22) * 0.94f;
+					border = isHovered ? new Color(74, 222, 128) : new Color(34, 197, 94) * 0.80f;
+					textColor = isHovered ? Color.White : new Color(220, 252, 231);
+				}
+				else
+				{
+					// Dismantle / Refund
+					bg = isHovered ? new Color(48, 20, 24) * 0.98f : new Color(32, 14, 18) * 0.94f;
+					border = isHovered ? new Color(248, 113, 113) : new Color(220, 70, 70) * 0.80f;
+					textColor = isHovered ? Color.White : new Color(254, 226, 226);
+				}
+
+				// Ambient hover underglow
+				if (isHovered && !disabled)
+				{
+					spriteBatch.Draw(pixel, new Rectangle(rect.X - 1, rect.Y - 1, rect.Width + 2, rect.Height + 2), border * 0.12f);
+				}
+
+				// Chassis Fill
+				spriteBatch.Draw(pixel, rect, bg);
+
+				// 1px Inner Hairline Highlight Accent
+				Color innerHairline = Color.White * (isHovered ? 0.08f : 0.04f);
+				spriteBatch.Draw(pixel, new Rectangle(rect.X + 1, rect.Y + 1, rect.Width - 2, 1), innerHairline);
+				spriteBatch.Draw(pixel, new Rectangle(rect.X + 1, rect.Bottom - 2, rect.Width - 2, 1), innerHairline);
+				spriteBatch.Draw(pixel, new Rectangle(rect.X + 1, rect.Y + 1, 1, rect.Height - 2), innerHairline);
+				spriteBatch.Draw(pixel, new Rectangle(rect.Right - 2, rect.Y + 1, 1, rect.Height - 2), innerHairline);
+
+				// 1px Outer Border
+				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, rect.Width, 1), border);
+				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Bottom - 1, rect.Width, 1), border);
+				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, 1, rect.Height), border);
+				spriteBatch.Draw(pixel, new Rectangle(rect.Right - 1, rect.Y, 1, rect.Height), border);
+
+				// Corner 2px accent ticks
+				Color cornerTick = border * (isHovered ? 1.0f : 0.70f);
+				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, 2, 2), cornerTick);
+				spriteBatch.Draw(pixel, new Rectangle(rect.Right - 2, rect.Y, 2, 2), cornerTick);
+				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Bottom - 2, 2, 2), cornerTick);
+				spriteBatch.Draw(pixel, new Rectangle(rect.Right - 2, rect.Bottom - 2, 2, 2), cornerTick);
+
+				// Text label
+				var font = FontAssets.MouseText.Value;
+				Vector2 textSize = ChatManager.GetStringSize(font, label, new Vector2(0.70f));
+				Vector2 textPos = new Vector2(
+					rect.X + (rect.Width - textSize.X) * 0.5f,
+					rect.Y + (rect.Height - textSize.Y) * 0.5f + 1f
+				);
+				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, label, textPos, textColor, 0f, Vector2.Zero, new Vector2(0.70f));
 			}
 		}
 	}

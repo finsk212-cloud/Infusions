@@ -950,26 +950,26 @@ namespace Augments
 
 			// Set Bonuses Section
 			string bSectionHeader = "PROTOCOL SPECIFICATIONS";
-			curHeight += ChatManager.GetStringSize(font, bSectionHeader, sectionScale).Y + 4f;
+			curHeight += ChatManager.GetStringSize(font, bSectionHeader, sectionScale).Y + 6f;
 			Measure(bSectionHeader, sectionScale, 36f);
 
 			foreach (var kv in fam.ThresholdBonuses)
 			{
 				int thresh = kv.Key;
 				var bonus = kv.Value;
-				string symbol = ownedCount >= thresh ? "✓" : "•";
-				string bonusTag = ownedCount >= thresh ? " (Active)" : " (Locked)";
-				string bonusTitle = $"{symbol} ({thresh}) {bonus.Title}";
+				string bonusTitle = bonus.Title;
+				string bonusTag = "  •  ACTIVE";
 
-				curHeight += ChatManager.GetStringSize(font, bonusTitle + bonusTag, itemScale).Y + lineSpacing;
-				Measure(bonusTitle + bonusTag, itemScale, 36f);
+				curHeight += Math.Max(16f, ChatManager.GetStringSize(font, bonusTitle + bonusTag, itemScale).Y) + lineSpacing;
+				Measure(bonusTitle + bonusTag, itemScale, 60f);
 
 				foreach (var desc in bonus.Descriptions)
 				{
 					string perkLine = $"• {desc.Trim()}";
 					curHeight += ChatManager.GetStringSize(font, perkLine, perkScale).Y + lineSpacing;
-					Measure(perkLine, perkScale, 48f);
+					Measure(perkLine, perkScale, 60f);
 				}
+				curHeight += 4f;
 			}
 
 			// Divider 2
@@ -977,19 +977,17 @@ namespace Augments
 
 			// Synergy Members Section
 			string mSectionHeader = "ASSIGNED PLUGINS";
-			curHeight += ChatManager.GetStringSize(font, mSectionHeader, sectionScale).Y + 4f;
+			curHeight += ChatManager.GetStringSize(font, mSectionHeader, sectionScale).Y + 6f;
 			Measure(mSectionHeader, sectionScale, 36f);
 
 			foreach (var memberId in fam.MemberIds)
 			{
 				Augment m = AugmentDatabase.GetById(memberId);
 				string mName = m?.DisplayName ?? memberId;
-				bool owned = ap.HasAugment(memberId);
-				string mSymbol = owned ? "✓ " : "• ";
-				string mStatus = owned ? " (Installed)" : " (Not Installed)";
+				string mLine = $"✓ {mName}  •  INSTALLED";
 
-				curHeight += ChatManager.GetStringSize(font, mSymbol + mName + mStatus, itemScale).Y + lineSpacing;
-				Measure(mSymbol + mName + mStatus, itemScale, 36f);
+				curHeight += ChatManager.GetStringSize(font, mLine, itemScale).Y + lineSpacing;
+				Measure(mLine, itemScale, 36f);
 			}
 
 			curHeight += pad;
@@ -1003,6 +1001,9 @@ namespace Augments
 
 			Rectangle panelRect = new Rectangle((int)currentX, (int)panelY, (int)panelWidth, (int)panelHeight);
 			panelBounds[fam.Id] = panelRect;
+
+			// Ambient drop shadow (2px expansion)
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(panelRect.X - 2, panelRect.Y - 2, panelRect.Width + 4, panelRect.Height + 4), new Color(0, 0, 0, (int)(160 * progress)));
 
 			// Cybernetic chassis background with subtle ambient underglow
 			spriteBatch.Draw(TextureAssets.MagicPixel.Value, panelRect, new Color(10, 16, 28) * (0.96f * progress));
@@ -1042,8 +1043,8 @@ namespace Augments
 
 			// 4. Set Bonuses Section
 			string bonusSectionHeader = "PROTOCOL SPECIFICATIONS";
-			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, bonusSectionHeader, new Vector2(leftX, drawY), new Color(130, 160, 200) * progress, 0f, Vector2.Zero, sectionScale);
-			drawY += ChatManager.GetStringSize(font, bonusSectionHeader, sectionScale).Y + 4f;
+			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, bonusSectionHeader, new Vector2(leftX, drawY), new Color(250, 204, 21) * progress, 0f, Vector2.Zero, sectionScale);
+			drawY += ChatManager.GetStringSize(font, bonusSectionHeader, sectionScale).Y + 6f;
 
 			foreach (var kv in fam.ThresholdBonuses)
 			{
@@ -1051,39 +1052,66 @@ namespace Augments
 				var bonus = kv.Value;
 				bool unlocked = ownedCount >= thresh;
 
-				string symbol = unlocked ? "✓" : "•";
-				string bonusTitle = $"{symbol} ({thresh}) {bonus.Title}";
-				string bonusTag = unlocked ? " (Active)" : " (Locked)";
-				Color headCol = unlocked ? AugmentTextColors.Healing : new Color(150, 165, 185);
-				Color tagCol = unlocked ? AugmentTextColors.Healing : new Color(115, 130, 150);
+				float nodeY = drawY + 1f;
 
-				// Bonus Header Line
-				Vector2 headSz = ChatManager.GetStringSize(font, bonusTitle + bonusTag, itemScale);
-				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, bonusTitle, new Vector2(leftX, drawY), headCol * progress, 0f, Vector2.Zero, itemScale);
-				Vector2 titlePartSz = ChatManager.GetStringSize(font, bonusTitle, itemScale);
-				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, bonusTag, new Vector2(leftX + titlePartSz.X, drawY), tagCol * progress, 0f, Vector2.Zero, itemScale);
-				drawY += headSz.Y + lineSpacing;
+				// Milestone Node Badge (18x14px rounded cybernetic pill)
+				Rectangle nodeRect = new Rectangle((int)leftX, (int)nodeY, 18, 14);
+				Color nodeBg = unlocked ? fam.ThemeColor * (0.24f * progress) : new Color(16, 22, 34) * (0.90f * progress);
+				Color nodeBorder = unlocked ? AugmentTextColors.Healing * (0.90f * progress) : new Color(45, 55, 75) * (0.80f * progress);
 
-				// Indented perk descriptions (aligned at leftX + 16f)
-				float perkIndent = leftX + 16f;
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, nodeRect, nodeBg);
+				// 1px node border
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(nodeRect.X, nodeRect.Y, nodeRect.Width, 1), nodeBorder);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(nodeRect.X, nodeRect.Bottom - 1, nodeRect.Width, 1), nodeBorder);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(nodeRect.X, nodeRect.Y, 1, nodeRect.Height), nodeBorder);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(nodeRect.Right - 1, nodeRect.Y, 1, nodeRect.Height), nodeBorder);
+
+				// Node text: "{thresh}"
+				string threshStr = thresh.ToString();
+				Vector2 threshSz = ChatManager.GetStringSize(font, threshStr, new Vector2(0.62f));
+				Vector2 threshPos = new Vector2(
+					nodeRect.X + (nodeRect.Width - threshSz.X) * 0.5f,
+					nodeRect.Y + (nodeRect.Height - threshSz.Y) * 0.5f + 1f
+				);
+				Color threshCol = unlocked ? Color.White * progress : new Color(130, 145, 170) * progress;
+				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, threshStr, threshPos, threshCol, 0f, Vector2.Zero, new Vector2(0.62f));
+
+				// Title text and inline status
+				float textX = leftX + 24f;
+				Color titleCol = unlocked ? Color.White * progress : new Color(148, 163, 184) * progress;
+				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, bonus.Title, new Vector2(textX, drawY), titleCol, 0f, Vector2.Zero, itemScale);
+				float titleW = ChatManager.GetStringSize(font, bonus.Title, itemScale).X;
+
+				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, "  •  ", new Vector2(textX + titleW, drawY), new Color(100, 116, 139) * progress, 0f, Vector2.Zero, itemScale);
+				float dotW = ChatManager.GetStringSize(font, "  •  ", itemScale).X;
+
+				string statusBadge = unlocked ? "ACTIVE" : "LOCKED";
+				Color statusBadgeCol = unlocked ? AugmentTextColors.Healing * progress : new Color(100, 116, 139) * progress;
+				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, statusBadge, new Vector2(textX + titleW + dotW, drawY), statusBadgeCol, 0f, Vector2.Zero, itemScale);
+
+				drawY += Math.Max(16f, ChatManager.GetStringSize(font, bonus.Title, itemScale).Y) + lineSpacing;
+
+				// Indented perk descriptions
 				foreach (var desc in bonus.Descriptions)
 				{
 					string perkLine = $"• {desc.Trim()}";
-					Color perkCol = unlocked ? new Color(210, 238, 225) : new Color(125, 138, 158);
-					ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, perkLine, new Vector2(perkIndent, drawY), perkCol * progress, 0f, Vector2.Zero, perkScale);
+					Color perkCol = unlocked ? new Color(210, 238, 225) * progress : new Color(125, 138, 158) * progress;
+					ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, perkLine, new Vector2(textX, drawY), perkCol, 0f, Vector2.Zero, perkScale);
 					drawY += ChatManager.GetStringSize(font, perkLine, perkScale).Y + lineSpacing;
 				}
+
+				drawY += 4f;
 			}
 
-			drawY += 4f;
+			drawY += 2f;
 			// Divider 2 (Full width sleek hairline rail)
 			DrawDivider(spriteBatch, panelRect, drawY, fam.ThemeColor, progress);
 			drawY += 8f;
 
 			// 5. Synergy Members Section
 			string membersSectionHeader = "ASSIGNED PLUGINS";
-			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, membersSectionHeader, new Vector2(leftX, drawY), new Color(130, 160, 200) * progress, 0f, Vector2.Zero, sectionScale);
-			drawY += ChatManager.GetStringSize(font, membersSectionHeader, sectionScale).Y + 4f;
+			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, membersSectionHeader, new Vector2(leftX, drawY), new Color(250, 204, 21) * progress, 0f, Vector2.Zero, sectionScale);
+			drawY += ChatManager.GetStringSize(font, membersSectionHeader, sectionScale).Y + 6f;
 
 			foreach (var memberId in fam.MemberIds)
 			{
@@ -1091,11 +1119,9 @@ namespace Augments
 				string mName = m?.DisplayName ?? memberId;
 				bool owned = ap.HasAugment(memberId);
 
-				string mSymbol = owned ? "✓ " : "• ";
-				string mStatus = owned ? " (Installed)" : " (Not Installed)";
-				Color mSymbolCol = owned ? AugmentTextColors.Healing : new Color(130, 150, 175);
-				Color mNameCol = owned ? Color.White : new Color(165, 180, 205);
-				Color mStatusCol = owned ? AugmentTextColors.Healing : new Color(115, 130, 150);
+				string mSymbol = owned ? "✓" : "•";
+				Color mSymbolCol = owned ? AugmentTextColors.Healing : new Color(100, 116, 139);
+				Color mNameCol = owned ? Color.White : new Color(148, 163, 184);
 
 				// Draw symbol
 				Vector2 symSz = ChatManager.GetStringSize(font, mSymbol, itemScale);
@@ -1103,10 +1129,12 @@ namespace Augments
 
 				// Draw name
 				Vector2 nameSz = ChatManager.GetStringSize(font, mName, itemScale);
-				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, mName, new Vector2(leftX + symSz.X, drawY), mNameCol * progress, 0f, Vector2.Zero, itemScale);
+				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, mName, new Vector2(leftX + 16f, drawY), mNameCol * progress, 0f, Vector2.Zero, itemScale);
 
 				// Draw status
-				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, mStatus, new Vector2(leftX + symSz.X + nameSz.X, drawY), mStatusCol * progress, 0f, Vector2.Zero, itemScale);
+				string mStatus = owned ? "  •  INSTALLED" : "  •  NOT INSTALLED";
+				Color mStatusCol = owned ? AugmentTextColors.Healing * progress : new Color(100, 116, 139) * progress;
+				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, mStatus, new Vector2(leftX + 16f + nameSz.X, drawY), mStatusCol, 0f, Vector2.Zero, itemScale);
 
 				drawY += symSz.Y + lineSpacing;
 			}
