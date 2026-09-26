@@ -168,6 +168,7 @@ namespace Augments
 			confirmOverlay.BorderColor = Color.Transparent;
 
 			var confirmBox = new UIPanel();
+			confirmBox.SetPadding(0f);
 			confirmBox.Width.Set(ConfirmBoxWidth, 0f);
 			confirmBox.Height.Set(ConfirmBoxHeight, 0f);
 			confirmBox.HAlign = 0.5f;
@@ -189,26 +190,29 @@ namespace Augments
 				HAlign = 0.5f,
 				IsWrapped = true
 			};
-			confirmMessageText.Width.Set(-30f, 1f);
+			confirmMessageText.Width.Set(-40f, 1f);
 			confirmMessageText.Height.Set(120f, 0f);
 			confirmMessageText.Top.Set(50f, 0f);
 			confirmBox.Append(confirmMessageText);
 
+			const float buttonGap = 20f;
+			float pairWidth = ConfirmButtonWidth * 2f + buttonGap;
+
 			var confirmButton = new ModalButton("Confirm", new Color(48, 18, 22, 240), new Color(72, 24, 30, 250), new Color(248, 113, 113));
 			confirmButton.Width.Set(ConfirmButtonWidth, 0f);
 			confirmButton.Height.Set(ConfirmButtonHeight, 0f);
-			confirmButton.HAlign = 0.25f;
+			confirmButton.Left.Set(-pairWidth / 2f, 0.5f);
 			confirmButton.VAlign = 1f;
-			confirmButton.Top.Set(-16f, 0f);
+			confirmButton.Top.Set(-18f, 0f);
 			confirmButton.Clicked += HandleConfirmOverlayConfirmed;
 			confirmBox.Append(confirmButton);
 
 			var cancelButton = new ModalButton("Cancel", new Color(14, 20, 32, 240), new Color(22, 32, 54, 250), new Color(56, 189, 248));
 			cancelButton.Width.Set(ConfirmButtonWidth, 0f);
 			cancelButton.Height.Set(ConfirmButtonHeight, 0f);
-			cancelButton.HAlign = 0.75f;
+			cancelButton.Left.Set(-pairWidth / 2f + ConfirmButtonWidth + buttonGap, 0.5f);
 			cancelButton.VAlign = 1f;
-			cancelButton.Top.Set(-16f, 0f);
+			cancelButton.Top.Set(-18f, 0f);
 			cancelButton.Clicked += HandleConfirmOverlayCanceled;
 			confirmBox.Append(cancelButton);
 		}
