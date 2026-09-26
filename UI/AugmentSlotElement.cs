@@ -137,6 +137,44 @@ namespace Augments
 			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X + 1, rect.Y + 1, 1, rect.Height - 2), innerHairline);
 			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right - 2, rect.Y + 1, 1, rect.Height - 2), innerHairline);
 
+			// 2.5. Subtle Glass Sheen Sweep for Legendary tier (whisper-soft ambient refraction)
+			if (Augment.Rarity == AugmentRarity.Legendary)
+			{
+				float sweepPeriod = 6.0f;
+				float sweepProgress = (time * 0.75f + (rect.X + rect.Y) * 0.002f) % sweepPeriod;
+				if (sweepProgress < 1.1f)
+				{
+					float t = sweepProgress / 1.1f;
+					float sweepCenter = (rect.Width + rect.Height) * t;
+					int beamWidth = 14;
+					Color sheenColor = new Color(255, 230, 160);
+
+					for (int py = 2; py < rect.Height - 2; py += 2)
+					{
+						int centerPx = (int)(sweepCenter - py);
+						int startPx = Math.Max(2, centerPx - beamWidth / 2);
+						int endPx = Math.Min(rect.Width - 2, centerPx + beamWidth / 2);
+						if (endPx > startPx)
+						{
+							float dist = Math.Abs((startPx + endPx) * 0.5f - centerPx);
+							float normDist = dist / (beamWidth * 0.5f);
+							if (normDist < 1f)
+							{
+								// Smooth cosine falloff with delicate 0.08f peak alpha
+								float falloff = (float)Math.Cos(normDist * MathHelper.PiOver2);
+								float beamA = falloff * 0.08f;
+								if (beamA > 0.01f)
+								{
+									spriteBatch.Draw(TextureAssets.MagicPixel.Value,
+										new Rectangle(rect.X + startPx, rect.Y + py, endPx - startPx, 2),
+										sheenColor * beamA);
+								}
+							}
+						}
+					}
+				}
+			}
+
 			// 3. Border (Rarity colored, with Epic/Legendary custom effects)
 			Color borderColor = rarityColor;
 			int borderWidth = 1;
@@ -199,6 +237,47 @@ namespace Augments
 			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right - cLen, rect.Bottom - cThick, cLen, cThick), cornerCol);
 			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right - cThick, rect.Bottom - cLen, cThick, cLen), cornerCol);
 
+			// 3.5. Subtle Occasional Star Sparkles (clean micro-glints on borders, relaxed rhythm)
+			if (Augment.Rarity == AugmentRarity.Legendary)
+			{
+				(int x, int y, float offset)[] spPoints = new (int, int, float)[]
+				{
+					(rect.X + (int)(rect.Width * 0.70f), rect.Y, 0.0f),
+					(rect.X + 2, rect.Bottom - 2, 2.5f)
+				};
+
+				Color goldSparkle = new Color(255, 225, 120);
+				foreach (var sp in spPoints)
+				{
+					float spPhase = (time * 0.85f + sp.offset + (rect.X * 0.015f)) % 5.0f;
+					if (spPhase < 1.0f)
+					{
+						float prog = spPhase / 1.0f;
+						float intensity = (float)Math.Sin(prog * MathHelper.Pi);
+						DrawSubtleStarSparkle(spriteBatch, sp.x, sp.y, intensity, goldSparkle);
+					}
+				}
+			}
+			else if (Augment.Rarity == AugmentRarity.Epic)
+			{
+				(int x, int y, float offset)[] spPoints = new (int, int, float)[]
+				{
+					(rect.Right - 3, rect.Y + 2, 0.0f),
+					(rect.X, rect.Y + (int)(rect.Height * 0.55f), 2.5f)
+				};
+
+				Color epicSparkle = new Color(215, 160, 255);
+				foreach (var sp in spPoints)
+				{
+					float spPhase = (time * 0.85f + sp.offset + (rect.X * 0.015f)) % 5.0f;
+					if (spPhase < 1.0f)
+					{
+						float prog = spPhase / 1.0f;
+						float intensity = (float)Math.Sin(prog * MathHelper.Pi);
+						DrawSubtleStarSparkle(spriteBatch, sp.x, sp.y, intensity, epicSparkle);
+					}
+				}
+			}
 
 			var font = FontAssets.MouseText.Value;
 
@@ -364,62 +443,31 @@ namespace Augments
 			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, botStr, botPos, color, 0f, Vector2.Zero, lineScale);
 		}
 
-		public static void DrawStarSparkle(SpriteBatch spriteBatch, int cx, int cy, float intensity)
+		public static void DrawSubtleStarSparkle(SpriteBatch spriteBatch, int cx, int cy, float intensity, Color rayColor)
 		{
 			if (intensity <= 0.05f) return;
 
-			int rayLen = 3 + (int)(intensity * 6f); // 3..9px
-			Color goldRay = new Color(255, 225, 100) * (intensity * 0.85f);
-			Color whiteRay = Color.White * intensity;
+			// Clean micro-glint: 2-3px ray length, never protruding into neighbor tiles
+			int rayLen = 1 + (int)(intensity * 2.5f);
+			Color tintedRay = rayColor * (intensity * 0.45f);
+			Color coreColor = Color.Lerp(rayColor, Color.White, 0.70f) * (intensity * 0.65f);
 
-			// Outer golden cross rays
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx, cy - rayLen, 1, rayLen * 2 + 1), goldRay);
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - rayLen, cy, rayLen * 2 + 1, 1), goldRay);
+			// Clean, delicate 1px hairline cross rays
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx, cy - rayLen, 1, rayLen * 2 + 1), tintedRay);
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - rayLen, cy, rayLen * 2 + 1, 1), tintedRay);
 
-			// 8-point diagonal glint spikes when intensity > 0.55f
-			if (intensity > 0.55f)
-			{
-				int d = (int)(rayLen * 0.6f);
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - d, cy - d, 1, 1), goldRay);
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + d, cy - d, 1, 1), goldRay);
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - d, cy + d, 1, 1), goldRay);
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + d, cy + d, 1, 1), goldRay);
-			}
+			// 1-pixel micro-core dot
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx, cy, 1, 1), coreColor);
+		}
 
-			// Inner brilliant white core
-			int innerRay = (int)(rayLen * 0.45f);
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx, cy - innerRay, 1, innerRay * 2 + 1), whiteRay);
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - innerRay, cy, innerRay * 2 + 1, 1), whiteRay);
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 1, cy - 1, 3, 3), Color.White * (intensity * 0.95f));
+		public static void DrawStarSparkle(SpriteBatch spriteBatch, int cx, int cy, float intensity)
+		{
+			DrawSubtleStarSparkle(spriteBatch, cx, cy, intensity, new Color(255, 220, 110));
 		}
 
 		public static void DrawAmethystSparkle(SpriteBatch spriteBatch, int cx, int cy, float intensity)
 		{
-			if (intensity <= 0.05f) return;
-
-			int rayLen = 2 + (int)(intensity * 5f);
-			Color violetRay = new Color(215, 140, 255) * (intensity * 0.9f);
-			Color whiteRay = Color.White * intensity;
-
-			// Cross rays
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx, cy - rayLen, 1, rayLen * 2 + 1), violetRay);
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - rayLen, cy, rayLen * 2 + 1, 1), violetRay);
-
-			// 8-point spikes when intensity > 0.55f
-			if (intensity > 0.55f)
-			{
-				int d = (int)(rayLen * 0.6f);
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - d, cy - d, 1, 1), violetRay);
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + d, cy - d, 1, 1), violetRay);
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - d, cy + d, 1, 1), violetRay);
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx + d, cy + d, 1, 1), violetRay);
-			}
-
-			// Inner brilliant white core
-			int innerRay = (int)(rayLen * 0.45f);
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx, cy - innerRay, 1, innerRay * 2 + 1), whiteRay);
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - innerRay, cy, innerRay * 2 + 1, 1), whiteRay);
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 1, cy - 1, 3, 3), Color.White * (intensity * 0.95f));
+			DrawSubtleStarSparkle(spriteBatch, cx, cy, intensity, new Color(215, 150, 255));
 		}
 
 		private static string GetInitials(string name)
