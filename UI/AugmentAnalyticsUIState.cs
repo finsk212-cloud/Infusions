@@ -51,8 +51,7 @@ namespace Augments
 		private AnalyticsActionButton filterButton;
 		private AnalyticsSearchBar searchBar;
 		public bool IsSearchFocused => searchBar != null && searchBar.IsFocused;
-		private UIPanel statusPill;
-		private UIText statusPillText;
+		private StatusIndicatorPill statusPill;
 
 		private readonly UIParticleSystem particles = new UIParticleSystem(40);
 
@@ -67,30 +66,30 @@ namespace Augments
 
 		public override void OnInitialize()
 		{
-			// 1. Main Background Panel (Classic Terraria slate-navy styling)
+			// 1. Main Background Panel (Cybernetic chassis #0A101C)
 			backPanel = new AnalyticsBackPanel();
 			backPanel.SetPadding(0f);
 			backPanel.Width.Set(PanelWidth, 0f);
 			backPanel.Height.Set(PanelHeight, 0f);
 			backPanel.HAlign = 0.5f;
 			backPanel.VAlign = 0.5f;
-			backPanel.BackgroundColor = new Color(20, 28, 54) * 0.98f;
-			backPanel.BorderColor = new Color(38, 52, 98);
+			backPanel.BackgroundColor = new Color(10, 16, 28, 250);
+			backPanel.BorderColor = new Color(30, 41, 59);
 			Append(backPanel);
 
 			// 2. Title & Subtitle Header (Cleanly separated at Y = 12 & Y = 38)
-			UIText titleText = new UIText("✦  Combat Analytics & DPS  ✦", 1.15f)
+			UIText titleText = new UIText("COMBAT ANALYTICS & TELEMETRY", 1.05f)
 			{
 				HAlign = 0.5f,
-				TextColor = new Color(255, 235, 175)
+				TextColor = new Color(248, 250, 252)
 			};
-			titleText.Top.Set(12f, 0f);
+			titleText.Top.Set(14f, 0f);
 			backPanel.Append(titleText);
 
-			UIText subtitle = new UIText("Real-time neural telemetry and plugin performance metrics", 0.76f)
+			UIText subtitle = new UIText("Real-time neural telemetry and plugin performance metrics", 0.74f)
 			{
 				HAlign = 0.5f,
-				TextColor = new Color(150, 170, 205)
+				TextColor = new Color(148, 163, 184)
 			};
 			subtitle.Top.Set(38f, 0f);
 			backPanel.Append(subtitle);
@@ -108,7 +107,7 @@ namespace Augments
 			float barTop = 76f;
 			float barHeight = 28f;
 
-			modeButton = new AnalyticsActionButton("★  Mode: Last 10 Mins  ★", new Color(56, 189, 248), new Color(20, 42, 65));
+			modeButton = new AnalyticsActionButton("Mode: Last 10 Mins", new Color(56, 189, 248), new Color(10, 16, 28));
 			modeButton.Left.Set(20f, 0f);
 			modeButton.Top.Set(barTop, 0f);
 			modeButton.Width.Set(175f, 0f);
@@ -123,7 +122,7 @@ namespace Augments
 			};
 			backPanel.Append(modeButton);
 
-			pauseButton = new AnalyticsActionButton("⏸  Pause", new Color(250, 204, 21), new Color(48, 42, 20));
+			pauseButton = new AnalyticsActionButton("Pause Feed", new Color(250, 204, 21), new Color(10, 16, 28));
 			pauseButton.Left.Set(203f, 0f);
 			pauseButton.Top.Set(barTop, 0f);
 			pauseButton.Width.Set(105f, 0f);
@@ -135,7 +134,7 @@ namespace Augments
 			};
 			backPanel.Append(pauseButton);
 
-			resetButton = new AnalyticsActionButton("↺  Reset", new Color(248, 113, 113), new Color(50, 24, 24));
+			resetButton = new AnalyticsActionButton("Reset Data", new Color(248, 113, 113), new Color(10, 16, 28));
 			resetButton.Left.Set(316f, 0f);
 			resetButton.Top.Set(barTop, 0f);
 			resetButton.Width.Set(95f, 0f);
@@ -148,7 +147,7 @@ namespace Augments
 			};
 			backPanel.Append(resetButton);
 
-			filterButton = new AnalyticsActionButton("⚙  Filters", new Color(168, 85, 247), new Color(38, 22, 58));
+			filterButton = new AnalyticsActionButton("Filters", new Color(168, 85, 247), new Color(10, 16, 28));
 			filterButton.Left.Set(419f, 0f);
 			filterButton.Top.Set(barTop, 0f);
 			filterButton.Width.Set(120f, 0f);
@@ -174,17 +173,6 @@ namespace Augments
 			statusPill.Top.Set(barTop, 0f);
 			statusPill.Width.Set(135f, 0f);
 			statusPill.Height.Set(barHeight, 0f);
-			statusPill.SetPadding(0f);
-			statusPill.BackgroundColor = new Color(14, 20, 36) * 0.95f;
-			statusPill.BorderColor = new Color(74, 222, 128) * 0.7f;
-
-			statusPillText = new UIText("● Live Feed", 0.70f)
-			{
-				HAlign = 0.5f,
-				VAlign = 0.5f,
-				TextColor = new Color(74, 222, 128)
-			};
-			statusPill.Append(statusPillText);
 			backPanel.Append(statusPill);
 
 			// 4. Summary Metric Cards (Y = 114f to 166f)
@@ -258,15 +246,15 @@ namespace Augments
 			card.Width.Set(width, 0f);
 			card.Height.Set(height, 0f);
 			card.SetPadding(0f);
-			card.BackgroundColor = new Color(12, 18, 36) * 0.96f;
-			card.BorderColor = accent * 0.70f;
+			card.BackgroundColor = new Color(10, 16, 28, 245);
+			card.BorderColor = accent * 0.55f;
 
 			UIText labelText = new UIText(label, 0.58f)
 			{
 				Left = new StyleDimension(8f, 0f),
 				Top = new StyleDimension(6f, 0f),
 				HAlign = 0f,
-				TextColor = new Color(150, 168, 195)
+				TextColor = new Color(148, 163, 184)
 			};
 			card.Append(labelText);
 
@@ -370,22 +358,51 @@ namespace Augments
 			}
 		}
 
-		private class StatusIndicatorPill : UIPanel
+		private class StatusIndicatorPill : UIElement
 		{
 			public StatusIndicatorPill()
 			{
-				SetPadding(0f);
 			}
 
 			protected override void DrawSelf(SpriteBatch spriteBatch)
 			{
-				base.DrawSelf(spriteBatch);
-
 				CalculatedStyle dims = GetDimensions();
+				var rect = new Rectangle((int)dims.X, (int)dims.Y, (int)dims.Width, (int)dims.Height);
+				Texture2D pixel = TextureAssets.MagicPixel.Value;
+
+				bool isPaused = AugmentDamageTracker.IsPaused;
+				Color themeColor = isPaused ? new Color(250, 204, 21) : new Color(74, 222, 128);
+				string text = isPaused ? "Feed Paused" : "Live Feed";
+
+				// Smooth pulsing dot alpha
+				float time = (float)Main.GlobalTimeWrappedHourly;
+				float pulse = (float)Math.Sin(time * (isPaused ? 3f : 5f)) * 0.5f + 0.5f;
+				float dotAlpha = isPaused ? 0.7f + pulse * 0.3f : 0.8f + pulse * 0.2f;
+
+				var font = FontAssets.MouseText.Value;
+				Vector2 scale = new Vector2(0.72f);
+				Vector2 textSize = ChatManager.GetStringSize(font, text, scale);
+
+				// Total content width = 6px (dot) + 6px (gap) + text width
+				float totalW = 6f + 6f + textSize.X;
+				float startX = rect.X + (rect.Width - totalW) * 0.5f;
+				float dotY = rect.Y + (rect.Height - 6f) * 0.5f;
+
+				// Draw 6x6 glowing dot with core
+				spriteBatch.Draw(pixel, new Rectangle((int)startX, (int)dotY, 6, 6), themeColor * dotAlpha);
+				spriteBatch.Draw(pixel, new Rectangle((int)startX + 1, (int)dotY + 1, 4, 4), Color.White * (dotAlpha * 0.9f));
+
+				// Text
+				Vector2 textPos = new Vector2(
+					startX + 12f,
+					rect.Y + (rect.Height - 12.2f) * 0.5f - 1.5f
+				);
+				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, text, textPos, themeColor, 0f, Vector2.Zero, scale);
+
 				Point mouse = new Point(Main.mouseX, Main.mouseY);
-				if (dims.ToRectangle().Contains(mouse))
+				if (rect.Contains(mouse))
 				{
-					if (AugmentDamageTracker.IsPaused)
+					if (isPaused)
 					{
 						Main.instance.MouseText("Telemetry Feed: PAUSED\nLive combat hits are temporarily frozen. Click 'Resume Feed' to restart recording.");
 					}
@@ -429,13 +446,13 @@ namespace Augments
 			header.Width.Set(820f, 0f);
 			header.Height.Set(26f, 0f);
 			header.SetPadding(0f);
-			header.BackgroundColor = new Color(14, 20, 40) * 0.92f;
-			header.BorderColor = new Color(34, 48, 86);
+			header.BackgroundColor = new Color(14, 23, 38, 240);
+			header.BorderColor = new Color(30, 41, 59);
 
-			var col1 = new UIText("PLUGIN / DAMAGE SOURCE", 0.70f) { Top = new StyleDimension(5f, 0f), Left = new StyleDimension(14f, 0f), TextColor = new Color(180, 200, 230) };
-			var col2 = new UIText("HITS & CRITS", 0.70f) { Top = new StyleDimension(5f, 0f), Left = new StyleDimension(325f, 0f), TextColor = new Color(180, 200, 230) };
-			var col3 = new UIText("MAX HIT", 0.70f) { Top = new StyleDimension(5f, 0f), Left = new StyleDimension(495f, 0f), TextColor = new Color(180, 200, 230) };
-			var col4 = new UIText("DAMAGE (% SHARE)", 0.70f) { Top = new StyleDimension(5f, 0f), Left = new StyleDimension(625f, 0f), TextColor = new Color(180, 200, 230) };
+			var col1 = new UIText("PLUGIN / DAMAGE SOURCE", 0.70f) { Top = new StyleDimension(5f, 0f), Left = new StyleDimension(14f, 0f), TextColor = new Color(148, 163, 184) };
+			var col2 = new UIText("HITS & CRITS", 0.70f) { Top = new StyleDimension(5f, 0f), Left = new StyleDimension(325f, 0f), TextColor = new Color(148, 163, 184) };
+			var col3 = new UIText("MAX HIT", 0.70f) { Top = new StyleDimension(5f, 0f), Left = new StyleDimension(495f, 0f), TextColor = new Color(148, 163, 184) };
+			var col4 = new UIText("DAMAGE (% SHARE)", 0.70f) { Top = new StyleDimension(5f, 0f), Left = new StyleDimension(625f, 0f), TextColor = new Color(148, 163, 184) };
 
 			header.Append(col1);
 			header.Append(col2);
@@ -490,12 +507,12 @@ namespace Augments
 
 			if (!HasActiveFilters)
 			{
-				filterButton.SetLabel("⚙  Filters");
+				filterButton.SetLabel("Filters");
 				filterButton.SetAccent(new Color(168, 85, 247));
 			}
 			else
 			{
-				string filterSummary = "⚙ ";
+				string filterSummary = "Filter: ";
 				if (currentClassFilter.HasValue)
 					filterSummary += $"{currentClassFilter.Value} ";
 				else if (currentSourceFilter != AnalyticsSourceFilter.All)
@@ -511,7 +528,7 @@ namespace Augments
 				else if (currentRarityFilter.HasValue)
 					filterSummary += $"{currentRarityFilter.Value} ";
 
-				filterButton.SetLabel(filterSummary.TrimEnd() + " ★");
+				filterButton.SetLabel(filterSummary.TrimEnd());
 				filterButton.SetAccent(new Color(255, 215, 75));
 			}
 
@@ -561,30 +578,14 @@ namespace Augments
 			if (modeButton != null)
 			{
 				modeButton.SetLabel(AugmentDamageTracker.ViewMode == AnalyticsViewMode.Last10Minutes
-					? "★  Mode: Last 10 Mins  ★"
-					: "★  Mode: Total Session  ★");
+					? "Mode: Last 10 Mins"
+					: "Mode: Total Session");
 			}
 
 			if (pauseButton != null)
 			{
-				pauseButton.SetLabel(AugmentDamageTracker.IsPaused ? "▶  Resume Feed" : "⏸  Pause Feed");
+				pauseButton.SetLabel(AugmentDamageTracker.IsPaused ? "Resume Feed" : "Pause Feed");
 				pauseButton.SetAccent(AugmentDamageTracker.IsPaused ? new Color(74, 222, 128) : new Color(250, 204, 21));
-			}
-
-			if (statusPill != null && statusPillText != null)
-			{
-				if (AugmentDamageTracker.IsPaused)
-				{
-					statusPill.BorderColor = new Color(250, 204, 21) * 0.7f;
-					statusPillText.SetText("❚❚ Feed Paused");
-					statusPillText.TextColor = new Color(250, 204, 21);
-				}
-				else
-				{
-					statusPill.BorderColor = new Color(74, 222, 128) * 0.7f;
-					statusPillText.SetText("● Live Feed");
-					statusPillText.TextColor = new Color(74, 222, 128);
-				}
 			}
 		}
 
@@ -779,31 +780,40 @@ namespace Augments
 				base.DrawSelf(spriteBatch);
 
 				CalculatedStyle dims = GetDimensions();
-
-				// 1. Cyber Corner Accents on Dialog
-				Color cornerAccent = new Color(56, 189, 248) * 0.75f;
-				const int clen = 8;
-				const int cthk = 2;
+				Texture2D pixel = TextureAssets.MagicPixel.Value;
 				Rectangle bRect = dims.ToRectangle();
 
+				// 1. Inner 1px hairline highlight
+				Color innerHairline = Color.White * 0.05f;
+				spriteBatch.Draw(pixel, new Rectangle(bRect.X + 1, bRect.Y + 1, bRect.Width - 2, 1), innerHairline);
+				spriteBatch.Draw(pixel, new Rectangle(bRect.X + 1, bRect.Bottom - 2, bRect.Width - 2, 1), innerHairline);
+				spriteBatch.Draw(pixel, new Rectangle(bRect.X + 1, bRect.Y + 1, 1, bRect.Height - 2), innerHairline);
+				spriteBatch.Draw(pixel, new Rectangle(bRect.Right - 2, bRect.Y + 1, 1, bRect.Height - 2), innerHairline);
+
+				// Flush corner accent notches (5x2 / 2x5)
+				Color cornerAccent = new Color(56, 189, 248) * 0.70f;
+				const int clen = 5;
+				const int cthk = 2;
+
 				// Top-left
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(bRect.X + 2, bRect.Y + 2, clen, cthk), cornerAccent);
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(bRect.X + 2, bRect.Y + 2, cthk, clen), cornerAccent);
+				spriteBatch.Draw(pixel, new Rectangle(bRect.X + 1, bRect.Y + 1, clen, cthk), cornerAccent);
+				spriteBatch.Draw(pixel, new Rectangle(bRect.X + 1, bRect.Y + 1, cthk, clen), cornerAccent);
 				// Top-right
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(bRect.Right - clen - 2, bRect.Y + 2, clen, cthk), cornerAccent);
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(bRect.Right - cthk - 2, bRect.Y + 2, cthk, clen), cornerAccent);
+				spriteBatch.Draw(pixel, new Rectangle(bRect.Right - clen - 1, bRect.Y + 1, clen, cthk), cornerAccent);
+				spriteBatch.Draw(pixel, new Rectangle(bRect.Right - cthk - 1, bRect.Y + 1, cthk, clen), cornerAccent);
 				// Bottom-left
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(bRect.X + 2, bRect.Bottom - cthk - 2, clen, cthk), cornerAccent);
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(bRect.X + 2, bRect.Bottom - clen - 2, cthk, clen), cornerAccent);
+				spriteBatch.Draw(pixel, new Rectangle(bRect.X + 1, bRect.Bottom - cthk - 1, clen, cthk), cornerAccent);
+				spriteBatch.Draw(pixel, new Rectangle(bRect.X + 1, bRect.Bottom - clen - 1, cthk, clen), cornerAccent);
 				// Bottom-right
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(bRect.Right - clen - 2, bRect.Bottom - cthk - 2, clen, cthk), cornerAccent);
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(bRect.Right - cthk - 2, bRect.Bottom - clen - 2, cthk, clen), cornerAccent);
+				spriteBatch.Draw(pixel, new Rectangle(bRect.Right - clen - 1, bRect.Bottom - cthk - 1, clen, cthk), cornerAccent);
+				spriteBatch.Draw(pixel, new Rectangle(bRect.Right - cthk - 1, bRect.Bottom - clen - 1, cthk, clen), cornerAccent);
 
 				// 2. Header horizontal divider (at Y = 66)
 				int divY = (int)dims.Y + 66;
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle((int)dims.X + 20, divY, (int)dims.Width - 40, 1), new Color(45, 62, 105) * 0.75f);
+				spriteBatch.Draw(pixel, new Rectangle((int)dims.X + 20, divY, (int)dims.Width - 40, 1), new Color(30, 41, 59) * 0.90f);
 				int midX = (int)dims.X + (int)(dims.Width * 0.5f);
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(midX - 3, divY - 2, 7, 5), new Color(56, 189, 248) * 0.85f);
+				spriteBatch.Draw(pixel, new Rectangle(midX - 1, divY - 1, 3, 3), new Color(56, 189, 248) * 0.85f);
+				spriteBatch.Draw(pixel, new Rectangle(midX, divY, 1, 1), Color.White * 0.9f);
 
 				// 3. Cybernetic Background Radar / Telemetry Reticle Watermark
 				Vector2 center = new Vector2(dims.X + dims.Width * 0.5f, dims.Y + 380f);
@@ -813,15 +823,15 @@ namespace Augments
 				DrawRadarCircle(spriteBatch, center, 110f, watermarkCol);
 				DrawRadarCircle(spriteBatch, center, 170f, watermarkCol);
 
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle((int)center.X - 180, (int)center.Y, 360, 1), watermarkCol);
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle((int)center.X, (int)center.Y - 180, 1, 360), watermarkCol);
+				spriteBatch.Draw(pixel, new Rectangle((int)center.X - 180, (int)center.Y, 360, 1), watermarkCol);
+				spriteBatch.Draw(pixel, new Rectangle((int)center.X, (int)center.Y - 180, 1, 360), watermarkCol);
 
 				// 4. Footer Horizontal Divider & Status Line (at Y = bRect.Bottom - 32)
 				int footerY = bRect.Bottom - 32;
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(bRect.X + 20, footerY, bRect.Width - 40, 1), new Color(35, 48, 80) * 0.75f);
+				spriteBatch.Draw(pixel, new Rectangle(bRect.X + 20, footerY, bRect.Width - 40, 1), new Color(30, 41, 59) * 0.75f);
 
 				var font = FontAssets.MouseText.Value;
-				string footerLeft = "✦ TELEMETRY ENGINE v2.0  •  [Hold Left Alt] To Drag Pinned HUD Widgets";
+				string footerLeft = "TELEMETRY ENGINE v2.0  •  [Hold Left Alt] To Drag Pinned HUD Widgets";
 				string footerRight = "[L] Toggle  •  [ESC] Close";
 				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, footerLeft, new Vector2(bRect.X + 20f, footerY + 8f), new Color(130, 150, 185) * 0.70f, 0f, Vector2.Zero, new Vector2(0.58f));
 
@@ -843,84 +853,75 @@ namespace Augments
 			}
 		}
 
-		private class CloseButton : UIPanel
+		private class CloseButton : UIElement
 		{
 			public event Action Clicked;
-
-			private static readonly Color IdleColor = new Color(110, 40, 40);
-			private static readonly Color HoverColor = new Color(160, 60, 60);
-
-			public CloseButton()
-			{
-				SetPadding(0f);
-				BackgroundColor = IdleColor;
-				BorderColor = Color.White * 0.4f;
-
-				UIText labelText = new UIText("x", 0.85f)
-				{
-					HAlign = 0.5f,
-					VAlign = 0.5f
-				};
-				Append(labelText);
-			}
+			private bool isHovered;
 
 			public override void LeftClick(UIMouseEvent evt)
 			{
 				base.LeftClick(evt);
+				SoundEngine.PlaySound(SoundID.MenuClose);
 				Clicked?.Invoke();
 			}
 
 			public override void MouseOver(UIMouseEvent evt)
 			{
 				base.MouseOver(evt);
-				BackgroundColor = HoverColor;
+				isHovered = true;
 				SoundEngine.PlaySound(SoundID.MenuTick);
 			}
 
 			public override void MouseOut(UIMouseEvent evt)
 			{
 				base.MouseOut(evt);
-				BackgroundColor = IdleColor;
+				isHovered = false;
+			}
+
+			protected override void DrawSelf(SpriteBatch spriteBatch)
+			{
+				CalculatedStyle dims = GetDimensions();
+				var rect = new Rectangle((int)dims.X, (int)dims.Y, (int)dims.Width, (int)dims.Height);
+				Texture2D pixel = TextureAssets.MagicPixel.Value;
+
+				if (isHovered)
+				{
+					// Subtle soft red hover wash, NO harsh outline box
+					spriteBatch.Draw(pixel, rect, new Color(239, 68, 68, 35));
+				}
+
+				var font = FontAssets.MouseText.Value;
+				Vector2 xSize = ChatManager.GetStringSize(font, "✕", new Vector2(0.85f));
+				Vector2 xPos = new Vector2(
+					rect.X + (rect.Width - xSize.X) * 0.5f,
+					rect.Y + (rect.Height - xSize.Y) * 0.5f + 1f
+				);
+				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, "✕", xPos, isHovered ? new Color(248, 113, 113) : new Color(148, 163, 184), 0f, Vector2.Zero, new Vector2(0.85f));
 			}
 		}
 
-		private class AnalyticsActionButton : UIPanel
+		private class AnalyticsActionButton : UIElement
 		{
 			public event Action Clicked;
 
-			private UIText labelText;
+			private string label;
 			private Color accentColor;
-			private Color idleBg;
-			private Color hoverBg;
+			private bool isHovered;
 
 			public AnalyticsActionButton(string label, Color accent, Color bg)
 			{
+				this.label = label;
 				this.accentColor = accent;
-				this.idleBg = bg;
-				this.hoverBg = bg * 1.4f;
-
-				SetPadding(0f);
-				BackgroundColor = idleBg;
-				BorderColor = accent * 0.7f;
-
-				labelText = new UIText(label, 0.74f)
-				{
-					HAlign = 0.5f,
-					VAlign = 0.5f,
-					TextColor = Color.White
-				};
-				Append(labelText);
 			}
 
 			public void SetLabel(string label)
 			{
-				labelText?.SetText(label);
+				this.label = label;
 			}
 
 			public void SetAccent(Color accent)
 			{
-				accentColor = accent;
-				BorderColor = accent * 0.7f;
+				this.accentColor = accent;
 			}
 
 			public override void LeftClick(UIMouseEvent evt)
@@ -933,16 +934,57 @@ namespace Augments
 			public override void MouseOver(UIMouseEvent evt)
 			{
 				base.MouseOver(evt);
-				BackgroundColor = hoverBg;
-				BorderColor = Color.White;
+				isHovered = true;
 				SoundEngine.PlaySound(SoundID.MenuTick);
 			}
 
 			public override void MouseOut(UIMouseEvent evt)
 			{
 				base.MouseOut(evt);
-				BackgroundColor = idleBg;
-				BorderColor = accentColor * 0.7f;
+				isHovered = false;
+			}
+
+			protected override void DrawSelf(SpriteBatch spriteBatch)
+			{
+				CalculatedStyle dims = GetDimensions();
+				var rect = new Rectangle((int)dims.X, (int)dims.Y, (int)dims.Width, (int)dims.Height);
+				Texture2D pixel = TextureAssets.MagicPixel.Value;
+
+				Color bg = isHovered ? new Color(18, 28, 48, 250) : new Color(10, 16, 28, 245);
+				Color border = isHovered ? accentColor : new Color(30, 41, 59);
+
+				// Ambient hover underglow
+				if (isHovered)
+				{
+					spriteBatch.Draw(pixel, new Rectangle(rect.X - 1, rect.Y - 1, rect.Width + 2, rect.Height + 2), accentColor * 0.12f);
+				}
+
+				// Body fill
+				spriteBatch.Draw(pixel, rect, bg);
+
+				// Inner 1px hairline
+				Color innerHairline = Color.White * (isHovered ? 0.08f : 0.04f);
+				spriteBatch.Draw(pixel, new Rectangle(rect.X + 1, rect.Y + 1, rect.Width - 2, 1), innerHairline);
+				spriteBatch.Draw(pixel, new Rectangle(rect.X + 1, rect.Bottom - 2, rect.Width - 2, 1), innerHairline);
+				spriteBatch.Draw(pixel, new Rectangle(rect.X + 1, rect.Y + 1, 1, rect.Height - 2), innerHairline);
+				spriteBatch.Draw(pixel, new Rectangle(rect.Right - 2, rect.Y + 1, 1, rect.Height - 2), innerHairline);
+
+				// Outer 1px frame
+				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, rect.Width, 1), border);
+				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Bottom - 1, rect.Width, 1), border);
+				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, 1, rect.Height), border);
+				spriteBatch.Draw(pixel, new Rectangle(rect.Right - 1, rect.Y, 1, rect.Height), border);
+
+				// Typography with exact optical cap-height centering
+				var font = FontAssets.MouseText.Value;
+				Vector2 scale = new Vector2(0.74f);
+				Vector2 textSize = ChatManager.GetStringSize(font, label, scale);
+				Vector2 textPos = new Vector2(
+					rect.X + (rect.Width - textSize.X) * 0.5f,
+					rect.Y + (rect.Height - 12.2f) * 0.5f - 1.5f
+				);
+				Color textCol = isHovered ? Color.White : new Color(226, 232, 240);
+				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, label, textPos, textCol, 0f, Vector2.Zero, scale);
 			}
 		}
 
@@ -953,14 +995,14 @@ namespace Augments
 			public event Action Clicked;
 			private bool isHovered;
 			public bool IsActiveHighlight { get; set; }
-			public Color CustomActiveBg { get; set; } = new Color(38, 54, 105);
-			public Color CustomActiveBorder { get; set; } = new Color(255, 215, 75);
+			public Color CustomActiveBg { get; set; } = new Color(18, 28, 50);
+			public Color CustomActiveBorder { get; set; } = new Color(56, 189, 248);
 
 			public FilterPillButton(string initialText, float textScale = 0.70f)
 			{
 				SetPadding(0f);
-				BackgroundColor = new Color(20, 28, 54);
-				BorderColor = new Color(45, 60, 105);
+				BackgroundColor = new Color(10, 16, 28);
+				BorderColor = new Color(30, 41, 59);
 
 				Label = new UIText(initialText, textScale)
 				{
@@ -1262,13 +1304,13 @@ namespace Augments
 			{
 				this.state = state;
 				SetPadding(8f);
-				BackgroundColor = new Color(14, 20, 42) * 0.98f;
-				BorderColor = new Color(255, 215, 75);
+				BackgroundColor = new Color(10, 16, 28, 250);
+				BorderColor = new Color(30, 41, 59);
 
 				// Title
-				UIText title = new UIText("⚙ Combat Telemetry Filters", 0.84f)
+				UIText title = new UIText("Combat Telemetry Filters", 0.84f)
 				{
-					TextColor = new Color(255, 215, 75),
+					TextColor = new Color(248, 250, 252),
 					Top = { Pixels = 2f },
 					Left = { Pixels = 4f }
 				};
@@ -1356,23 +1398,23 @@ namespace Augments
 				curY += 32f;
 
 				// Bottom Action Bar: Reset + Close + Summary
-				var resetBtn = new FilterPillButton("↺ Clear Filters", 0.72f);
+				var resetBtn = new FilterPillButton("Clear Filters", 0.72f);
 				resetBtn.Width.Set(110f, 0f);
 				resetBtn.Height.Set(24f, 0f);
 				resetBtn.Left.Set(4f, 0f);
 				resetBtn.Top.Set(curY, 0f);
-				resetBtn.BackgroundColor = new Color(60, 25, 35);
-				resetBtn.BorderColor = new Color(180, 70, 80);
+				resetBtn.BackgroundColor = new Color(36, 14, 18);
+				resetBtn.BorderColor = new Color(248, 113, 113) * 0.7f;
 				resetBtn.Clicked += state.ResetFilters;
 				Append(resetBtn);
 
-				var closeApplyBtn = new FilterPillButton("✔ Close Menu", 0.72f);
+				var closeApplyBtn = new FilterPillButton("Close Menu", 0.72f);
 				closeApplyBtn.Width.Set(110f, 0f);
 				closeApplyBtn.Height.Set(24f, 0f);
 				closeApplyBtn.Left.Set(120f, 0f);
 				closeApplyBtn.Top.Set(curY, 0f);
-				closeApplyBtn.BackgroundColor = new Color(25, 45, 80);
-				closeApplyBtn.BorderColor = new Color(70, 130, 210);
+				closeApplyBtn.BackgroundColor = new Color(14, 23, 38);
+				closeApplyBtn.BorderColor = new Color(56, 189, 248) * 0.7f;
 				closeApplyBtn.Clicked += state.ToggleFilterMenu;
 				Append(closeApplyBtn);
 
@@ -1496,8 +1538,8 @@ namespace Augments
 			Rectangle rect = new Rectangle(rx, ry, rw, rh);
 
 			Color baseBorder = record.Color;
-			Color bgColor = isHovered ? new Color(30, 42, 76) * 0.98f : new Color(18, 26, 48) * 0.94f;
-			Color borderColor = isHovered ? baseBorder : baseBorder * 0.5f;
+			Color bgColor = isHovered ? new Color(14, 23, 38, 250) : new Color(10, 16, 28, 245);
+			Color borderColor = isHovered ? baseBorder : baseBorder * 0.40f;
 
 			// Row Background
 			spriteBatch.Draw(TextureAssets.MagicPixel.Value, rect, bgColor);
@@ -1512,11 +1554,11 @@ namespace Augments
 
 			// 1. Icon Box on the Left
 			Rectangle iconBox = new Rectangle(rect.X + 12, rect.Y + 8, 32, 32);
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, iconBox, new Color(12, 18, 34) * 0.95f);
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(iconBox.X, iconBox.Y, iconBox.Width, 1), borderColor * 0.7f);
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(iconBox.X, iconBox.Bottom - 1, iconBox.Width, 1), borderColor * 0.7f);
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(iconBox.X, iconBox.Y, 1, iconBox.Height), borderColor * 0.7f);
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(iconBox.Right - 1, iconBox.Y, 1, iconBox.Height), borderColor * 0.7f);
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, iconBox, new Color(10, 16, 28, 250));
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(iconBox.X, iconBox.Y, iconBox.Width, 1), borderColor * 0.5f);
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(iconBox.X, iconBox.Bottom - 1, iconBox.Width, 1), borderColor * 0.5f);
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(iconBox.X, iconBox.Y, 1, iconBox.Height), borderColor * 0.5f);
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(iconBox.Right - 1, iconBox.Y, 1, iconBox.Height), borderColor * 0.5f);
 
 			if (augmentRef != null)
 			{
@@ -1533,7 +1575,7 @@ namespace Augments
 				{
 					AugmentClass.Melee => "⚔",
 					AugmentClass.Ranged => "⌖",
-					AugmentClass.Magic => "★",
+					AugmentClass.Magic => "◆",
 					AugmentClass.Summon => "❖",
 					_ => "⚔"
 				};
