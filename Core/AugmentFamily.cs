@@ -153,7 +153,7 @@ namespace Augments.Core
 				ThresholdBonuses = new Dictionary<int, FamilyThresholdBonus>
 				{
 					[2] = new FamilyThresholdBonus(
-						"Probability Matrix",
+						"Lucky Streak",
 						new string[]
 						{
 							"Increases character's World Luck by +0.15",
@@ -304,7 +304,7 @@ namespace Augments.Core
 						"Astral Discharge",
 						new string[]
 						{
-							"Spending mana charges an Astral Matrix (1 stack per 20 mana spent, max 5 stacks)",
+							"Spending mana builds Astral Charge (1 stack per 20 mana spent, max 5 stacks)",
 							"At 5 stacks (100 mana spent), your next magic hit releases an Arcane Nova shockwave dealing 65 damage and refunds 30 mana"
 						}
 					)

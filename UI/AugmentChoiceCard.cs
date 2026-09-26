@@ -791,7 +791,7 @@ namespace Augments
 			var lines = new List<(string Text, Color Color)>
 			{
 				("SUPPORT CLASS", SupportTagColor),
-				("Sacrifices direct offensive output to amplify armor matrix defenses.", new Color(200, 220, 245)),
+				("Sacrifices direct offensive output to amplify armor and personal defense.", new Color(200, 220, 245)),
 			};
 
 			if (active)
@@ -806,13 +806,13 @@ namespace Augments
 			}
 
 			lines.Add(("---DIVIDER---", Color.Transparent));
-			lines.Add(("Class Threshold Matrix:", new Color(250, 204, 21)));
+			lines.Add(("Support Level Bonuses:", new Color(250, 204, 21)));
 
 			var thresholds = new (int Threshold, string Label, int Defense, int Damage, string Note)[]
 			{
 				(2, "2 Plugins", 20, -30, "Initial Support Protocol"),
-				(3, "3 Plugins", 30, -23, "Reinforced Defensive Matrix"),
-				(4, "4 Plugins", 40, -16, "High-Output Shield Lattice"),
+				(3, "3 Plugins", 30, -23, "Reinforced Armor"),
+				(4, "4 Plugins", 40, -16, "High Output Shield Lattice"),
 				(5, "5+ Plugins", 60, -5, "Peak Operational Efficiency")
 			};
 

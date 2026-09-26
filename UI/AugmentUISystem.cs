@@ -80,6 +80,7 @@ namespace Augments
 
 			AugmentFamilyHUD.Update(gameTime);
 			AugmentPinnedHUD.Update(gameTime);
+			AugmentAdvisoryHUD.Update(gameTime);
 
 			if (IsPlayerInputBlocked())
 			{
@@ -142,6 +143,16 @@ namespace Augments
 						if (Main.LocalPlayer != null && Main.LocalPlayer.active)
 							Main.LocalPlayer.mouseInterface = true;
 					}
+					return true;
+				},
+				InterfaceScaleType.UI)
+			);
+
+			layers.Insert(mouseTextIndex, new LegacyGameInterfaceLayer(
+				"Augments: Advisory Ticker HUD",
+				delegate
+				{
+					AugmentAdvisoryHUD.Draw(Main.spriteBatch);
 					return true;
 				},
 				InterfaceScaleType.UI)
@@ -434,6 +445,12 @@ namespace Augments
 		{
 			if (shopState == null)
 				return;
+
+			var ap = Main.LocalPlayer?.GetModPlayer<AugmentPlayer>();
+			if (ap != null)
+			{
+				AugmentAdvisoryHUD.TriggerSmartAdvisory(ap, "first_vendor", "[POD 042 // OPERATOR TIP]", "All plugins can be removed for a 100% full Machine Core refund at the shop, so feel free to experiment with different setups.");
+			}
 
 			if (IsGachaOpen)
 				HideGacha();

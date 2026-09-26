@@ -1310,7 +1310,7 @@ namespace Augments
 							: $"CLASS ACTIVE  •  +20 DEFENSE, -30% DAMAGE ({count}/5 PLUGINS)")))
 				: $"INACTIVE  •  {count}/2 REQUIRED FOR CLASS BONUSES";
 
-			string descText = "Sacrifices direct offensive output to amplify armor matrix defenses.";
+			string descText = "Sacrifices direct offensive output to amplify armor and personal defense.";
 
 			float curHeight = pad;
 			float maxContentWidth = 330f;
@@ -1339,15 +1339,15 @@ namespace Augments
 			curHeight += 6f;
 
 			// Threshold Matrix Section
-			string bSectionHeader = "CLASS THRESHOLD MATRIX";
+			string bSectionHeader = "SUPPORT LEVEL BONUSES";
 			curHeight += ChatManager.GetStringSize(font, bSectionHeader, sectionScale).Y + 6f;
 			Measure(bSectionHeader, sectionScale, 36f);
 
 			var thresholds = new (int Threshold, string Label, int Defense, int Damage, string Note)[]
 			{
 				(2, "2 Plugins", 20, -30, "Initial Support Protocol"),
-				(3, "3 Plugins", 30, -23, "Reinforced Defensive Matrix"),
-				(4, "4 Plugins", 40, -16, "High-Output Shield Lattice"),
+				(3, "3 Plugins", 30, -23, "Reinforced Armor"),
+				(4, "4 Plugins", 40, -16, "High Output Shield Lattice"),
 				(5, "5+ Plugins", 60, -5, "Peak Operational Efficiency")
 			};
 

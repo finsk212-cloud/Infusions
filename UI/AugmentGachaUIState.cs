@@ -598,7 +598,7 @@ namespace Augments
 
 				// Telemetry stamp in bottom-right corner
 				var font = FontAssets.MouseText.Value;
-				string stamp = "YORHA POD // NEURAL SYNTHESIS MATRIX REV-4.2";
+				string stamp = "YORHA POD // NEURAL SYNTHESIS ARRAY REV 4.2";
 				Vector2 stampSize = ChatManager.GetStringSize(font, stamp, new Vector2(0.64f));
 				Vector2 stampPos = new Vector2(rect.Right - stampSize.X - 28f, rect.Bottom - stampSize.Y - 8f);
 				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, stamp, stampPos, new Color(75, 95, 125) * 0.42f, 0f, Vector2.Zero, new Vector2(0.64f));
