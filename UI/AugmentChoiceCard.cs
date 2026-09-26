@@ -150,12 +150,12 @@ namespace Augments
 			// =================================================================
 			// 2. SOLID SCI-FI CARD CHASSIS & HEADER BANNER
 			// =================================================================
-			Color bgColor = isHovered ? new Color(22, 30, 60) : new Color(15, 20, 42);
+			Color bgColor = isHovered ? new Color(16, 24, 42, 248) : new Color(10, 16, 28, 245);
 			spriteBatch.Draw(TextureAssets.MagicPixel.Value, rect, bgColor);
 
 			// Top Header Banner
 			Rectangle headerRect = new Rectangle(rect.X + 2, rect.Y + 2, rect.Width - 4, 126);
-			Color headerBg = isHovered ? new Color(28, 38, 76) * 0.95f : new Color(20, 28, 56) * 0.95f;
+			Color headerBg = isHovered ? new Color(20, 30, 52, 240) : new Color(14, 22, 38, 240);
 			spriteBatch.Draw(TextureAssets.MagicPixel.Value, headerRect, headerBg);
 
 			// =================================================================
@@ -360,47 +360,33 @@ namespace Augments
 
 		private void DrawCardBorders(SpriteBatch spriteBatch, Rectangle rect, Color borderColor, float pulse)
 		{
-			// 2px outer border
-			DrawRectBorder(spriteBatch, rect, borderColor, 2);
+			// 1px outer border
+			DrawRectBorder(spriteBatch, rect, borderColor, 1);
 
 			// 1px inner hairline
-			Color hairlineColor = borderColor * 0.30f;
-			Rectangle innerHairline = new Rectangle(rect.X + 3, rect.Y + 3, rect.Width - 6, rect.Height - 6);
+			Color hairlineColor = Color.White * 0.05f;
+			Rectangle innerHairline = new Rectangle(rect.X + 2, rect.Y + 2, rect.Width - 4, rect.Height - 4);
 			DrawRectBorder(spriteBatch, innerHairline, hairlineColor, 1);
 
-			// Ornaments
-			if (Augment.Rarity == AugmentRarity.Rare)
+			// Flush corner accent notches (5x2 / 2x5) for Epic & Legendary
+			Color cornerCol = borderColor * (isHovered ? 1.0f : 0.85f);
+			if (Augment.Rarity >= AugmentRarity.Epic)
 			{
-				// 2 Delicate Cyan Corner Accents (top-right & bottom-left, 3x3)
-				Color cornerCyan = new Color(130, 220, 255) * (0.65f + pulse * 0.35f);
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right - 3, rect.Y, 3, 3), cornerCyan);
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X, rect.Bottom - 3, 3, 3), cornerCyan);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X, rect.Y, 5, 2), cornerCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X, rect.Y, 2, 5), cornerCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right - 5, rect.Y, 5, 2), cornerCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right - 2, rect.Y, 2, 5), cornerCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X, rect.Bottom - 2, 5, 2), cornerCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X, rect.Bottom - 5, 2, 5), cornerCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right - 5, rect.Bottom - 2, 5, 2), cornerCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right - 2, rect.Bottom - 5, 2, 5), cornerCol);
 			}
-			else if (Augment.Rarity == AugmentRarity.Epic)
+			else if (Augment.Rarity == AugmentRarity.Rare)
 			{
-				// 4 Glowing Amethyst Corner Studs (3x3 pixels)
-				Color gemColor = new Color(230, 190, 255) * (0.8f + pulse * 0.2f);
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X, rect.Y, 3, 3), gemColor);
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right - 3, rect.Y, 3, 3), gemColor);
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X, rect.Bottom - 3, 3, 3), gemColor);
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right - 3, rect.Bottom - 3, 3, 3), gemColor);
-			}
-			else if (Augment.Rarity == AugmentRarity.Legendary)
-			{
-				// 4 Royal Gold Corner Brackets (8x2 and 2x8 L-shapes)
-				Color cornerGold = new Color(255, 225, 85);
-				// Top-Left
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X, rect.Y, 8, 2), cornerGold);
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X, rect.Y, 2, 8), cornerGold);
-				// Top-Right
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right - 8, rect.Y, 8, 2), cornerGold);
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right - 2, rect.Y, 2, 8), cornerGold);
-				// Bottom-Left
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X, rect.Bottom - 2, 8, 2), cornerGold);
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X, rect.Bottom - 8, 2, 8), cornerGold);
-				// Bottom-Right
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right - 8, rect.Bottom - 2, 8, 2), cornerGold);
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right - 2, rect.Bottom - 8, 2, 8), cornerGold);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X, rect.Y, 3, 2), cornerCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right - 3, rect.Y, 3, 2), cornerCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X, rect.Bottom - 2, 3, 2), cornerCol);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right - 3, rect.Bottom - 2, 3, 2), cornerCol);
 			}
 		}
 
@@ -566,37 +552,38 @@ namespace Augments
 		{
 			Vector2 scale = new Vector2(0.70f);
 			Vector2 textSize = ChatManager.GetStringSize(font, text, scale);
-			int pillW = (int)textSize.X + 24;
-			int pillH = 24;
+			int pillW = (int)textSize.X + 20;
+			int pillH = 22;
 			int pillX = cardRect.X + (cardRect.Width - pillW) / 2;
 			Rectangle pillRect = new Rectangle(pillX, y, pillW, pillH);
 
-			// Clean dark sci-fi navy background
-			Color bgNavy = new Color(12, 18, 34) * 0.95f;
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, pillRect, bgNavy);
+			// Hitbox for mouse hover tooltip
+			bool isTagHovered = pillRect.Contains(Main.MouseScreen.ToPoint());
 
-			// Subtle colored underglow fill
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, pillRect, accentColor * 0.12f);
+			// Sleek cybernetic chassis fill with subtle ambient underglow
+			Color bg = isTagHovered ? new Color(18, 28, 48, 245) : new Color(10, 16, 28, 235);
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, pillRect, bg);
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, pillRect, accentColor * (isTagHovered ? 0.16f : 0.08f));
 
-			// Top & Bottom subtle rail lines
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(pillRect.X + 4, pillRect.Y, pillRect.Width - 8, 1), accentColor * 0.55f);
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(pillRect.X + 4, pillRect.Bottom - 1, pillRect.Width - 8, 1), accentColor * 0.55f);
+			// 1px Inner Hairline
+			Color innerHairline = Color.White * (isTagHovered ? 0.08f : 0.04f);
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(pillRect.X + 1, pillRect.Y + 1, pillRect.Width - 2, 1), innerHairline);
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(pillRect.X + 1, pillRect.Bottom - 2, pillRect.Width - 2, 1), innerHairline);
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(pillRect.X + 1, pillRect.Y + 1, 1, pillRect.Height - 2), innerHairline);
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(pillRect.Right - 2, pillRect.Y + 1, 1, pillRect.Height - 2), innerHairline);
 
-			// High-tech corner bracket notches (left & right edge caps)
-			// Left bracket: full height vertical line + top/bottom corner hooks
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(pillRect.X, pillRect.Y, 2, pillRect.Height), accentColor * 0.85f);
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(pillRect.X, pillRect.Y, 5, 2), accentColor * 0.85f);
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(pillRect.X, pillRect.Bottom - 2, 5, 2), accentColor * 0.85f);
+			// 1px Outer Border (clean, NO protruding bracket hooks)
+			Color border = isTagHovered ? accentColor : accentColor * 0.55f;
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(pillRect.X, pillRect.Y, pillRect.Width, 1), border);
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(pillRect.X, pillRect.Bottom - 1, pillRect.Width, 1), border);
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(pillRect.X, pillRect.Y, 1, pillRect.Height), border);
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(pillRect.Right - 1, pillRect.Y, 1, pillRect.Height), border);
 
-			// Right bracket: full height vertical line + top/bottom corner hooks
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(pillRect.Right - 2, pillRect.Y, 2, pillRect.Height), accentColor * 0.85f);
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(pillRect.Right - 5, pillRect.Y, 5, 2), accentColor * 0.85f);
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(pillRect.Right - 5, pillRect.Bottom - 2, 5, 2), accentColor * 0.85f);
-
-			// Text centered with shadow (+4f optical offset for MouseText font line-height/leading)
-			float textY = pillRect.Y + (pillRect.Height - textSize.Y) * 0.5f + 4f;
+			// Text centered with optical baseline adjustment
+			float textY = pillRect.Y + (pillRect.Height - 12f) * 0.5f - 1.5f;
 			Vector2 textPos = new Vector2(pillRect.X + (pillRect.Width - textSize.X) * 0.5f, textY);
-			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, text, textPos, accentColor, 0f, Vector2.Zero, scale);
+			Color drawColor = isTagHovered ? Color.White : accentColor;
+			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, text, textPos, drawColor, 0f, Vector2.Zero, scale);
 
 			return pillRect;
 		}

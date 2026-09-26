@@ -9,6 +9,7 @@ using Terraria.GameContent.UI.Elements;
 using Terraria.ID;
 using Terraria.ModLoader;
 using Terraria.UI;
+using Terraria.UI.Chat;
 
 namespace Augments
 {
@@ -75,13 +76,13 @@ namespace Augments
 			backPanel.HAlign = 0.5f;
 			backPanel.VAlign = 0.5f;
 			backPanel.SetPadding(0f);
-			backPanel.BackgroundColor = new Color(16, 22, 44);
-			backPanel.BorderColor = new Color(38, 52, 98);
+			backPanel.BackgroundColor = new Color(10, 16, 28, 250);
+			backPanel.BorderColor = new Color(30, 41, 59);
 
 			UIText titleText = new UIText("CHOOSE A PLUGIN", 1.22f)
 			{
 				HAlign = 0.5f,
-				TextColor = new Color(255, 225, 150)
+				TextColor = new Color(248, 250, 252)
 			};
 			titleText.Top.Set(16f, 0f);
 			backPanel.Append(titleText);
@@ -89,7 +90,7 @@ namespace Augments
 			UIText subtitle = new UIText("Select a plugin to install into your neural frame", 0.76f)
 			{
 				HAlign = 0.5f,
-				TextColor = new Color(150, 170, 205)
+				TextColor = new Color(148, 163, 184)
 			};
 			subtitle.Top.Set(44f, 0f);
 			backPanel.Append(subtitle);
@@ -97,13 +98,13 @@ namespace Augments
 			capNoticeText = new UIText("", 0.76f)
 			{
 				HAlign = 0.5f,
-				TextColor = new Color(255, 95, 95)
+				TextColor = new Color(248, 113, 113)
 			};
 			capNoticeText.Top.Set(68f, 0f);
 			backPanel.Append(capNoticeText);
 
 			// Minimize Button (ends at 862px, exact 18px buffer from right edge)
-			minimizeButton = new ModalButton("-", new Color(45, 52, 75), new Color(75, 88, 125));
+			minimizeButton = new ModalButton("-", new Color(10, 16, 28, 240), new Color(18, 30, 52, 250), new Color(56, 189, 248));
 			minimizeButton.Width.Set(24f, 0f);
 			minimizeButton.Height.Set(24f, 0f);
 			minimizeButton.Left.Set(838f, 0f);
@@ -126,7 +127,7 @@ namespace Augments
 			rerollButton.Clicked += HandleRerollClicked;
 			backPanel.Append(rerollButton);
 
-			skipButton = new RerollButton(new Color(90, 28, 28), new Color(140, 42, 42));
+			skipButton = new RerollButton(new Color(36, 14, 18, 240), new Color(52, 20, 26, 250), new Color(248, 113, 113));
 			skipButton.Width.Set(skipWidth, 0f);
 			skipButton.Height.Set(RerollButtonHeight, 0f);
 			skipButton.Left.Set(-pairWidth / 2f + rerollWidth + buttonGap, 0.5f);
@@ -171,14 +172,14 @@ namespace Augments
 			confirmBox.Height.Set(ConfirmBoxHeight, 0f);
 			confirmBox.HAlign = 0.5f;
 			confirmBox.VAlign = 0.5f;
-			confirmBox.BackgroundColor = new Color(33, 43, 79) * 0.95f;
-			confirmBox.BorderColor = new Color(220, 60, 60);
+			confirmBox.BackgroundColor = new Color(10, 16, 28, 250);
+			confirmBox.BorderColor = new Color(248, 113, 113);
 			confirmOverlay.Append(confirmBox);
 
 			UIText confirmTitleText = new UIText("Confirm", 1.05f)
 			{
 				HAlign = 0.5f,
-				TextColor = new Color(220, 60, 60)
+				TextColor = new Color(248, 113, 113)
 			};
 			confirmTitleText.Top.Set(14f, 0f);
 			confirmBox.Append(confirmTitleText);
@@ -193,7 +194,7 @@ namespace Augments
 			confirmMessageText.Top.Set(50f, 0f);
 			confirmBox.Append(confirmMessageText);
 
-			var confirmButton = new ModalButton("Confirm", new Color(110, 40, 40), new Color(160, 60, 60));
+			var confirmButton = new ModalButton("Confirm", new Color(48, 18, 22, 240), new Color(72, 24, 30, 250), new Color(248, 113, 113));
 			confirmButton.Width.Set(ConfirmButtonWidth, 0f);
 			confirmButton.Height.Set(ConfirmButtonHeight, 0f);
 			confirmButton.HAlign = 0.25f;
@@ -202,7 +203,7 @@ namespace Augments
 			confirmButton.Clicked += HandleConfirmOverlayConfirmed;
 			confirmBox.Append(confirmButton);
 
-			var cancelButton = new ModalButton("Cancel", new Color(60, 70, 110), new Color(90, 105, 160));
+			var cancelButton = new ModalButton("Cancel", new Color(14, 20, 32, 240), new Color(22, 32, 54, 250), new Color(56, 189, 248));
 			cancelButton.Width.Set(ConfirmButtonWidth, 0f);
 			cancelButton.Height.Set(ConfirmButtonHeight, 0f);
 			cancelButton.HAlign = 0.75f;
@@ -521,53 +522,142 @@ namespace Augments
 		// AugmentChoiceCard/AugmentShopEntry use, to match this mod's existing
 		// UI button style. "Disabled" here is just a grey visual hint - the
 		// real gating lives in AugmentChoiceUIState.HandleRerollClicked.
-		private class RerollButton : UIPanel
+		private class RerollButton : UIElement
 		{
 			public event Action Clicked;
 
-			private static readonly Color DefaultIdleColor = new Color(20, 28, 54);
-			private static readonly Color DefaultHoverColor = new Color(34, 48, 88);
-			private static readonly Color DisabledColor = new Color(16, 20, 34);
+			private static readonly Color DefaultIdleColor = new Color(10, 16, 28, 245);
+			private static readonly Color DefaultHoverColor = new Color(18, 32, 54, 250);
+			private static readonly Color DisabledColor = new Color(10, 14, 24, 200);
 
 			private readonly Color idleColor;
 			private readonly Color hoverColor;
-			private readonly UIText labelText;
+			private readonly Color activeBorderColor;
+			private string currentLabel;
 			private bool enabledState = true;
 			private bool isHovered = false;
 
-			public RerollButton() : this(DefaultIdleColor, DefaultHoverColor)
+			public RerollButton() : this(DefaultIdleColor, DefaultHoverColor, new Color(56, 189, 248))
 			{
 			}
 
-			public RerollButton(Color idleColor, Color hoverColor)
+			public RerollButton(Color idleColor, Color hoverColor, Color activeBorderColor)
 			{
 				this.idleColor = idleColor;
 				this.hoverColor = hoverColor;
-
-				SetPadding(0f);
-				BackgroundColor = idleColor;
-				BorderColor = new Color(50, 75, 130) * 0.8f;
-
-				labelText = new UIText("Reroll (1 Core)", 0.82f)
-				{
-					HAlign = 0.5f,
-					VAlign = 0.5f,
-					TextColor = new Color(230, 235, 245)
-				};
-				Append(labelText);
+				this.activeBorderColor = activeBorderColor;
+				currentLabel = "Reroll (1 Core)";
 			}
 
 			public void SetEnabled(bool enabled, string label)
 			{
-				labelText.SetText(label);
-
-				if (enabledState == enabled)
-					return;
-
+				currentLabel = label;
 				enabledState = enabled;
-				BackgroundColor = enabled ? (isHovered ? hoverColor : idleColor) : DisabledColor;
-				BorderColor = enabled ? (isHovered ? new Color(100, 160, 255) : new Color(50, 75, 130) * 0.8f) : new Color(35, 45, 65) * 0.6f;
-				labelText.TextColor = enabled ? (isHovered ? Color.White : new Color(230, 235, 245)) : new Color(110, 120, 140);
+			}
+
+			public override void LeftClick(UIMouseEvent evt)
+			{
+				base.LeftClick(evt);
+				if (enabledState)
+				{
+					SoundEngine.PlaySound(SoundID.MenuTick);
+					Clicked?.Invoke();
+				}
+			}
+
+			public override void MouseOver(UIMouseEvent evt)
+			{
+				base.MouseOver(evt);
+				isHovered = true;
+				if (enabledState)
+					SoundEngine.PlaySound(SoundID.MenuTick);
+			}
+
+			public override void MouseOut(UIMouseEvent evt)
+			{
+				base.MouseOut(evt);
+				isHovered = false;
+			}
+
+			protected override void DrawSelf(SpriteBatch spriteBatch)
+			{
+				CalculatedStyle dims = GetDimensions();
+				var rect = new Rectangle((int)dims.X, (int)dims.Y, (int)dims.Width, (int)dims.Height);
+				Texture2D pixel = TextureAssets.MagicPixel.Value;
+
+				Color bg;
+				Color border;
+				Color textColor;
+
+				if (!enabledState)
+				{
+					bg = DisabledColor;
+					border = new Color(25, 33, 48);
+					textColor = new Color(100, 116, 139);
+				}
+				else if (isHovered)
+				{
+					bg = hoverColor;
+					border = activeBorderColor;
+					textColor = Color.White;
+				}
+				else
+				{
+					bg = idleColor;
+					border = new Color(30, 41, 59);
+					textColor = new Color(226, 232, 240);
+				}
+
+				// Ambient hover underglow
+				if (isHovered && enabledState)
+				{
+					spriteBatch.Draw(pixel, new Rectangle(rect.X - 1, rect.Y - 1, rect.Width + 2, rect.Height + 2), border * 0.12f);
+				}
+
+				// Chassis Fill
+				spriteBatch.Draw(pixel, rect, bg);
+
+				// 1px Inner Hairline Highlight Accent
+				Color innerHairline = Color.White * (isHovered && enabledState ? 0.08f : 0.04f);
+				spriteBatch.Draw(pixel, new Rectangle(rect.X + 1, rect.Y + 1, rect.Width - 2, 1), innerHairline);
+				spriteBatch.Draw(pixel, new Rectangle(rect.X + 1, rect.Bottom - 2, rect.Width - 2, 1), innerHairline);
+				spriteBatch.Draw(pixel, new Rectangle(rect.X + 1, rect.Y + 1, 1, rect.Height - 2), innerHairline);
+				spriteBatch.Draw(pixel, new Rectangle(rect.Right - 2, rect.Y + 1, 1, rect.Height - 2), innerHairline);
+
+				// 1px Outer Border (clean, no corner ticks)
+				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, rect.Width, 1), border);
+				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Bottom - 1, rect.Width, 1), border);
+				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, 1, rect.Height), border);
+				spriteBatch.Draw(pixel, new Rectangle(rect.Right - 1, rect.Y, 1, rect.Height), border);
+
+				// Centered typography with baseline optical centering
+				var font = FontAssets.MouseText.Value;
+				Vector2 scale = new Vector2(0.80f);
+				Vector2 textSize = ChatManager.GetStringSize(font, currentLabel, scale);
+				Vector2 textPos = new Vector2(
+					rect.X + (rect.Width - textSize.X) * 0.5f,
+					rect.Y + (rect.Height - 13.5f) * 0.5f - 1.5f
+				);
+				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, currentLabel, textPos, textColor, 0f, Vector2.Zero, scale);
+			}
+		}
+
+		private class ModalButton : UIElement
+		{
+			public event Action Clicked;
+
+			private readonly string label;
+			private readonly Color idleColor;
+			private readonly Color hoverColor;
+			private readonly Color hoverBorderColor;
+			private bool isHovered;
+
+			public ModalButton(string label, Color idleColor, Color hoverColor, Color? hoverBorderColor = null)
+			{
+				this.label = label;
+				this.idleColor = idleColor;
+				this.hoverColor = hoverColor;
+				this.hoverBorderColor = hoverBorderColor ?? new Color(56, 189, 248);
 			}
 
 			public override void LeftClick(UIMouseEvent evt)
@@ -581,99 +671,61 @@ namespace Augments
 			{
 				base.MouseOver(evt);
 				isHovered = true;
-				if (enabledState)
-				{
-					BackgroundColor = hoverColor;
-					BorderColor = new Color(100, 160, 255);
-					labelText.TextColor = Color.White;
-					SoundEngine.PlaySound(SoundID.MenuTick);
-				}
 			}
 
 			public override void MouseOut(UIMouseEvent evt)
 			{
 				base.MouseOut(evt);
 				isHovered = false;
-				if (enabledState)
+			}
+
+			protected override void DrawSelf(SpriteBatch spriteBatch)
+			{
+				CalculatedStyle dims = GetDimensions();
+				var rect = new Rectangle((int)dims.X, (int)dims.Y, (int)dims.Width, (int)dims.Height);
+				Texture2D pixel = TextureAssets.MagicPixel.Value;
+
+				Color bg = isHovered ? hoverColor : idleColor;
+				Color border = isHovered ? hoverBorderColor : new Color(30, 41, 59);
+
+				if (isHovered)
 				{
-					BackgroundColor = idleColor;
-					BorderColor = new Color(50, 75, 130) * 0.8f;
-					labelText.TextColor = new Color(230, 235, 245);
+					spriteBatch.Draw(pixel, new Rectangle(rect.X - 1, rect.Y - 1, rect.Width + 2, rect.Height + 2), border * 0.12f);
 				}
+
+				spriteBatch.Draw(pixel, rect, bg);
+
+				Color innerHairline = Color.White * (isHovered ? 0.08f : 0.04f);
+				spriteBatch.Draw(pixel, new Rectangle(rect.X + 1, rect.Y + 1, rect.Width - 2, 1), innerHairline);
+				spriteBatch.Draw(pixel, new Rectangle(rect.X + 1, rect.Bottom - 2, rect.Width - 2, 1), innerHairline);
+				spriteBatch.Draw(pixel, new Rectangle(rect.X + 1, rect.Y + 1, 1, rect.Height - 2), innerHairline);
+				spriteBatch.Draw(pixel, new Rectangle(rect.Right - 2, rect.Y + 1, 1, rect.Height - 2), innerHairline);
+
+				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, rect.Width, 1), border);
+				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Bottom - 1, rect.Width, 1), border);
+				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, 1, rect.Height), border);
+				spriteBatch.Draw(pixel, new Rectangle(rect.Right - 1, rect.Y, 1, rect.Height), border);
+
+				var font = FontAssets.MouseText.Value;
+				Vector2 scale = new Vector2(0.85f);
+				Vector2 textSize = ChatManager.GetStringSize(font, label, scale);
+				Vector2 textPos = new Vector2(
+					rect.X + (rect.Width - textSize.X) * 0.5f,
+					rect.Y + (rect.Height - 14f) * 0.5f - 1.5f
+				);
+				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, label, textPos, isHovered ? Color.White : new Color(203, 213, 225), 0f, Vector2.Zero, scale);
 			}
 		}
 
-		// Generic small clickable panel for the keystone confirm overlay's
-		// Confirm/Cancel buttons - same manual hover/click approach as
-		// RerollButton, just without a disabled state since both buttons are
-		// always actionable for as long as the overlay is shown.
-		private class ModalButton : UIPanel
+		private class RestoreIcon : UIElement
 		{
 			public event Action Clicked;
 
-			private readonly Color idleColor;
-			private readonly Color hoverColor;
-
-			public ModalButton(string label, Color idleColor, Color hoverColor)
-			{
-				this.idleColor = idleColor;
-				this.hoverColor = hoverColor;
-
-				SetPadding(0f);
-				BackgroundColor = idleColor;
-				BorderColor = Color.White * 0.4f;
-
-				UIText labelText = new UIText(label, 0.85f)
-				{
-					HAlign = 0.5f,
-					VAlign = 0.5f
-				};
-				Append(labelText);
-			}
-
-			public override void LeftClick(UIMouseEvent evt)
-			{
-				base.LeftClick(evt);
-				Clicked?.Invoke();
-			}
-
-			public override void MouseOver(UIMouseEvent evt)
-			{
-				base.MouseOver(evt);
-				BackgroundColor = hoverColor;
-			}
-
-			public override void MouseOut(UIMouseEvent evt)
-			{
-				base.MouseOut(evt);
-				BackgroundColor = idleColor;
-			}
-		}
-
-		// The minimized-state stand-in for backPanel - small, always-visible
-		// reminder that a reward selection is still pending. Pulses a gold
-		// glow using the same sine-based approach as AugmentChoiceCard's
-		// rarity border pulse, just with a single fixed speed/strength
-		// instead of per-rarity tiers.
-		private class RestoreIcon : UIPanel
-		{
-			public event Action Clicked;
-
-			private static readonly Color BaseBorderColor = new Color(180, 150, 60);
+			private static readonly Color BaseBorderColor = new Color(56, 189, 248);
 			private const float PulseSpeed = 2.2f;
-			private const float PulseStrength = 0.4f;
 
 			private float pulseTimer;
-
-			public RestoreIcon()
-			{
-				SetPadding(0f);
-				BackgroundColor = new Color(33, 43, 79) * 0.95f;
-				BorderColor = BaseBorderColor;
-
-				var label = new UIText("?", 1.1f) { HAlign = 0.5f, VAlign = 0.5f };
-				Append(label);
-			}
+			private bool isHovered;
 
 			public override void Update(GameTime gameTime)
 			{
@@ -681,28 +733,56 @@ namespace Augments
 				pulseTimer += (float)gameTime.ElapsedGameTime.TotalSeconds;
 			}
 
-			protected override void DrawSelf(SpriteBatch spriteBatch)
-			{
-				base.DrawSelf(spriteBatch);
-			}
-
 			public override void MouseOver(UIMouseEvent evt)
 			{
 				base.MouseOver(evt);
-				BorderColor = Color.White;
+				isHovered = true;
 				SoundEngine.PlaySound(SoundID.MenuTick);
 			}
 
 			public override void MouseOut(UIMouseEvent evt)
 			{
 				base.MouseOut(evt);
-				BorderColor = BaseBorderColor;
+				isHovered = false;
 			}
 
 			public override void LeftClick(UIMouseEvent evt)
 			{
 				base.LeftClick(evt);
+				SoundEngine.PlaySound(SoundID.MenuTick);
 				Clicked?.Invoke();
+			}
+
+			protected override void DrawSelf(SpriteBatch spriteBatch)
+			{
+				CalculatedStyle dims = GetDimensions();
+				var rect = new Rectangle((int)dims.X, (int)dims.Y, (int)dims.Width, (int)dims.Height);
+				Texture2D pixel = TextureAssets.MagicPixel.Value;
+
+				float pulse = (float)Math.Sin(pulseTimer * PulseSpeed) * 0.5f + 0.5f;
+				Color border = isHovered ? Color.White : Color.Lerp(BaseBorderColor, new Color(250, 204, 21), pulse * 0.5f);
+
+				spriteBatch.Draw(pixel, rect, new Color(10, 16, 28, 250));
+
+				Color innerHairline = Color.White * (isHovered ? 0.08f : 0.04f);
+				spriteBatch.Draw(pixel, new Rectangle(rect.X + 1, rect.Y + 1, rect.Width - 2, 1), innerHairline);
+				spriteBatch.Draw(pixel, new Rectangle(rect.X + 1, rect.Bottom - 2, rect.Width - 2, 1), innerHairline);
+				spriteBatch.Draw(pixel, new Rectangle(rect.X + 1, rect.Y + 1, 1, rect.Height - 2), innerHairline);
+				spriteBatch.Draw(pixel, new Rectangle(rect.Right - 2, rect.Y + 1, 1, rect.Height - 2), innerHairline);
+
+				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, rect.Width, 1), border);
+				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Bottom - 1, rect.Width, 1), border);
+				spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, 1, rect.Height), border);
+				spriteBatch.Draw(pixel, new Rectangle(rect.Right - 1, rect.Y, 1, rect.Height), border);
+
+				var font = FontAssets.MouseText.Value;
+				Vector2 scale = new Vector2(1.1f);
+				Vector2 textSize = ChatManager.GetStringSize(font, "?", scale);
+				Vector2 textPos = new Vector2(
+					rect.X + (rect.Width - textSize.X) * 0.5f,
+					rect.Y + (rect.Height - 18f) * 0.5f - 1.5f
+				);
+				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, "?", textPos, isHovered ? Color.White : border, 0f, Vector2.Zero, scale);
 			}
 		}
 
@@ -713,15 +793,16 @@ namespace Augments
 				base.DrawSelf(spriteBatch);
 
 				CalculatedStyle dims = GetDimensions();
+				Texture2D pixel = TextureAssets.MagicPixel.Value;
 
 				// Header horizontal divider spanning X = 18f to X = 862f (exact 18px bilateral symmetry)
 				int divY = (int)dims.Y + 86;
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle((int)dims.X + 18, divY, (int)dims.Width - 36, 1), new Color(45, 62, 105) * 0.75f);
+				spriteBatch.Draw(pixel, new Rectangle((int)dims.X + 18, divY, (int)dims.Width - 36, 1), new Color(30, 41, 59) * 0.90f);
 
 				// Center diamond node
 				int midX = (int)dims.X + (int)(dims.Width * 0.5f);
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(midX - 1, divY - 1, 3, 3), new Color(80, 160, 240) * 0.85f);
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(midX, divY, 1, 1), Color.White * 0.9f);
+				spriteBatch.Draw(pixel, new Rectangle(midX - 1, divY - 1, 3, 3), new Color(56, 189, 248) * 0.85f);
+				spriteBatch.Draw(pixel, new Rectangle(midX, divY, 1, 1), Color.White * 0.9f);
 			}
 		}
 	}
