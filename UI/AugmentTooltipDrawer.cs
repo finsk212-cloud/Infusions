@@ -18,11 +18,11 @@ namespace Augments
         private const float LineSpacing = -2f;
 
         private static readonly Vector2 TitleScale = new Vector2(0.92f);
-        private static readonly Vector2 BadgeScale = new Vector2(0.68f);
+        private static readonly Vector2 SubtitleScale = new Vector2(0.72f);
         private static readonly Vector2 DescScale = new Vector2(0.80f);
         private static readonly Vector2 MetaScale = new Vector2(0.74f);
         private static readonly Vector2 ProtocolScale = new Vector2(0.72f);
-        private static readonly Vector2 BonusScale = new Vector2(0.70f);
+        private static readonly Vector2 BonusScale = new Vector2(0.68f);
 
         public static void DrawIfHovering(SpriteBatch spriteBatch)
         {
@@ -93,16 +93,23 @@ namespace Augments
             // 1. Title lines
             var titleLines = AugmentColorText.Wrap(font, augment.DisplayName, MaxContentWidth, TitleScale);
 
-            // 2. Badges row
-            var badges = new List<(string text, Color color)>();
-            badges.Add((GetRarityDisplayName(augment.Rarity), rarityColor));
-            badges.Add((GetClassDisplayName(augment.Class), GetClassColor(augment.Class)));
+            // 2. Clean inline subtitle text (e.g. "RARE  •  MELEE")
+            var subtitleParts = new List<(string text, Color color)>();
+            subtitleParts.Add((GetRarityDisplayName(augment.Rarity), rarityColor));
+            subtitleParts.Add(("  •  ", new Color(110, 130, 160)));
+            subtitleParts.Add((GetClassDisplayName(augment.Class), GetClassColor(augment.Class)));
 
             if (augment.KeystoneFamily != null)
-                badges.Add(("CORE OVERRIDE", new Color(248, 113, 113)));
+            {
+                subtitleParts.Add(("  •  ", new Color(110, 130, 160)));
+                subtitleParts.Add(("CORE OVERRIDE", new Color(248, 113, 113)));
+            }
 
             if (augment.IsPermanent)
-                badges.Add(("PERMANENT", new Color(255, 205, 120)));
+            {
+                subtitleParts.Add(("  •  ", new Color(110, 130, 160)));
+                subtitleParts.Add(("PERMANENT", new Color(255, 205, 120)));
+            }
 
             // 3. Description lines
             var descLines = AugmentColorText.Wrap(font, augment.Description, MaxContentWidth, DescScale);
@@ -158,7 +165,7 @@ namespace Augments
 
                         foreach (var desc in bonus.Descriptions)
                         {
-                            var wrappedPerk = AugmentColorText.Wrap(font, "      " + desc.Trim(), MaxContentWidth, BonusScale);
+                            var wrappedPerk = AugmentColorText.Wrap(font, "    " + desc.Trim(), MaxContentWidth, BonusScale);
                             foreach (var line in wrappedPerk)
                             {
                                 Color perkCol = unlocked ? new Color(210, 238, 225) : new Color(125, 138, 158);
@@ -179,15 +186,16 @@ namespace Augments
                 if (w > maxContentWidth) maxContentWidth = w;
             }
 
-            // Badges row width
-            float badgesRowWidth = 0f;
-            foreach (var (bText, _) in badges)
+            // Subtitle text width
+            float subtitleWidth = 0f;
+            float subtitleHeight = 0f;
+            foreach (var (sText, _) in subtitleParts)
             {
-                float bw = ChatManager.GetStringSize(font, bText, BadgeScale).X + 14f;
-                badgesRowWidth += bw + 6f;
+                Vector2 sz = ChatManager.GetStringSize(font, sText, SubtitleScale);
+                subtitleWidth += sz.X;
+                if (sz.Y > subtitleHeight) subtitleHeight = sz.Y;
             }
-            if (badgesRowWidth > 0f) badgesRowWidth -= 6f; // remove trailing gap
-            if (badgesRowWidth > maxContentWidth) maxContentWidth = badgesRowWidth;
+            if (subtitleWidth > maxContentWidth) maxContentWidth = subtitleWidth;
 
             // Description lines width
             foreach (var line in descLines)
@@ -219,15 +227,12 @@ namespace Augments
             foreach (var line in titleLines)
                 totalHeight += ChatManager.GetStringSize(font, line, TitleScale).Y + LineSpacing;
 
-            totalHeight += 4f; // spacing to badges
+            totalHeight += 2f; // spacing to subtitle
 
-            // Badges height
-            totalHeight += 18f;
+            // Subtitle height
+            totalHeight += subtitleHeight;
 
-            totalHeight += 8f; // spacing to divider
-
-            // Divider 1
-            totalHeight += 7f; // divider line + margin
+            totalHeight += 8f; // spacing to description
 
             // Description height
             foreach (var line in descLines)
@@ -245,7 +250,7 @@ namespace Augments
             if (protocolLines.Count > 0)
             {
                 totalHeight += 8f; // spacing to divider
-                totalHeight += 7f; // divider 2 + margin
+                totalHeight += 7f; // divider + margin
 
                 foreach (var (pText, _, pScale) in protocolLines)
                     totalHeight += ChatManager.GetStringSize(font, pText, pScale).Y + LineSpacing;
@@ -274,20 +279,18 @@ namespace Augments
                 curY += ChatManager.GetStringSize(font, line, TitleScale).Y + LineSpacing;
             }
 
-            curY += 4f;
+            curY += 2f;
 
-            // Badges row
-            float curBadgeX = contentX;
-            foreach (var (bText, bColor) in badges)
+            // Clean inline subtitle text (no rectangular boxes)
+            float curSubX = contentX;
+            foreach (var (sText, sColor) in subtitleParts)
             {
-                DrawBadge(spriteBatch, font, bText, new Vector2(curBadgeX, curY), bColor, out float badgeW);
-                curBadgeX += badgeW + 6f;
+                ChatManager.DrawColorCodedStringWithShadow(
+                    spriteBatch, font, sText, new Vector2(curSubX, curY), sColor, 0f, Vector2.Zero, SubtitleScale
+                );
+                curSubX += ChatManager.GetStringSize(font, sText, SubtitleScale).X;
             }
-            curY += 18f + 6f;
-
-            // Divider 1
-            DrawDivider(spriteBatch, (int)contentX, (int)curY, (int)contentWidth, rarityColor);
-            curY += 7f;
+            curY += subtitleHeight + 8f;
 
             // Description
             foreach (var line in descLines)
@@ -408,33 +411,6 @@ namespace Augments
             // Bottom-Right
             spriteBatch.Draw(pixel, new Rectangle(boxRect.Right - 5, boxRect.Bottom - 2, 5, 2), cornerColor);
             spriteBatch.Draw(pixel, new Rectangle(boxRect.Right - 2, boxRect.Bottom - 5, 2, 5), cornerColor);
-        }
-
-        private static void DrawBadge(SpriteBatch spriteBatch, DynamicSpriteFont font, string text, Vector2 pos, Color accentColor, out float badgeW)
-        {
-            Vector2 textSize = ChatManager.GetStringSize(font, text, BadgeScale);
-            badgeW = textSize.X + 14f;
-            float badgeH = 18f;
-            Rectangle badgeRect = new Rectangle((int)pos.X, (int)pos.Y, (int)badgeW, (int)badgeH);
-            Texture2D pixel = TextureAssets.MagicPixel.Value;
-
-            // Pill dark background
-            spriteBatch.Draw(pixel, badgeRect, new Color(14, 22, 40) * 0.92f);
-            // Pill accent underglow
-            spriteBatch.Draw(pixel, badgeRect, accentColor * 0.12f);
-
-            // 1px border
-            spriteBatch.Draw(pixel, new Rectangle(badgeRect.X, badgeRect.Y, badgeRect.Width, 1), accentColor * 0.70f);
-            spriteBatch.Draw(pixel, new Rectangle(badgeRect.X, badgeRect.Bottom - 1, badgeRect.Width, 1), accentColor * 0.70f);
-            spriteBatch.Draw(pixel, new Rectangle(badgeRect.X, badgeRect.Y, 1, badgeRect.Height), accentColor * 0.70f);
-            spriteBatch.Draw(pixel, new Rectangle(badgeRect.Right - 1, badgeRect.Y, 1, badgeRect.Height), accentColor * 0.70f);
-
-            // Text centered with shadow
-            Vector2 textPos = new Vector2(
-                badgeRect.X + (badgeRect.Width - textSize.X) * 0.5f,
-                badgeRect.Y + (badgeRect.Height - textSize.Y) * 0.5f + 2f
-            );
-            ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, text, textPos, accentColor, 0f, Vector2.Zero, BadgeScale);
         }
 
         private static void DrawDivider(SpriteBatch spriteBatch, int x, int y, int width, Color tint)
