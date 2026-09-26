@@ -155,75 +155,34 @@ namespace Augments
 				return;
 
 			var font = FontAssets.MouseText.Value;
-			Vector2 scale = new Vector2(0.72f);
+			Vector2 scale = new Vector2(0.74f);
 
 			Vector2 prefixSize = ChatManager.GetStringSize(font, currentPrefix, scale);
 			Vector2 msgSize = ChatManager.GetStringSize(font, currentMessage, scale);
 
-			const float padX = 16f;
-			const float padY = 7f;
 			const float gap = 8f;
-
 			float totalTextWidth = prefixSize.X + gap + msgSize.X;
-			float boxWidth = totalTextWidth + padX * 2f;
-			float boxHeight = Math.Max(prefixSize.Y, msgSize.Y) + padY * 2f;
+			float textHeight = Math.Max(prefixSize.Y, msgSize.Y);
 
-			float posX = (Main.screenWidth - boxWidth) * 0.5f;
-			float posY = 75f;
+			// Position horizontally centered at the bottom of the screen
+			float posX = (Main.screenWidth - totalTextWidth) * 0.5f;
+			float posY = Main.screenHeight - 56f;
 
-			Rectangle rect = new Rectangle((int)posX, (int)posY, (int)boxWidth, (int)boxHeight);
-			bounds = rect;
+			// Invisible interaction bounds around the text for pause-on-hover and click-to-dismiss
+			bounds = new Rectangle((int)posX - 8, (int)posY - 4, (int)totalTextWidth + 16, (int)textHeight + 8);
 
-			Texture2D pixel = TextureAssets.MagicPixel.Value;
-
-			// 1. Ambient drop shadow (2px expansion)
-			spriteBatch.Draw(pixel, new Rectangle(rect.X - 2, rect.Y - 2, rect.Width + 4, rect.Height + 4), new Color(0, 0, 0, (int)(160 * fadeAlpha)));
-
-			// 2. Chassis background fill (#0A101C)
-			spriteBatch.Draw(pixel, rect, new Color(10, 16, 28) * (0.94f * fadeAlpha));
-
-			// 3. Subtle ambient cyan glow
-			Color glowCol = new Color(56, 189, 248);
-			spriteBatch.Draw(pixel, rect, glowCol * (0.045f * fadeAlpha));
-
-			// 4. 1px inner hairline accent
-			Color innerHairline = Color.White * (0.05f * fadeAlpha);
-			spriteBatch.Draw(pixel, new Rectangle(rect.X + 1, rect.Y + 1, rect.Width - 2, 1), innerHairline);
-			spriteBatch.Draw(pixel, new Rectangle(rect.X + 1, rect.Bottom - 2, rect.Width - 2, 1), innerHairline);
-			spriteBatch.Draw(pixel, new Rectangle(rect.X + 1, rect.Y + 1, 1, rect.Height - 2), innerHairline);
-			spriteBatch.Draw(pixel, new Rectangle(rect.Right - 2, rect.Y + 1, 1, rect.Height - 2), innerHairline);
-
-			// 5. 1px outer frame
-			Color frameCol = Color.Lerp(new Color(30, 41, 59), glowCol, 0.40f) * fadeAlpha;
-			spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, rect.Width, 1), frameCol);
-			spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Bottom - 1, rect.Width, 1), frameCol);
-			spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, 1, rect.Height), frameCol);
-			spriteBatch.Draw(pixel, new Rectangle(rect.Right - 1, rect.Y, 1, rect.Height), frameCol);
-
-			// 6. Flush corner micro-notches (3x1 and 1x3)
-			Color cornerCol = Color.Lerp(glowCol, Color.White, 0.40f) * fadeAlpha;
-			const int cLen = 3;
-			// Top-left
-			spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, cLen, 1), cornerCol);
-			spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, 1, cLen), cornerCol);
-			// Top-right
-			spriteBatch.Draw(pixel, new Rectangle(rect.Right - cLen, rect.Y, cLen, 1), cornerCol);
-			spriteBatch.Draw(pixel, new Rectangle(rect.Right - 1, rect.Y, 1, cLen), cornerCol);
-			// Bottom-left
-			spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Bottom - 1, cLen, 1), cornerCol);
-			spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Bottom - cLen, 1, cLen), cornerCol);
-			// Bottom-right
-			spriteBatch.Draw(pixel, new Rectangle(rect.Right - cLen, rect.Bottom - 1, cLen, 1), cornerCol);
-			spriteBatch.Draw(pixel, new Rectangle(rect.Right - 1, rect.Bottom - cLen, 1, cLen), cornerCol);
-
-			// 7. Typography (Prefix + Message)
-			float textY = rect.Y + (rect.Height - 12f) * 0.5f - 1.5f;
-			Vector2 prefixPos = new Vector2(rect.X + padX, textY);
-			Vector2 msgPos = new Vector2(prefixPos.X + prefixSize.X + gap, textY);
+			Vector2 prefixPos = new Vector2(posX, posY);
+			Vector2 msgPos = new Vector2(posX + prefixSize.X + gap, posY);
 
 			Color pColor = new Color(56, 189, 248) * fadeAlpha; // Cyan
-			Color mColor = new Color(226, 232, 240) * fadeAlpha; // Crisp slate-white
+			Color mColor = new Color(241, 245, 249) * fadeAlpha; // Crisp white
 
+			// Soft subtle drop shadow behind so the text pops cleanly on any bright or dark terrain
+			Color shadowColor = Color.Black * (0.80f * fadeAlpha);
+			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, currentPrefix, prefixPos + new Vector2(1f, 1f), shadowColor, 0f, Vector2.Zero, scale);
+			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, currentMessage, msgPos + new Vector2(1f, 1f), shadowColor, 0f, Vector2.Zero, scale);
+
+			// Primary text
 			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, currentPrefix, prefixPos, pColor, 0f, Vector2.Zero, scale);
 			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, currentMessage, msgPos, mColor, 0f, Vector2.Zero, scale);
 		}
