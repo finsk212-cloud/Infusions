@@ -279,30 +279,32 @@ namespace Augments
         {
             Texture2D pixel = TextureAssets.MagicPixel.Value;
 
-            // 1. High-tech cyber navy background fill
-            Color bgNavy = new Color(10, 16, 30) * 0.96f;
+            // 1. Ambient drop shadow (2px expansion)
+            spriteBatch.Draw(pixel, new Rectangle(boxRect.X - 2, boxRect.Y - 2, boxRect.Width + 4, boxRect.Height + 4), new Color(0, 0, 0, 160));
+
+            // 2. High-tech cyber navy background fill (#0A101C)
+            Color bgNavy = new Color(10, 16, 28, 248);
             spriteBatch.Draw(pixel, boxRect, bgNavy);
 
-            // 2. Subtle ambient accent underglow
-            spriteBatch.Draw(pixel, boxRect, accentColor * 0.04f);
+            // 3. Subtle ambient accent underglow
+            spriteBatch.Draw(pixel, boxRect, accentColor * 0.045f);
 
-            // 3. 2px outer border tinted with accent
-            const int border = 2;
-            Color outerBorder = accentColor * 0.65f;
-            spriteBatch.Draw(pixel, new Rectangle(boxRect.X, boxRect.Y, boxRect.Width, border), outerBorder);
-            spriteBatch.Draw(pixel, new Rectangle(boxRect.X, boxRect.Bottom - border, boxRect.Width, border), outerBorder);
-            spriteBatch.Draw(pixel, new Rectangle(boxRect.X, boxRect.Y, border, boxRect.Height), outerBorder);
-            spriteBatch.Draw(pixel, new Rectangle(boxRect.Right - border, boxRect.Y, border, boxRect.Height), outerBorder);
+            // 4. 1px outer border tinted with accent
+            Color outerBorder = Color.Lerp(new Color(30, 41, 59), accentColor, 0.40f) * 0.90f;
+            spriteBatch.Draw(pixel, new Rectangle(boxRect.X, boxRect.Y, boxRect.Width, 1), outerBorder);
+            spriteBatch.Draw(pixel, new Rectangle(boxRect.X, boxRect.Bottom - 1, boxRect.Width, 1), outerBorder);
+            spriteBatch.Draw(pixel, new Rectangle(boxRect.X, boxRect.Y, 1, boxRect.Height), outerBorder);
+            spriteBatch.Draw(pixel, new Rectangle(boxRect.Right - 1, boxRect.Y, 1, boxRect.Height), outerBorder);
 
-            // 4. 1px inner hairline accent
-            Color innerHairline = Color.White * 0.08f;
-            spriteBatch.Draw(pixel, new Rectangle(boxRect.X + 2, boxRect.Y + 2, boxRect.Width - 4, 1), innerHairline);
-            spriteBatch.Draw(pixel, new Rectangle(boxRect.X + 2, boxRect.Bottom - 3, boxRect.Width - 4, 1), innerHairline);
-            spriteBatch.Draw(pixel, new Rectangle(boxRect.X + 2, boxRect.Y + 2, 1, boxRect.Height - 4), innerHairline);
-            spriteBatch.Draw(pixel, new Rectangle(boxRect.Right - 3, boxRect.Y + 2, 1, boxRect.Height - 4), innerHairline);
+            // 5. 1px inner hairline accent
+            Color innerHairline = Color.White * 0.06f;
+            spriteBatch.Draw(pixel, new Rectangle(boxRect.X + 1, boxRect.Y + 1, boxRect.Width - 2, 1), innerHairline);
+            spriteBatch.Draw(pixel, new Rectangle(boxRect.X + 1, boxRect.Bottom - 2, boxRect.Width - 2, 1), innerHairline);
+            spriteBatch.Draw(pixel, new Rectangle(boxRect.X + 1, boxRect.Y + 1, 1, boxRect.Height - 2), innerHairline);
+            spriteBatch.Draw(pixel, new Rectangle(boxRect.Right - 2, boxRect.Y + 1, 1, boxRect.Height - 2), innerHairline);
 
-            // 5. Corner accent notches
-            Color cornerColor = accentColor * 0.90f;
+            // 6. Flush corner accent notches (4x2 / 2x4)
+            Color cornerColor = accentColor * 0.92f;
             // Top-Left
             spriteBatch.Draw(pixel, new Rectangle(boxRect.X, boxRect.Y, 4, 2), cornerColor);
             spriteBatch.Draw(pixel, new Rectangle(boxRect.X, boxRect.Y, 2, 4), cornerColor);

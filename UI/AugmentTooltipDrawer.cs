@@ -264,7 +264,7 @@ namespace Augments
             Rectangle boxRect = new Rectangle((int)boxPos.X, (int)boxPos.Y, (int)boxWidth, (int)boxHeight);
 
             // 8. Draw cybernetic chassis
-            DrawChassis(spriteBatch, boxRect, rarityColor);
+            DrawChassis(spriteBatch, boxRect, rarityColor, augment.Rarity);
 
             // 9. Render content
             float curY = boxRect.Y + Padding;
@@ -371,34 +371,62 @@ namespace Augments
             return new Vector2(posX, posY);
         }
 
-        private static void DrawChassis(SpriteBatch spriteBatch, Rectangle boxRect, Color rarityColor)
+        private static void DrawChassis(SpriteBatch spriteBatch, Rectangle boxRect, Color rarityColor, AugmentRarity rarity)
         {
             Texture2D pixel = TextureAssets.MagicPixel.Value;
 
-            // 1. High-tech cyber navy background fill
-            Color bgNavy = new Color(10, 16, 30) * 0.96f;
+            // 1. Ambient drop shadow (2px expansion)
+            spriteBatch.Draw(pixel, new Rectangle(boxRect.X - 2, boxRect.Y - 2, boxRect.Width + 4, boxRect.Height + 4), new Color(0, 0, 0, 160));
+
+            // 2. High-tech cyber navy background fill (#0A101C)
+            Color bgNavy = new Color(10, 16, 28, 248);
             spriteBatch.Draw(pixel, boxRect, bgNavy);
 
-            // 2. Subtle ambient rarity underglow
-            spriteBatch.Draw(pixel, boxRect, rarityColor * 0.04f);
+            // 3. Subtle ambient rarity underglow
+            float underglowAlpha = rarity == AugmentRarity.Legendary ? 0.06f : (rarity == AugmentRarity.Epic ? 0.05f : 0.035f);
+            spriteBatch.Draw(pixel, boxRect, rarityColor * underglowAlpha);
 
-            // 3. 2px outer border tinted with rarity
-            const int border = 2;
-            Color outerBorder = rarityColor * 0.65f;
-            spriteBatch.Draw(pixel, new Rectangle(boxRect.X, boxRect.Y, boxRect.Width, border), outerBorder);
-            spriteBatch.Draw(pixel, new Rectangle(boxRect.X, boxRect.Bottom - border, boxRect.Width, border), outerBorder);
-            spriteBatch.Draw(pixel, new Rectangle(boxRect.X, boxRect.Y, border, boxRect.Height), outerBorder);
-            spriteBatch.Draw(pixel, new Rectangle(boxRect.Right - border, boxRect.Y, border, boxRect.Height), outerBorder);
+            // 4. Stepped rarity halo for Epic and Legendary
+            if (rarity == AugmentRarity.Legendary)
+            {
+                Color halo1 = rarityColor * 0.15f;
+                Color halo2 = rarityColor * 0.07f;
+                // 1px stepped outer halo
+                spriteBatch.Draw(pixel, new Rectangle(boxRect.X - 1, boxRect.Y - 1, boxRect.Width + 2, 1), halo1);
+                spriteBatch.Draw(pixel, new Rectangle(boxRect.X - 1, boxRect.Bottom, boxRect.Width + 2, 1), halo1);
+                spriteBatch.Draw(pixel, new Rectangle(boxRect.X - 1, boxRect.Y, 1, boxRect.Height), halo1);
+                spriteBatch.Draw(pixel, new Rectangle(boxRect.Right, boxRect.Y, 1, boxRect.Height), halo1);
+                // 2px stepped outer halo
+                spriteBatch.Draw(pixel, new Rectangle(boxRect.X - 2, boxRect.Y - 2, boxRect.Width + 4, 1), halo2);
+                spriteBatch.Draw(pixel, new Rectangle(boxRect.X - 2, boxRect.Bottom + 1, boxRect.Width + 4, 1), halo2);
+                spriteBatch.Draw(pixel, new Rectangle(boxRect.X - 2, boxRect.Y - 1, 1, boxRect.Height + 2), halo2);
+                spriteBatch.Draw(pixel, new Rectangle(boxRect.Right + 1, boxRect.Y - 1, 1, boxRect.Height + 2), halo2);
+            }
+            else if (rarity == AugmentRarity.Epic)
+            {
+                Color halo = rarityColor * 0.10f;
+                spriteBatch.Draw(pixel, new Rectangle(boxRect.X - 1, boxRect.Y - 1, boxRect.Width + 2, 1), halo);
+                spriteBatch.Draw(pixel, new Rectangle(boxRect.X - 1, boxRect.Bottom, boxRect.Width + 2, 1), halo);
+                spriteBatch.Draw(pixel, new Rectangle(boxRect.X - 1, boxRect.Y, 1, boxRect.Height), halo);
+                spriteBatch.Draw(pixel, new Rectangle(boxRect.Right, boxRect.Y, 1, boxRect.Height), halo);
+            }
 
-            // 4. 1px inner hairline accent
-            Color innerHairline = Color.White * 0.08f;
-            spriteBatch.Draw(pixel, new Rectangle(boxRect.X + 2, boxRect.Y + 2, boxRect.Width - 4, 1), innerHairline);
-            spriteBatch.Draw(pixel, new Rectangle(boxRect.X + 2, boxRect.Bottom - 3, boxRect.Width - 4, 1), innerHairline);
-            spriteBatch.Draw(pixel, new Rectangle(boxRect.X + 2, boxRect.Y + 2, 1, boxRect.Height - 4), innerHairline);
-            spriteBatch.Draw(pixel, new Rectangle(boxRect.Right - 3, boxRect.Y + 2, 1, boxRect.Height - 4), innerHairline);
+            // 5. 1px Outer Border
+            Color outerBorder = Color.Lerp(new Color(30, 41, 59), rarityColor, 0.40f) * 0.90f;
+            spriteBatch.Draw(pixel, new Rectangle(boxRect.X, boxRect.Y, boxRect.Width, 1), outerBorder);
+            spriteBatch.Draw(pixel, new Rectangle(boxRect.X, boxRect.Bottom - 1, boxRect.Width, 1), outerBorder);
+            spriteBatch.Draw(pixel, new Rectangle(boxRect.X, boxRect.Y, 1, boxRect.Height), outerBorder);
+            spriteBatch.Draw(pixel, new Rectangle(boxRect.Right - 1, boxRect.Y, 1, boxRect.Height), outerBorder);
 
-            // 5. Corner accent notches
-            Color cornerColor = rarityColor * 0.95f;
+            // 6. 1px Inner Hairline Highlight Accent
+            Color innerHairline = Color.White * 0.06f;
+            spriteBatch.Draw(pixel, new Rectangle(boxRect.X + 1, boxRect.Y + 1, boxRect.Width - 2, 1), innerHairline);
+            spriteBatch.Draw(pixel, new Rectangle(boxRect.X + 1, boxRect.Bottom - 2, boxRect.Width - 2, 1), innerHairline);
+            spriteBatch.Draw(pixel, new Rectangle(boxRect.X + 1, boxRect.Y + 1, 1, boxRect.Height - 2), innerHairline);
+            spriteBatch.Draw(pixel, new Rectangle(boxRect.Right - 2, boxRect.Y + 1, 1, boxRect.Height - 2), innerHairline);
+
+            // 7. Flush Corner Accent Notches (5x2 / 2x5)
+            Color cornerColor = rarityColor * 0.92f;
             // Top-Left
             spriteBatch.Draw(pixel, new Rectangle(boxRect.X, boxRect.Y, 5, 2), cornerColor);
             spriteBatch.Draw(pixel, new Rectangle(boxRect.X, boxRect.Y, 2, 5), cornerColor);
@@ -411,6 +439,25 @@ namespace Augments
             // Bottom-Right
             spriteBatch.Draw(pixel, new Rectangle(boxRect.Right - 5, boxRect.Bottom - 2, 5, 2), cornerColor);
             spriteBatch.Draw(pixel, new Rectangle(boxRect.Right - 2, boxRect.Bottom - 5, 2, 5), cornerColor);
+
+            // 8. Delicate alternating micro-glints for Epic & Legendary
+            if (rarity == AugmentRarity.Legendary || rarity == AugmentRarity.Epic)
+            {
+                float time = (float)Main.timeForVisualEffects * 0.05f;
+                float glint1 = (float)Math.Sin(time);
+                float glint2 = (float)Math.Cos(time + 1.5f);
+
+                if (glint1 > 0.3f)
+                {
+                    float alpha = (glint1 - 0.3f) / 0.7f;
+                    AugmentSlotElement.DrawSubtleStarSparkle(spriteBatch, boxRect.X + 14, boxRect.Y + 1, alpha * 0.70f, rarityColor);
+                }
+                if (glint2 > 0.3f)
+                {
+                    float alpha = (glint2 - 0.3f) / 0.7f;
+                    AugmentSlotElement.DrawSubtleStarSparkle(spriteBatch, boxRect.Right - 14, boxRect.Bottom - 2, alpha * 0.70f, rarityColor);
+                }
+            }
         }
 
         private static void DrawDivider(SpriteBatch spriteBatch, int x, int y, int width, Color tint)

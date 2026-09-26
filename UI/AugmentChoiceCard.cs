@@ -705,6 +705,50 @@ namespace Augments
 			);
 		}
 
+		private static void DrawChoiceTooltipChassis(SpriteBatch spriteBatch, Rectangle boxRect, Color accentColor)
+		{
+			Texture2D pixel = TextureAssets.MagicPixel.Value;
+
+			// 1. Ambient drop shadow (2px expansion)
+			spriteBatch.Draw(pixel, new Rectangle(boxRect.X - 2, boxRect.Y - 2, boxRect.Width + 4, boxRect.Height + 4), new Color(0, 0, 0, 160));
+
+			// 2. High-tech cyber navy background fill (#0A101C)
+			Color bgNavy = new Color(10, 16, 28, 248);
+			spriteBatch.Draw(pixel, boxRect, bgNavy);
+
+			// 3. Subtle ambient accent underglow
+			spriteBatch.Draw(pixel, boxRect, accentColor * 0.045f);
+
+			// 4. 1px outer border tinted with accent
+			Color outerBorder = Color.Lerp(new Color(30, 41, 59), accentColor, 0.40f) * 0.90f;
+			spriteBatch.Draw(pixel, new Rectangle(boxRect.X, boxRect.Y, boxRect.Width, 1), outerBorder);
+			spriteBatch.Draw(pixel, new Rectangle(boxRect.X, boxRect.Bottom - 1, boxRect.Width, 1), outerBorder);
+			spriteBatch.Draw(pixel, new Rectangle(boxRect.X, boxRect.Y, 1, boxRect.Height), outerBorder);
+			spriteBatch.Draw(pixel, new Rectangle(boxRect.Right - 1, boxRect.Y, 1, boxRect.Height), outerBorder);
+
+			// 5. 1px inner hairline accent
+			Color innerHairline = Color.White * 0.06f;
+			spriteBatch.Draw(pixel, new Rectangle(boxRect.X + 1, boxRect.Y + 1, boxRect.Width - 2, 1), innerHairline);
+			spriteBatch.Draw(pixel, new Rectangle(boxRect.X + 1, boxRect.Bottom - 2, boxRect.Width - 2, 1), innerHairline);
+			spriteBatch.Draw(pixel, new Rectangle(boxRect.X + 1, boxRect.Y + 1, 1, boxRect.Height - 2), innerHairline);
+			spriteBatch.Draw(pixel, new Rectangle(boxRect.Right - 2, boxRect.Y + 1, 1, boxRect.Height - 2), innerHairline);
+
+			// 6. Flush corner accent notches (4x2 / 2x4)
+			Color cornerColor = accentColor * 0.92f;
+			// Top-Left
+			spriteBatch.Draw(pixel, new Rectangle(boxRect.X, boxRect.Y, 4, 2), cornerColor);
+			spriteBatch.Draw(pixel, new Rectangle(boxRect.X, boxRect.Y, 2, 4), cornerColor);
+			// Top-Right
+			spriteBatch.Draw(pixel, new Rectangle(boxRect.Right - 4, boxRect.Y, 4, 2), cornerColor);
+			spriteBatch.Draw(pixel, new Rectangle(boxRect.Right - 2, boxRect.Y, 2, 4), cornerColor);
+			// Bottom-Left
+			spriteBatch.Draw(pixel, new Rectangle(boxRect.X, boxRect.Bottom - 2, 4, 2), cornerColor);
+			spriteBatch.Draw(pixel, new Rectangle(boxRect.X, boxRect.Bottom - 4, 2, 4), cornerColor);
+			// Bottom-Right
+			spriteBatch.Draw(pixel, new Rectangle(boxRect.Right - 4, boxRect.Bottom - 2, 4, 2), cornerColor);
+			spriteBatch.Draw(pixel, new Rectangle(boxRect.Right - 2, boxRect.Bottom - 4, 2, 4), cornerColor);
+		}
+
 		internal static void DrawKeystoneTooltip(SpriteBatch spriteBatch, DynamicSpriteFont font)
 		{
 			const float padding = 12f;
@@ -736,8 +780,7 @@ namespace Augments
 			Vector2 boxPos = GetSmartTooltipPosition(boxWidth, boxHeight);
 
 			var boxRect = new Rectangle((int)boxPos.X, (int)boxPos.Y, (int)boxWidth, (int)boxHeight);
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, boxRect, new Color(12, 18, 34) * 0.96f);
-			DrawRectBorder(spriteBatch, boxRect, KeystoneTagColor * 0.8f, 2);
+			DrawChoiceTooltipChassis(spriteBatch, boxRect, KeystoneTagColor);
 
 			float y = boxRect.Y + padding;
 			float x = boxRect.X + padding;
@@ -780,8 +823,7 @@ namespace Augments
 			Vector2 boxPos = GetSmartTooltipPosition(boxWidth, boxHeight);
 
 			var boxRect = new Rectangle((int)boxPos.X, (int)boxPos.Y, (int)boxWidth, (int)boxHeight);
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, boxRect, new Color(12, 18, 34) * 0.96f);
-			DrawRectBorder(spriteBatch, boxRect, SupportTagColor * 0.8f, 2);
+			DrawChoiceTooltipChassis(spriteBatch, boxRect, SupportTagColor);
 
 			float y = boxRect.Y + padding;
 			float x = boxRect.X + padding;
@@ -814,8 +856,8 @@ namespace Augments
 				lines.Add(($"Active Fortune: +{(int)System.MathF.Round(ap.TotalFortune * 100f)}%  •  World Luck: +{player.luck:0.00}", new Color(255, 220, 120)));
 			}
 
-			lines.Add(("─────────────────────────────", new Color(60, 80, 120) * 0.7f));
-			lines.Add(("Protocol Specifications:", Color.White));
+			lines.Add(("---DIVIDER---", Color.Transparent));
+			lines.Add(("Protocol Specifications:", new Color(250, 204, 21)));
 
 			foreach (var kv in family.ThresholdBonuses)
 			{
@@ -825,7 +867,7 @@ namespace Augments
 				string header = unlocked
 					? $"  ✓ ({threshold}) {bonus.Title} (Active)"
 					: $"  • ({threshold}) {bonus.Title} (Locked)";
-				Color headerCol = unlocked ? AugmentTextColors.Healing : new Color(160, 170, 185);
+				Color headerCol = unlocked ? AugmentTextColors.Healing : new Color(148, 163, 184);
 				lines.Add((header, headerCol));
 
 				foreach (var dl in bonus.Descriptions)
@@ -834,8 +876,8 @@ namespace Augments
 				}
 			}
 
-			lines.Add(("─────────────────────────────", new Color(60, 80, 120) * 0.7f));
-			lines.Add(("Assigned Plugins:", Color.White));
+			lines.Add(("---DIVIDER---", Color.Transparent));
+			lines.Add(("Assigned Plugins:", new Color(250, 204, 21)));
 
 			foreach (var memberId in family.MemberIds)
 			{
@@ -853,6 +895,11 @@ namespace Augments
 			float totalHeight = 0f;
 			foreach (var (text, _) in lines)
 			{
+				if (text == "---DIVIDER---")
+				{
+					totalHeight += 9f;
+					continue;
+				}
 				Vector2 size = ChatManager.GetStringSize(font, text, scale);
 				if (size.X > maxWidth) maxWidth = size.X;
 				totalHeight += size.Y + lineSpacing;
@@ -865,13 +912,19 @@ namespace Augments
 			Vector2 boxPos = GetSmartTooltipPosition(boxWidth, boxHeight);
 
 			var boxRect = new Rectangle((int)boxPos.X, (int)boxPos.Y, (int)boxWidth, (int)boxHeight);
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, boxRect, new Color(12, 18, 34) * 0.96f);
-			DrawRectBorder(spriteBatch, boxRect, family.ThemeColor * 0.8f, 2);
+			DrawChoiceTooltipChassis(spriteBatch, boxRect, family.ThemeColor);
 
 			float y = boxRect.Y + padding;
 			float x = boxRect.X + padding;
 			foreach (var (text, color) in lines)
 			{
+				if (text == "---DIVIDER---")
+				{
+					y += 3f;
+					spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle((int)x, (int)y, (int)(boxWidth - padding * 2f), 1), family.ThemeColor * 0.35f);
+					y += 5f;
+					continue;
+				}
 				Vector2 size = ChatManager.GetStringSize(font, text, scale);
 				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, text, new Vector2(x, y), color, 0f, Vector2.Zero, scale);
 				y += size.Y + lineSpacing;
