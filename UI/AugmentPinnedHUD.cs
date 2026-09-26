@@ -28,8 +28,8 @@ namespace Augments
 		public Vector2 Position;
 		public bool IsDragging;
 		public Vector2 DragOffset;
-		public float Width = 152f;
-		public float Height = 36f;
+		public float Width = 160f;
+		public float Height = 32f;
 	}
 
 	// In-game HUD overlay for pinned combat analytics telemetry cards.
@@ -44,31 +44,41 @@ namespace Augments
 			{
 				Type = PinnedStatType.LiveDPS,
 				IsPinned = false,
-				Position = new Vector2(20f, 110f)
+				Position = new Vector2(20f, 110f),
+				Width = 160f,
+				Height = 32f
 			},
 			[PinnedStatType.HitsAndCrits] = new PinnedWidgetData
 			{
 				Type = PinnedStatType.HitsAndCrits,
 				IsPinned = false,
-				Position = new Vector2(20f, 154f)
+				Position = new Vector2(20f, 148f),
+				Width = 160f,
+				Height = 32f
 			},
 			[PinnedStatType.TotalDamage] = new PinnedWidgetData
 			{
 				Type = PinnedStatType.TotalDamage,
 				IsPinned = false,
-				Position = new Vector2(20f, 198f)
+				Position = new Vector2(20f, 186f),
+				Width = 160f,
+				Height = 32f
 			},
 			[PinnedStatType.CombatTime] = new PinnedWidgetData
 			{
 				Type = PinnedStatType.CombatTime,
 				IsPinned = false,
-				Position = new Vector2(20f, 242f)
+				Position = new Vector2(20f, 224f),
+				Width = 160f,
+				Height = 32f
 			},
 			[PinnedStatType.DamageBlocked] = new PinnedWidgetData
 			{
 				Type = PinnedStatType.DamageBlocked,
 				IsPinned = false,
-				Position = new Vector2(20f, 286f)
+				Position = new Vector2(20f, 262f),
+				Width = 160f,
+				Height = 32f
 			}
 		};
 
@@ -167,8 +177,8 @@ namespace Augments
 
 				if (isAltDown)
 				{
-					// Check close button [✕] in top right corner (size 16x16)
-					Rectangle closeRect = new Rectangle(rect.Right - 18, rect.Y + 2, 16, 16);
+					// Close button [✕] on right side
+					Rectangle closeRect = new Rectangle(rect.Right - 18, rect.Y + 4, 14, 14);
 					bool closeHover = closeRect.Contains((int)mouse.X, (int)mouse.Y);
 
 					if (hovered && rightPressed)
@@ -201,10 +211,69 @@ namespace Augments
 					{
 						if (Main.mouseLeft)
 						{
-							w.Position = mouse - w.DragOffset;
-							// Clamp to screen boundaries
-							w.Position.X = MathHelper.Clamp(w.Position.X, 4f, Main.screenWidth - w.Width - 4f);
-							w.Position.Y = MathHelper.Clamp(w.Position.Y, 4f, Main.screenHeight - w.Height - 4f);
+							Vector2 rawPos = mouse - w.DragOffset;
+							Vector2 snapPos = rawPos;
+
+							const float snapDist = 14f;
+							const float screenMarginX = 20f;
+							const float screenMarginY = 20f;
+							const float widgetGap = 6f;
+
+							// 1. Sibling snapping (align with other pinned widgets in columns or rows)
+							foreach (var other in widgets.Values)
+							{
+								if (other == w || !other.IsPinned)
+									continue;
+
+								// Snap X to other's X (column alignment)
+								if (Math.Abs(rawPos.X - other.Position.X) < snapDist)
+								{
+									snapPos.X = other.Position.X;
+								}
+								// Snap X to other's right side (horizontal row alignment)
+								else if (Math.Abs(rawPos.X - (other.Position.X + other.Width + widgetGap)) < snapDist)
+								{
+									snapPos.X = other.Position.X + other.Width + widgetGap;
+								}
+								// Snap X to other's left side
+								else if (Math.Abs((rawPos.X + w.Width + widgetGap) - other.Position.X) < snapDist)
+								{
+									snapPos.X = other.Position.X - w.Width - widgetGap;
+								}
+
+								// Snap Y to other's Y (horizontal row alignment)
+								if (Math.Abs(rawPos.Y - other.Position.Y) < snapDist)
+								{
+									snapPos.Y = other.Position.Y;
+								}
+								// Snap Y below other (vertical column stack)
+								else if (Math.Abs(rawPos.Y - (other.Position.Y + other.Height + widgetGap)) < snapDist)
+								{
+									snapPos.Y = other.Position.Y + other.Height + widgetGap;
+								}
+								// Snap Y above other
+								else if (Math.Abs((rawPos.Y + w.Height + widgetGap) - other.Position.Y) < snapDist)
+								{
+									snapPos.Y = other.Position.Y - w.Height - widgetGap;
+								}
+							}
+
+							// 2. Screen boundary snapping
+							if (Math.Abs(snapPos.X - screenMarginX) < snapDist)
+								snapPos.X = screenMarginX;
+							else if (Math.Abs(snapPos.X - (Main.screenWidth - w.Width - screenMarginX)) < snapDist)
+								snapPos.X = Main.screenWidth - w.Width - screenMarginX;
+
+							if (Math.Abs(snapPos.Y - screenMarginY) < snapDist)
+								snapPos.Y = screenMarginY;
+							else if (Math.Abs(snapPos.Y - (Main.screenHeight - w.Height - screenMarginY)) < snapDist)
+								snapPos.Y = Main.screenHeight - w.Height - screenMarginY;
+
+							// 3. Screen boundary clamping
+							snapPos.X = MathHelper.Clamp(snapPos.X, 4f, Main.screenWidth - w.Width - 4f);
+							snapPos.Y = MathHelper.Clamp(snapPos.Y, 4f, Main.screenHeight - w.Height - 4f);
+
+							w.Position = snapPos;
 							Main.blockMouse = true;
 						}
 						else
@@ -262,11 +331,7 @@ namespace Augments
 				if (!w.IsPinned)
 					continue;
 
-				Rectangle rect = new Rectangle((int)w.Position.X, (int)w.Position.Y, (int)w.Width, (int)w.Height);
-				bool hovered = rect.Contains((int)mouse.X, (int)mouse.Y);
-
-				// Configure stat-specific branding
-				string iconGlyph;
+				// Configure stat-specific branding and clean inline text
 				Color accentColor;
 				string labelText;
 				string valueText;
@@ -274,122 +339,226 @@ namespace Augments
 				switch (w.Type)
 				{
 					case PinnedStatType.LiveDPS:
-						iconGlyph = "⚡";
 						accentColor = new Color(74, 222, 128); // Emerald Neon Green
-						labelText = "LIVE DPS";
+						labelText = "DPS";
 						valueText = $"{Math.Round(currentDps):N0} /s";
 						break;
 
 					case PinnedStatType.HitsAndCrits:
-						iconGlyph = "★";
 						accentColor = new Color(250, 204, 21); // Amber Gold
-						labelText = "HITS & CRITS";
-						valueText = $"{totalHits:N0} ({critRate:0.0}%)";
+						labelText = "CRIT";
+						valueText = $"{critRate:0.0}% ({totalHits:N0})";
 						break;
 
 					case PinnedStatType.TotalDamage:
-						iconGlyph = "❖";
 						accentColor = new Color(56, 189, 248); // Electric Cyan
-						labelText = "RECORDED DMG";
+						labelText = "DMG";
 						valueText = $"{viewDamage:N0}";
 						break;
 
 					case PinnedStatType.DamageBlocked:
-						iconGlyph = "◈";
 						accentColor = new Color(52, 211, 153); // Shield Emerald
-						labelText = "DMG BLOCKED";
+						labelText = "BLOCKED";
 						valueText = $"{viewBlocked:N0}";
 						break;
 
 					case PinnedStatType.CombatTime:
 					default:
-						iconGlyph = "⏱";
 						accentColor = new Color(192, 132, 252); // Violet
-						labelText = "COMBAT TIME";
+						labelText = "TIME";
 						valueText = $"{combatSec / 60:D2}:{combatSec % 60:D2}";
 						break;
 				}
 
-				// 1. Background
-				Color bgColor = new Color(8, 14, 28) * 0.90f;
+				Vector2 textScale = new Vector2(0.62f);
+				string dotSep = "  •  ";
+				float labelW = ChatManager.GetStringSize(font, labelText, textScale).X;
+				float dotW = ChatManager.GetStringSize(font, dotSep, textScale).X;
+				float valW = ChatManager.GetStringSize(font, valueText, textScale).X;
+				float totalTextW = labelW + dotW + valW;
+
+				// Dynamic width adaptation: ensures zero text clipping even with huge damage numbers
+				float minWidth = isAltDown ? 172f : 160f;
+				w.Width = Math.Max(minWidth, (float)Math.Ceiling(totalTextW + (isAltDown ? 52f : 40f)));
+
+				Rectangle rect = new Rectangle((int)w.Position.X, (int)w.Position.Y, (int)w.Width, (int)w.Height);
+				bool hovered = rect.Contains((int)mouse.X, (int)mouse.Y);
+
+				// 1. Ambient Underglow
+				float underglowPulse = (float)Math.Sin(pulseTimer * 3.5f) * 0.5f + 0.5f;
+				float underglowAlpha = hovered ? (0.07f + underglowPulse * 0.04f) : 0.035f;
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, rect, accentColor * underglowAlpha);
+
+				// 2. Solid Cyber Chassis Background
+				Color bgColor = new Color(10, 16, 28) * 0.94f;
 				spriteBatch.Draw(TextureAssets.MagicPixel.Value, rect, bgColor);
 
-				// 2. High-Tech Cyber Border
-				float pulse = (float)Math.Sin(pulseTimer * 4f) * 0.5f + 0.5f;
-				Color borderColor = isAltDown && hovered
-					? Color.Lerp(new Color(255, 215, 75), Color.White, pulse * 0.4f)
-					: (hovered ? Color.Lerp(accentColor, Color.White, 0.25f) : accentColor * 0.70f);
+				// 3. Cybernetic Chassis Border
+				Color borderColor = isAltDown && w.IsDragging
+					? Color.Lerp(new Color(255, 215, 75), Color.White, underglowPulse * 0.45f)
+					: (hovered ? Color.Lerp(accentColor, Color.White, 0.30f) : accentColor * 0.60f);
 
 				DrawCyberBorder(spriteBatch, rect, borderColor);
 
-				// 3. Left Icon Badge Box
-				Rectangle iconBox = new Rectangle(rect.X + 3, rect.Y + 3, 26, rect.Height - 6);
-				spriteBatch.Draw(TextureAssets.MagicPixel.Value, iconBox, accentColor * 0.15f);
-				DrawCyberBorder(spriteBatch, iconBox, accentColor * 0.40f);
+				// 4. Left Icon Badge Box
+				int iconBoxSize = 22;
+				Rectangle iconBox = new Rectangle(rect.X + 5, rect.Y + (rect.Height - iconBoxSize) / 2, iconBoxSize, iconBoxSize);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, iconBox, accentColor * 0.16f);
+				DrawMiniBorder(spriteBatch, iconBox, accentColor * 0.45f);
 
-				Vector2 glyphSz = ChatManager.GetStringSize(font, iconGlyph, new Vector2(0.80f));
-				Vector2 glyphPos = new Vector2(iconBox.X + (iconBox.Width - glyphSz.X) * 0.5f, iconBox.Y + (iconBox.Height - glyphSz.Y) * 0.5f);
-				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, iconGlyph, glyphPos, accentColor, 0f, Vector2.Zero, new Vector2(0.80f));
+				// Procedural high-tech pixel-art icon
+				int icx = iconBox.X + iconBox.Width / 2;
+				int icy = iconBox.Y + iconBox.Height / 2;
+				DrawStatIcon(spriteBatch, w.Type, icx, icy, accentColor, currentDps);
 
-				// 4. Content Typography
-				float textX = rect.X + 34f;
+				// 5. Clean Inline Metrics
+				float textX = iconBox.Right + 8f;
+				float textY = rect.Y + (rect.Height - 16f) * 0.5f;
 
 				// Label
-				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, labelText, new Vector2(textX, rect.Y + 4f), new Color(148, 163, 184), 0f, Vector2.Zero, new Vector2(0.56f));
+				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, labelText, new Vector2(textX, textY), accentColor, 0f, Vector2.Zero, textScale);
+
+				// Separator dot
+				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, dotSep, new Vector2(textX + labelW, textY), new Color(100, 125, 155) * 0.80f, 0f, Vector2.Zero, textScale);
 
 				// Value
-				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, valueText, new Vector2(textX, rect.Y + 16f), Color.White, 0f, Vector2.Zero, new Vector2(0.76f));
+				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, valueText, new Vector2(textX + labelW + dotW, textY), Color.White, 0f, Vector2.Zero, textScale);
 
-				// 5. Alt Drag / Unpin Controls Overlay
+				// 6. Alt Drag / Unpin Controls Overlay
 				if (isAltDown)
 				{
-					// Top-right close button [✕]
-					Rectangle closeRect = new Rectangle(rect.Right - 18, rect.Y + 2, 16, 16);
+					Rectangle closeRect = new Rectangle(rect.Right - 18, rect.Y + 4, 14, 14);
 					bool closeHover = closeRect.Contains((int)mouse.X, (int)mouse.Y);
 					Color closeColor = closeHover ? new Color(248, 113, 113) : new Color(148, 163, 184) * 0.8f;
 
-					Vector2 xSz = ChatManager.GetStringSize(font, "✕", new Vector2(0.65f));
+					Vector2 xSz = ChatManager.GetStringSize(font, "✕", new Vector2(0.55f));
 					Vector2 xPos = new Vector2(closeRect.X + (closeRect.Width - xSz.X) * 0.5f, closeRect.Y + (closeRect.Height - xSz.Y) * 0.5f);
-					ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, "✕", xPos, closeColor, 0f, Vector2.Zero, new Vector2(0.65f));
-
-					// Drag grip indicator on bottom right
-					ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, "⠿", new Vector2(rect.Right - 14, rect.Bottom - 16), new Color(255, 215, 75) * 0.75f, 0f, Vector2.Zero, new Vector2(0.60f));
+					ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, "✕", xPos, closeColor, 0f, Vector2.Zero, new Vector2(0.55f));
 
 					if (hovered)
 					{
-						Main.instance.MouseText($"[Pinned {labelText}]\n• Left Alt + Drag: Reposition anywhere on screen\n• Click ✕ or Right-click: Unpin from HUD");
+						Main.instance.MouseText($"Pinned {labelText}\nDrag to reposition (snaps to screen edges and cards)\nClick ✕ or Right-click to unpin");
 					}
 				}
 				else if (hovered)
 				{
-					Main.instance.MouseText($"[Pinned {labelText}]\n(Hold Left Alt or Shift to drag & move)");
+					Main.instance.MouseText($"Pinned {labelText}\nHold Alt to drag & reposition");
 				}
 			}
 		}
 
+		private static void DrawStatIcon(SpriteBatch spriteBatch, PinnedStatType type, int cx, int cy, Color accentColor, float currentDps)
+		{
+			Texture2D pixel = TextureAssets.MagicPixel.Value;
+
+			switch (type)
+			{
+				case PinnedStatType.LiveDPS:
+					// Animated 4-bar waveform (matches sidebar HUD)
+					float animPhase = pulseTimer * (currentDps > 0f ? 8f : 2.5f);
+					int[] barHeights = {
+						2 + (int)(Math.Sin(animPhase) * 1.5f + 1.5f),
+						4 + (int)(Math.Sin(animPhase + 1.2f) * 2f + 2f),
+						6 + (int)(Math.Sin(animPhase + 2.4f) * 2.5f + 2.5f),
+						3 + (int)(Math.Sin(animPhase + 3.6f) * 1.5f + 1.5f)
+					};
+					int[] barX = { cx - 5, cx - 2, cx + 2, cx + 5 };
+					for (int b = 0; b < 4; b++)
+					{
+						int bh = Math.Clamp(barHeights[b], 2, 8);
+						spriteBatch.Draw(pixel, new Rectangle(barX[b], cy + 4 - bh, 2, bh), accentColor);
+					}
+					break;
+
+				case PinnedStatType.HitsAndCrits:
+					// Precision Crosshair / Critical reticle
+					spriteBatch.Draw(pixel, new Rectangle(cx - 1, cy - 5, 2, 3), accentColor);
+					spriteBatch.Draw(pixel, new Rectangle(cx - 1, cy + 3, 2, 3), accentColor);
+					spriteBatch.Draw(pixel, new Rectangle(cx - 5, cy - 1, 3, 2), accentColor);
+					spriteBatch.Draw(pixel, new Rectangle(cx + 3, cy - 1, 3, 2), accentColor);
+					spriteBatch.Draw(pixel, new Rectangle(cx - 1, cy - 1, 2, 2), Color.White);
+					break;
+
+				case PinnedStatType.TotalDamage:
+					// Upright combat broadsword
+					spriteBatch.Draw(pixel, new Rectangle(cx - 1, cy - 6, 2, 8), accentColor);
+					spriteBatch.Draw(pixel, new Rectangle(cx, cy - 7, 1, 1), Color.White);
+					spriteBatch.Draw(pixel, new Rectangle(cx - 4, cy + 2, 8, 2), accentColor);
+					spriteBatch.Draw(pixel, new Rectangle(cx - 1, cy + 4, 2, 3), Color.Lerp(accentColor, Color.Black, 0.35f));
+					spriteBatch.Draw(pixel, new Rectangle(cx - 2, cy + 7, 4, 1), Color.White);
+					break;
+
+				case PinnedStatType.DamageBlocked:
+					// Bastion energy shield
+					spriteBatch.Draw(pixel, new Rectangle(cx - 4, cy - 5, 8, 2), accentColor);
+					spriteBatch.Draw(pixel, new Rectangle(cx - 5, cy - 3, 10, 5), accentColor);
+					spriteBatch.Draw(pixel, new Rectangle(cx - 4, cy + 2, 8, 2), accentColor);
+					spriteBatch.Draw(pixel, new Rectangle(cx - 2, cy + 4, 4, 2), accentColor);
+					spriteBatch.Draw(pixel, new Rectangle(cx - 1, cy + 6, 2, 1), Color.White);
+					spriteBatch.Draw(pixel, new Rectangle(cx - 1, cy - 2, 2, 3), Color.White);
+					break;
+
+				case PinnedStatType.CombatTime:
+				default:
+					// Chronometer / stopwatch
+					spriteBatch.Draw(pixel, new Rectangle(cx - 2, cy - 7, 4, 2), accentColor);
+					spriteBatch.Draw(pixel, new Rectangle(cx - 5, cy - 4, 10, 2), accentColor);
+					spriteBatch.Draw(pixel, new Rectangle(cx - 5, cy + 3, 10, 2), accentColor);
+					spriteBatch.Draw(pixel, new Rectangle(cx - 6, cy - 3, 2, 7), accentColor);
+					spriteBatch.Draw(pixel, new Rectangle(cx + 4, cy - 3, 2, 7), accentColor);
+					// Dial hands
+					spriteBatch.Draw(pixel, new Rectangle(cx - 1, cy, 2, 2), Color.White);
+					spriteBatch.Draw(pixel, new Rectangle(cx, cy - 3, 1, 3), Color.White);
+					spriteBatch.Draw(pixel, new Rectangle(cx + 1, cy, 3, 1), accentColor);
+					break;
+			}
+		}
+
+		private static void DrawMiniBorder(SpriteBatch spriteBatch, Rectangle rect, Color color)
+		{
+			Texture2D pixel = TextureAssets.MagicPixel.Value;
+			spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, rect.Width, 1), color);
+			spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Bottom - 1, rect.Width, 1), color);
+			spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, 1, rect.Height), color);
+			spriteBatch.Draw(pixel, new Rectangle(rect.Right - 1, rect.Y, 1, rect.Height), color);
+		}
+
 		private static void DrawCyberBorder(SpriteBatch spriteBatch, Rectangle rect, Color color)
 		{
-			// Thin line frame
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X, rect.Y, rect.Width, 1), color * 0.55f);
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X, rect.Bottom - 1, rect.Width, 1), color * 0.55f);
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X, rect.Y, 1, rect.Height), color * 0.55f);
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right - 1, rect.Y, 1, rect.Height), color * 0.55f);
+			Texture2D pixel = TextureAssets.MagicPixel.Value;
 
-			// Corner brackets
+			// Outer 1px frame
+			spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, rect.Width, 1), color * 0.55f);
+			spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Bottom - 1, rect.Width, 1), color * 0.55f);
+			spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, 1, rect.Height), color * 0.55f);
+			spriteBatch.Draw(pixel, new Rectangle(rect.Right - 1, rect.Y, 1, rect.Height), color * 0.55f);
+
+			// Inner 1px hairline accent
+			Color innerHairline = Color.White * 0.06f;
+			spriteBatch.Draw(pixel, new Rectangle(rect.X + 1, rect.Y + 1, rect.Width - 2, 1), innerHairline);
+			spriteBatch.Draw(pixel, new Rectangle(rect.X + 1, rect.Bottom - 2, rect.Width - 2, 1), innerHairline);
+			spriteBatch.Draw(pixel, new Rectangle(rect.X + 1, rect.Y + 1, 1, rect.Height - 2), innerHairline);
+			spriteBatch.Draw(pixel, new Rectangle(rect.Right - 2, rect.Y + 1, 1, rect.Height - 2), innerHairline);
+
+			// Corner brackets (4px long, 2px thick)
 			const int cLen = 4;
 			const int cThick = 2;
 
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X, rect.Y, cLen, cThick), color);
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X, rect.Y, cThick, cLen), color);
+			// Top-left
+			spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, cLen, cThick), color);
+			spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Y, cThick, cLen), color);
 
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right - cLen, rect.Y, cLen, cThick), color);
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right - cThick, rect.Y, cThick, cLen), color);
+			// Top-right
+			spriteBatch.Draw(pixel, new Rectangle(rect.Right - cLen, rect.Y, cLen, cThick), color);
+			spriteBatch.Draw(pixel, new Rectangle(rect.Right - cThick, rect.Y, cThick, cLen), color);
 
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X, rect.Bottom - cThick, cLen, cThick), color);
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X, rect.Bottom - cLen, cThick, cLen), color);
+			// Bottom-left
+			spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Bottom - cThick, cLen, cThick), color);
+			spriteBatch.Draw(pixel, new Rectangle(rect.X, rect.Bottom - cLen, cThick, cLen), color);
 
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right - cLen, rect.Bottom - cThick, cLen, cThick), color);
-			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.Right - cThick, rect.Bottom - cLen, cThick, cLen), color);
+			// Bottom-right
+			spriteBatch.Draw(pixel, new Rectangle(rect.Right - cLen, rect.Bottom - cThick, cLen, cThick), color);
+			spriteBatch.Draw(pixel, new Rectangle(rect.Right - cThick, rect.Bottom - cLen, cThick, cLen), color);
 		}
 	}
 }
