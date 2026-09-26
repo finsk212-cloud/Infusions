@@ -307,6 +307,51 @@ namespace Augments
 			return false;
 		}
 
+		public bool IsAnyOtherPanelOpenThanAnalytics()
+		{
+			if (IsListOpen)
+				return true;
+			if (IsShopOpen)
+				return true;
+			if (IsGachaOpen)
+				return true;
+			if (IsChoiceOpenAndActive)
+				return true;
+			if (AugmentPinnedHUD.IsInteractingAny)
+				return true;
+			return false;
+		}
+
+		public bool IsAnyOtherPanelOpenThanList()
+		{
+			if (IsAnalyticsOpen)
+				return true;
+			if (IsShopOpen)
+				return true;
+			if (IsGachaOpen)
+				return true;
+			if (IsChoiceOpenAndActive)
+				return true;
+			if (AugmentPinnedHUD.IsInteractingAny)
+				return true;
+			return false;
+		}
+
+		public bool IsTypingAnywhere()
+		{
+			if (Terraria.GameInput.PlayerInput.WritingText)
+				return true;
+			if (Main.drawingPlayerChat || Main.editSign || Main.editChest)
+				return true;
+			if (Main.CurrentInputTextTakerOverride != null)
+				return true;
+			if (listState != null && listState.IsSearchFocused)
+				return true;
+			if (analyticsState != null && analyticsState.IsSearchFocused)
+				return true;
+			return false;
+		}
+
 		public void RefreshOpenPlayerPanels()
 		{
 			if (IsListOpen)
@@ -337,9 +382,17 @@ namespace Augments
 		public void ToggleAnalytics()
 		{
 			if (IsAnalyticsOpen)
+			{
+				if (analyticsState != null && analyticsState.IsSearchFocused)
+					return;
 				HideAnalytics();
+			}
 			else
+			{
+				if (IsTypingAnywhere() || IsAnyOtherPanelOpenThanAnalytics())
+					return;
 				ShowAnalytics();
+			}
 		}
 
 		public bool IsAnalyticsOpen => analyticsInterface?.CurrentState != null;
@@ -360,9 +413,17 @@ namespace Augments
 		public void ToggleList()
 		{
 			if (IsListOpen)
+			{
+				if (listState != null && listState.IsSearchFocused)
+					return;
 				HideList();
+			}
 			else
+			{
+				if (IsTypingAnywhere() || IsAnyOtherPanelOpenThanList())
+					return;
 				ShowList();
+			}
 		}
 
 		public bool IsListOpen => listInterface?.CurrentState != null;

@@ -49,6 +49,7 @@ namespace Augments
 		private SupportClassTagElement supportTag;
 
 		private CodexSearchBar searchBar;
+		public bool IsSearchFocused => searchBar != null && searchBar.IsFocused;
 		private string searchQuery = "";
 
 		private UIElement devBarContainer;

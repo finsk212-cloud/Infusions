@@ -50,6 +50,7 @@ namespace Augments
 		private AnalyticsActionButton resetButton;
 		private AnalyticsActionButton filterButton;
 		private AnalyticsSearchBar searchBar;
+		public bool IsSearchFocused => searchBar != null && searchBar.IsFocused;
 		private UIPanel statusPill;
 		private UIText statusPillText;
 

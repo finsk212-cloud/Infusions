@@ -1227,13 +1227,16 @@ namespace Augments
 			if (Main.myPlayer != Player.whoAmI)
 				return;
 
-			if (Augments.OpenAugmentListKeybind.JustPressed)
-				ModContent.GetInstance<AugmentUISystem>().ToggleList();
+			var ui = ModContent.GetInstance<AugmentUISystem>();
+			bool isTyping = ui?.IsTypingAnywhere() ?? false;
+
+			if (Augments.OpenAugmentListKeybind.JustPressed && !isTyping)
+				ui?.ToggleList();
 
 			bool analyticsPressed = Augments.ToggleCombatAnalyticsKeybind?.JustPressed == true;
 			if (!analyticsPressed && (Augments.ToggleCombatAnalyticsKeybind == null || Augments.ToggleCombatAnalyticsKeybind.GetAssignedKeys().Count == 0))
 			{
-				if (!Main.drawingPlayerChat && !Main.editSign && !Main.editChest)
+				if (!isTyping)
 				{
 					if (Main.keyState.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.L) && !Main.oldKeyState.IsKeyDown(Microsoft.Xna.Framework.Input.Keys.L))
 					{
@@ -1242,10 +1245,10 @@ namespace Augments
 				}
 			}
 
-			if (analyticsPressed)
-				ModContent.GetInstance<AugmentUISystem>().ToggleAnalytics();
+			if (analyticsPressed && !isTyping)
+				ui?.ToggleAnalytics();
 
-			if (HasAugment("cleanse") && CleanseCooldown == 0 && Augments.CleanseKeybind?.JustPressed == true)
+			if (HasAugment("cleanse") && CleanseCooldown == 0 && Augments.CleanseKeybind?.JustPressed == true && !isTyping)
 			{
 				CleanseCooldown = 1800;
 				SoundEngine.PlaySound(SoundID.Item4, Player.Center);
