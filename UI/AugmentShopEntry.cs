@@ -37,7 +37,7 @@ namespace Augments
 			Width.Set(-4f, 1f);
 			Height.Set(54f, 0f);
 
-			actionButton = new ActionButton(actionLabel, isBuyAction, isPermanent);
+			actionButton = new ActionButton(actionLabel, isBuyAction, isPermanent, this, augment);
 			actionButton.Width.Set(116f, 0f);
 			actionButton.Height.Set(26f, 0f);
 			actionButton.HAlign = 1f;
@@ -54,7 +54,14 @@ namespace Augments
 		{
 			base.MouseOver(evt);
 			isHovered = true;
-			AugmentListEntry.HoveredAugment = augment;
+			if (actionButton == null || !actionButton.ContainsPoint(Main.MouseScreen))
+			{
+				AugmentListEntry.HoveredAugment = augment;
+			}
+			else if (AugmentListEntry.HoveredAugment == augment)
+			{
+				AugmentListEntry.HoveredAugment = null;
+			}
 			SoundEngine.PlaySound(SoundID.MenuTick);
 		}
 
@@ -64,6 +71,18 @@ namespace Augments
 			isHovered = false;
 			if (AugmentListEntry.HoveredAugment == augment)
 				AugmentListEntry.HoveredAugment = null;
+		}
+
+		public override void Update(GameTime gameTime)
+		{
+			base.Update(gameTime);
+			if (actionButton != null && actionButton.ContainsPoint(Main.MouseScreen))
+			{
+				if (AugmentListEntry.HoveredAugment == augment)
+				{
+					AugmentListEntry.HoveredAugment = null;
+				}
+			}
 		}
 
 		protected override void DrawSelf(SpriteBatch spriteBatch)
@@ -151,13 +170,17 @@ namespace Augments
 			private readonly string label;
 			private readonly bool isBuy;
 			private readonly bool disabled;
+			private readonly AugmentShopEntry parentEntry;
+			private readonly Augment parentAugment;
 			private bool isHovered;
 
-			public ActionButton(string label, bool isBuy, bool disabled)
+			public ActionButton(string label, bool isBuy, bool disabled, AugmentShopEntry parentEntry, Augment parentAugment)
 			{
 				this.label = label;
 				this.isBuy = isBuy;
 				this.disabled = disabled;
+				this.parentEntry = parentEntry;
+				this.parentAugment = parentAugment;
 			}
 
 			public override void LeftClick(UIMouseEvent evt)
@@ -173,6 +196,11 @@ namespace Augments
 			public override void MouseOver(UIMouseEvent evt)
 			{
 				base.MouseOver(evt);
+				// Disable tooltip when hovering the buy / sell button
+				if (AugmentListEntry.HoveredAugment == parentAugment)
+				{
+					AugmentListEntry.HoveredAugment = null;
+				}
 				if (!disabled)
 				{
 					isHovered = true;
@@ -184,6 +212,11 @@ namespace Augments
 			{
 				base.MouseOut(evt);
 				isHovered = false;
+				// If mouse left the button but is still within the parent card, restore tooltip
+				if (parentEntry != null && parentEntry.ContainsPoint(Main.MouseScreen))
+				{
+					AugmentListEntry.HoveredAugment = parentAugment;
+				}
 			}
 
 			protected override void DrawSelf(SpriteBatch spriteBatch)
