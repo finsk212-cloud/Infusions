@@ -25,6 +25,7 @@ namespace Augments
 		private const float Spacing = 8f;
 		private const float MinPanelWidth = 330f;
 		private const float SlideSpeed = 7f;
+		public const string SupportStanceId = "__support_stance";
 
 		private static float globalTimer;
 		private static bool wasMouseLeft = false;
@@ -35,6 +36,9 @@ namespace Augments
 		private static (float startY, float spacing) GetDynamicLayout(AugmentPlayer ap)
 		{
 			int activeCount = 0;
+			if (ap.SupportAugmentCount >= 1)
+				activeCount++;
+
 			foreach (var kv in AugmentFamilyRegistry.Families)
 			{
 				if (AugmentFamilyRegistry.GetOwnedCount(ap, kv.Key) > 0)
@@ -97,6 +101,44 @@ namespace Augments
 				Main.blockMouse = true;
 			}
 			wasMouseLeft = Main.mouseLeft;
+
+			if (ap.SupportAugmentCount >= 1)
+			{
+				string id = SupportStanceId;
+				if (!hoverProgress.ContainsKey(id))
+					hoverProgress[id] = 0f;
+
+				Rectangle iRect = new Rectangle((int)iconX, (int)currentY, (int)IconWidth, (int)IconHeight);
+				iconBounds[id] = iRect;
+				currentY += IconHeight + spacing;
+
+				panelBounds.TryGetValue(id, out var pRect);
+				bool isHovered = false;
+
+				Rectangle generousIcon = new Rectangle(iRect.X - 5, iRect.Y - 5, iRect.Width + 10, iRect.Height + 10);
+				if (generousIcon.Contains(mouse))
+				{
+					isHovered = true;
+				}
+				else if (hoverProgress[id] > 0.02f && pRect != Rectangle.Empty)
+				{
+					Rectangle generousPanel = new Rectangle(pRect.X - 5, pRect.Y - 5, pRect.Width + 10, pRect.Height + 10);
+					if (generousPanel.Contains(mouse))
+						isHovered = true;
+				}
+
+				float target = isHovered ? 1f : 0f;
+				float current = hoverProgress[id];
+				if (current < target)
+					hoverProgress[id] = Math.Min(target, current + dt * SlideSpeed);
+				else if (current > target)
+					hoverProgress[id] = Math.Max(target, current - dt * SlideSpeed);
+			}
+			else
+			{
+				hoverProgress[SupportStanceId] = 0f;
+				panelBounds[SupportStanceId] = Rectangle.Empty;
+			}
 
 			foreach (var kv in AugmentFamilyRegistry.Families)
 			{
@@ -217,6 +259,29 @@ namespace Augments
 			if (btnHover)
 			{
 				Main.instance.MouseText("Combat Analytics [L]\nClick to view live DPS and damage breakdown\nAlt + Drag to move pinned widgets");
+			}
+
+			if (ap.SupportAugmentCount >= 1)
+			{
+				string id = SupportStanceId;
+				hoverProgress.TryGetValue(id, out float progress);
+				Rectangle iconRect = new Rectangle((int)iconX, (int)currentY, (int)IconWidth, (int)IconHeight);
+				iconBounds[id] = iconRect;
+
+				// 1. Draw Slideout Panel (if expanding)
+				if (progress > 0.01f)
+				{
+					DrawSupportStanceSlideoutPanel(spriteBatch, font, ap, iconRect, progress);
+				}
+				else
+				{
+					panelBounds[id] = Rectangle.Empty;
+				}
+
+				// 2. Draw Docked Icon Box
+				DrawSupportStanceDockedIcon(spriteBatch, font, ap, iconRect);
+
+				currentY += IconHeight + spacing;
 			}
 
 			foreach (var kv in AugmentFamilyRegistry.Families)
@@ -1131,6 +1196,357 @@ namespace Augments
 
 				drawY += symSz.Y + lineSpacing;
 			}
+		}
+
+		private static void DrawSupportStanceDockedIcon(SpriteBatch spriteBatch, DynamicSpriteFont font, AugmentPlayer ap, Rectangle rect)
+		{
+			int count = ap.SupportAugmentCount;
+			bool isActive = count >= 2;
+			Color themeCol = new Color(74, 222, 128); // Emerald Green
+			float pulse = (float)Math.Sin(globalTimer * 3.5f) * 0.5f + 0.5f;
+
+			// Glowing aura when active
+			if (isActive)
+			{
+				int auraDist = (int)(2f + pulse * 3f);
+				Rectangle auraRect = new Rectangle(rect.X - auraDist, rect.Y - auraDist, rect.Width + auraDist * 2, rect.Height + auraDist * 2);
+				Color auraCol = themeCol * (0.15f + pulse * 0.20f);
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, auraRect, auraCol);
+			}
+
+			// Background
+			Color bg = new Color(8, 14, 28) * 0.95f;
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, rect, bg);
+
+			// Border
+			Color borderColor = isActive
+				? Color.Lerp(themeCol, Color.White, pulse * 0.35f)
+				: Color.Lerp(themeCol, new Color(90, 110, 130), 0.55f);
+			DrawHighTechBorder(spriteBatch, rect, borderColor);
+
+			int cx = rect.X + rect.Width / 2;
+
+			// Upper Section: Support Shield Graphic
+			DrawSupportStanceGraphic(spriteBatch, cx, rect.Y + 15, isActive);
+
+			// Subtle separator rail between icon and count
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(rect.X + 4, rect.Y + 26, rect.Width - 8, 1), themeCol * (isActive ? 0.35f : 0.15f));
+
+			// Lower Section: Clean integrated count bar
+			Rectangle countArea = new Rectangle(rect.X + 2, rect.Y + 27, rect.Width - 4, rect.Height - 29);
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, countArea, new Color(4, 7, 14) * 0.85f);
+
+			string countText = isActive ? (count >= 5 ? "5/5" : $"{count}/5") : $"{count}/2";
+			Vector2 numScale = new Vector2(0.55f);
+			Vector2 numSize = ChatManager.GetStringSize(font, countText, numScale);
+			float numX = cx - numSize.X * 0.5f;
+			float numY = countArea.Y + (countArea.Height - numSize.Y) * 0.5f + 8f;
+			Color countColor = isActive ? AugmentTextColors.Healing : new Color(175, 195, 220);
+			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, countText, new Vector2(numX, numY), countColor, 0f, Vector2.Zero, numScale);
+		}
+
+		private static void DrawSupportStanceGraphic(SpriteBatch spriteBatch, int cx, int cy, bool isActive)
+		{
+			Color iconCol = isActive
+				? Color.Lerp(new Color(74, 222, 128), Color.White, 0.25f)
+				: Color.Lerp(new Color(74, 222, 128), new Color(170, 190, 210), 0.40f);
+
+			Color outline = new Color(4, 8, 14) * 0.90f;
+
+			// Outer Shield Silhouette (Width 16, Height 18)
+			// Dark contrast outline
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 7, cy - 8, 14, 8), outline);
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 6, cy, 12, 4), outline);
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 4, cy + 4, 8, 3), outline);
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 2, cy + 7, 4, 2), outline);
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 1, cy + 9, 2, 1), outline);
+
+			// Shield Body Fill
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 6, cy - 7, 12, 7), iconCol * 0.85f);
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 5, cy, 10, 4), iconCol * 0.85f);
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 3, cy + 4, 6, 3), iconCol * 0.85f);
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 1, cy + 7, 2, 2), iconCol * 0.85f);
+
+			// Center Support Plus/Cross (Width 10, Height 10, thickness 2)
+			// Cross Outline
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 5, cy - 3, 10, 4), outline);
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 2, cy - 6, 4, 10), outline);
+
+			// Cross Fill
+			Color crossCol = isActive ? Color.White : new Color(200, 235, 215);
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 4, cy - 2, 8, 2), crossCol);
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 1, cy - 5, 2, 8), crossCol);
+
+			if (isActive)
+			{
+				// Brilliant center micro-sparkle
+				spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(cx - 1, cy - 2, 2, 2), Color.White);
+			}
+		}
+
+		private static void DrawSupportStanceSlideoutPanel(SpriteBatch spriteBatch, DynamicSpriteFont font, AugmentPlayer ap, Rectangle iconRect, float progress)
+		{
+			const float pad = 14f;
+			const float lineSpacing = 3f;
+
+			int count = ap.SupportAugmentCount;
+			bool isActive = count >= 2;
+			Color themeCol = new Color(74, 222, 128); // Emerald Green
+
+			Vector2 titleScale = new Vector2(0.82f);
+			Vector2 statusScale = new Vector2(0.72f);
+			Vector2 sectionScale = new Vector2(0.68f);
+			Vector2 itemScale = new Vector2(0.76f);
+			Vector2 perkScale = new Vector2(0.72f);
+
+			string titleText = "SUPPORT STANCE ARCHITECTURE";
+			string statusText = isActive
+				? (count >= 5
+					? "STANCE ACTIVE (MAX TIER)  •  +60 DEFENSE, -5% DAMAGE"
+					: (count == 4
+						? $"STANCE ACTIVE  •  +40 DEFENSE, -16% DAMAGE ({count}/5 PLUGINS)"
+						: (count == 3
+							? $"STANCE ACTIVE  •  +30 DEFENSE, -23% DAMAGE ({count}/5 PLUGINS)"
+							: $"STANCE ACTIVE  •  +20 DEFENSE, -30% DAMAGE ({count}/5 PLUGINS)")))
+				: $"INACTIVE  •  {count}/2 REQUIRED TO ACTIVATE STANCE";
+
+			string descText = "Sacrifices direct offensive output to amplify armor matrix defenses.";
+
+			float curHeight = pad;
+			float maxContentWidth = 330f;
+
+			void Measure(string text, Vector2 scale, float extraPad = 36f)
+			{
+				float w = ChatManager.GetStringSize(font, text, scale).X + extraPad;
+				if (w > maxContentWidth)
+					maxContentWidth = w;
+			}
+
+			// Header block
+			Vector2 tSz = ChatManager.GetStringSize(font, titleText, titleScale);
+			curHeight += tSz.Y + 2f;
+			Measure(titleText, titleScale, 36f);
+
+			Vector2 sSz = ChatManager.GetStringSize(font, statusText, statusScale);
+			curHeight += sSz.Y + 2f;
+			Measure(statusText, statusScale, 36f);
+
+			Vector2 dSz = ChatManager.GetStringSize(font, descText, statusScale);
+			curHeight += dSz.Y + 6f;
+			Measure(descText, statusScale, 36f);
+
+			// Divider 1
+			curHeight += 6f;
+
+			// Threshold Matrix Section
+			string bSectionHeader = "STANCE THRESHOLD MATRIX";
+			curHeight += ChatManager.GetStringSize(font, bSectionHeader, sectionScale).Y + 6f;
+			Measure(bSectionHeader, sectionScale, 36f);
+
+			var thresholds = new (int Threshold, string Label, int Defense, int Damage, string Note)[]
+			{
+				(2, "2 Plugins", 20, -30, "Initial Support Protocol"),
+				(3, "3 Plugins", 30, -23, "Reinforced Defensive Matrix"),
+				(4, "4 Plugins", 40, -16, "High-Output Shield Lattice"),
+				(5, "5+ Plugins", 60, -5, "Peak Operational Efficiency")
+			};
+
+			int activeTier = 0;
+			if (count >= 5) activeTier = 5;
+			else if (count >= 4) activeTier = 4;
+			else if (count >= 3) activeTier = 3;
+			else if (count >= 2) activeTier = 2;
+
+			foreach (var (req, label, def, dmg, note) in thresholds)
+			{
+				bool unlocked = count >= req;
+				bool isCurrent = (req == 5 && activeTier >= 5) || (req == activeTier);
+				string tag = isCurrent ? "Active [CURRENT]" : (unlocked ? "Active" : "Locked");
+				string lineHeader = $"✓ ({req}) {note}  •  {tag}";
+				curHeight += ChatManager.GetStringSize(font, lineHeader, itemScale).Y + lineSpacing;
+				Measure(lineHeader, itemScale, 36f);
+
+				string perkLine = $"• +{def} Defense, {dmg}% Damage Output";
+				curHeight += ChatManager.GetStringSize(font, perkLine, perkScale).Y + lineSpacing;
+				Measure(perkLine, perkScale, 48f);
+				curHeight += 4f;
+			}
+
+			// Divider 2
+			curHeight += 8f;
+
+			// Assigned Support Plugins Section
+			string mSectionHeader = "ASSIGNED SUPPORT PLUGINS";
+			curHeight += ChatManager.GetStringSize(font, mSectionHeader, sectionScale).Y + 6f;
+			Measure(mSectionHeader, sectionScale, 36f);
+
+			var supportAugs = new List<Augment>();
+			foreach (var a in ap.Owned)
+			{
+				if (a.Class == AugmentClass.Support)
+					supportAugs.Add(a);
+			}
+
+			if (supportAugs.Count == 0)
+			{
+				string emptyLine = "• No Support Plugins Installed";
+				curHeight += ChatManager.GetStringSize(font, emptyLine, itemScale).Y + lineSpacing;
+				Measure(emptyLine, itemScale, 36f);
+			}
+			else
+			{
+				foreach (var a in supportAugs)
+				{
+					string aLine = $"✓ {a.DisplayName}  •  INSTALLED";
+					curHeight += ChatManager.GetStringSize(font, aLine, itemScale).Y + lineSpacing;
+					Measure(aLine, itemScale, 36f);
+				}
+			}
+
+			string footerNote = "• Autonomous calibration: Stance adapts dynamically.";
+			curHeight += 4f + ChatManager.GetStringSize(font, footerNote, perkScale).Y + lineSpacing;
+			Measure(footerNote, perkScale, 48f);
+
+			curHeight += pad;
+			float panelHeight = curHeight;
+			float panelWidth = Math.Max(MinPanelWidth, (float)Math.Ceiling(maxContentWidth));
+
+			// Slide animation calculation - flush against icon edge (no gap), slides smoothly in from the left
+			float finalX = iconRect.X - panelWidth + 1f;
+			float currentX = finalX - (1f - progress) * 16f;
+			float panelY = Math.Clamp(iconRect.Y - 16f, 10f, Math.Max(10f, Main.screenHeight - panelHeight - 10f));
+
+			Rectangle panelRect = new Rectangle((int)currentX, (int)panelY, (int)panelWidth, (int)panelHeight);
+			panelBounds[SupportStanceId] = panelRect;
+
+			// Ambient drop shadow (2px expansion)
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, new Rectangle(panelRect.X - 2, panelRect.Y - 2, panelRect.Width + 4, panelRect.Height + 4), new Color(0, 0, 0, (int)(160 * progress)));
+
+			// Cybernetic chassis background
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, panelRect, new Color(10, 16, 28) * progress);
+			spriteBatch.Draw(TextureAssets.MagicPixel.Value, panelRect, themeCol * (0.04f * progress));
+
+			// High-tech panel border
+			DrawHighTechBorder(spriteBatch, panelRect, themeCol * (0.85f * progress));
+
+			// Render content
+			float drawY = panelRect.Y + pad;
+			float leftX = panelRect.X + 16f;
+
+			// 1. Title (Centered)
+			Vector2 titleSz = ChatManager.GetStringSize(font, titleText, titleScale);
+			Vector2 titlePos = new Vector2(panelRect.X + (panelRect.Width - titleSz.X) * 0.5f, drawY);
+			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, titleText, titlePos, themeCol * progress, 0f, Vector2.Zero, titleScale);
+			drawY += titleSz.Y + 2f;
+
+			// 2. Status Subtitle (Centered)
+			Vector2 statusSz = ChatManager.GetStringSize(font, statusText, statusScale);
+			Vector2 statusPos = new Vector2(panelRect.X + (panelRect.Width - statusSz.X) * 0.5f, drawY);
+			Color statusCol = isActive ? AugmentTextColors.Healing : new Color(148, 163, 184);
+			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, statusText, statusPos, statusCol * progress, 0f, Vector2.Zero, statusScale);
+			drawY += statusSz.Y + 2f;
+
+			// 3. Description Note (Centered)
+			Vector2 descSz = ChatManager.GetStringSize(font, descText, statusScale);
+			Vector2 descPos = new Vector2(panelRect.X + (panelRect.Width - descSz.X) * 0.5f, drawY);
+			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, descText, descPos, new Color(175, 190, 215) * progress, 0f, Vector2.Zero, statusScale);
+			drawY += descSz.Y + 6f;
+
+			// Divider 1
+			DrawDivider(spriteBatch, panelRect, drawY, themeCol, progress);
+			drawY += 8f;
+
+			// 4. Threshold Matrix Section
+			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, bSectionHeader, new Vector2(leftX, drawY), new Color(250, 204, 21) * progress, 0f, Vector2.Zero, sectionScale);
+			drawY += ChatManager.GetStringSize(font, bSectionHeader, sectionScale).Y + 6f;
+
+			foreach (var (req, label, def, dmg, note) in thresholds)
+			{
+				bool unlocked = count >= req;
+				bool isCurrent = (req == 5 && activeTier >= 5) || (req == activeTier);
+
+				string sym = unlocked ? "✓" : "•";
+				Color symCol = unlocked ? AugmentTextColors.Healing : new Color(100, 116, 139);
+				string threshStr = $" ({req}) ";
+				Color threshCol = unlocked ? new Color(56, 189, 248) : new Color(100, 116, 139);
+				string title = note;
+				Color titleCol = unlocked ? Color.White : new Color(148, 163, 184);
+				string tag = isCurrent ? "Active [CURRENT]" : (unlocked ? "Active" : "Locked");
+				Color tagCol = isCurrent ? new Color(251, 191, 36) : (unlocked ? AugmentTextColors.Healing : new Color(100, 116, 139));
+
+				float curX = leftX;
+
+				// Symbol
+				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, sym, new Vector2(curX, drawY), symCol * progress, 0f, Vector2.Zero, itemScale);
+				curX += ChatManager.GetStringSize(font, sym, itemScale).X;
+
+				// Threshold
+				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, threshStr, new Vector2(curX, drawY), threshCol * progress, 0f, Vector2.Zero, itemScale);
+				curX += ChatManager.GetStringSize(font, threshStr, itemScale).X;
+
+				// Title
+				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, title, new Vector2(curX, drawY), titleCol * progress, 0f, Vector2.Zero, itemScale);
+				curX += ChatManager.GetStringSize(font, title, itemScale).X;
+
+				// Separator
+				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, "  •  ", new Vector2(curX, drawY), new Color(71, 85, 105) * progress, 0f, Vector2.Zero, itemScale);
+				curX += ChatManager.GetStringSize(font, "  •  ", itemScale).X;
+
+				// Status Tag
+				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, tag, new Vector2(curX, drawY), tagCol * progress, 0f, Vector2.Zero, itemScale);
+
+				drawY += ChatManager.GetStringSize(font, title, itemScale).Y + lineSpacing;
+
+				// Indented perk line
+				float perkIndent = leftX + 16f;
+				string perkLine = $"• +{def} Defense, {dmg}% Damage Output";
+				Color perkCol = unlocked ? new Color(210, 238, 225) : new Color(125, 138, 158);
+				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, perkLine, new Vector2(perkIndent, drawY), perkCol * progress, 0f, Vector2.Zero, perkScale);
+				drawY += ChatManager.GetStringSize(font, perkLine, perkScale).Y + lineSpacing;
+
+				drawY += 4f;
+			}
+
+			drawY += 2f;
+			// Divider 2
+			DrawDivider(spriteBatch, panelRect, drawY, themeCol, progress);
+			drawY += 8f;
+
+			// 5. Assigned Support Plugins Section
+			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, mSectionHeader, new Vector2(leftX, drawY), new Color(250, 204, 21) * progress, 0f, Vector2.Zero, sectionScale);
+			drawY += ChatManager.GetStringSize(font, mSectionHeader, sectionScale).Y + 6f;
+
+			if (supportAugs.Count == 0)
+			{
+				string emptyLine = "• No Support Plugins Installed";
+				ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, emptyLine, new Vector2(leftX, drawY), new Color(148, 163, 184) * progress, 0f, Vector2.Zero, itemScale);
+				drawY += ChatManager.GetStringSize(font, emptyLine, itemScale).Y + lineSpacing;
+			}
+			else
+			{
+				foreach (var a in supportAugs)
+				{
+					string mSymbol = "✓";
+					Color mSymbolCol = AugmentTextColors.Healing;
+					string mName = a.DisplayName;
+					Color mNameCol = Color.White;
+
+					Vector2 symSz = ChatManager.GetStringSize(font, mSymbol, itemScale);
+					Vector2 nameSz = ChatManager.GetStringSize(font, mName, itemScale);
+
+					ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, mSymbol, new Vector2(leftX, drawY), mSymbolCol * progress, 0f, Vector2.Zero, itemScale);
+					ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, mName, new Vector2(leftX + 16f, drawY), mNameCol * progress, 0f, Vector2.Zero, itemScale);
+
+					string mStatus = "  •  INSTALLED";
+					Color mStatusCol = AugmentTextColors.Healing;
+					ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, mStatus, new Vector2(leftX + 16f + nameSz.X, drawY), mStatusCol * progress, 0f, Vector2.Zero, itemScale);
+
+					drawY += symSz.Y + lineSpacing;
+				}
+			}
+
+			drawY += 4f;
+			ChatManager.DrawColorCodedStringWithShadow(spriteBatch, font, footerNote, new Vector2(leftX, drawY), new Color(148, 163, 184) * progress, 0f, Vector2.Zero, perkScale);
 		}
 
 		private static void DrawDivider(SpriteBatch spriteBatch, Rectangle panelRect, float y, Color themeCol, float progress)

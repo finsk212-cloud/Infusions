@@ -46,7 +46,6 @@ namespace Augments
 		private UIList gridList;
 		private UIScrollbar gridScrollbar;
 		private AugmentDetailPanel detailPanel;
-		private SupportClassTagElement supportTag;
 
 		private CodexSearchBar searchBar;
 		public bool IsSearchFocused => searchBar != null && searchBar.IsFocused;
@@ -189,14 +188,6 @@ namespace Augments
 			detailPanel.Height.Set(-125f, 1f);
 			backPanel.Append(detailPanel);
 
-			// Bottom-Right: Support Class Tag (Left = 556f, Width = 306f, ends at 862f)
-			supportTag = new SupportClassTagElement();
-			supportTag.Left.Set(556f, 0f);
-			supportTag.Width.Set(306f, 0f);
-			supportTag.Height.Set(28f, 0f);
-			supportTag.Top.Set(556f, 0f);
-			backPanel.Append(supportTag);
-
 			// Bottom-Left: Dev Mode Action Bar
 			CreateDevBarControls();
 			if (IsDevMode)
@@ -208,12 +199,6 @@ namespace Augments
 		public override void Draw(SpriteBatch spriteBatch)
 		{
 			base.Draw(spriteBatch);
-
-			if (supportTag != null && supportTag.IsVisible && (supportTag.IsMouseHovering || supportTag.ContainsPoint(Main.MouseScreen)))
-			{
-				AugmentChoiceCard.DrawSupportTooltip(spriteBatch, FontAssets.MouseText.Value);
-			}
-
 			AugmentChoiceCard.DrawActiveTooltip(spriteBatch);
 		}
 
